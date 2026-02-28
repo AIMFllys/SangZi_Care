@@ -26,7 +26,7 @@ Supabase MCP Server 已成功连接，所有核心数据库表已创建完成！
         "-y",
         "@supabase/mcp-server-supabase",
         "--access-token",
-        "sbp_c155e0aaae51adb1ed20c886a3721ccb386ae6f5"
+        "sbp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
       ],
       "env": {
         "SUPABASE_URL": "https://rithloxzperfgiqyquch.supabase.co",
