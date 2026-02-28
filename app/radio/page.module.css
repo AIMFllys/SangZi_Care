@@ -1,0 +1,352 @@
+/* ============================================
+   健康广播播放页样式
+   适老化设计：大字体、高对比度、大按钮
+   ============================================ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  padding-bottom: 100px;
+}
+
+/* 顶部栏 */
+.header {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-base);
+  gap: var(--spacing-sm);
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--min-touch-target);
+  min-height: var(--min-touch-target);
+  font-size: var(--font-size-xl);
+  color: var(--color-text);
+  background: none;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.backBtn:active {
+  opacity: 0.7;
+}
+
+.title {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  color: var(--color-text);
+  flex: 1;
+}
+
+/* 当前播放区域 */
+.playerSection {
+  padding: var(--spacing-base);
+}
+
+.playerCard {
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-lg);
+  text-align: center;
+}
+
+.nowPlayingLabel {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.broadcastTitle {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 var(--spacing-xs);
+  line-height: 1.4;
+}
+
+.broadcastCategory {
+  display: inline-block;
+  font-size: var(--font-size-base);
+  color: var(--color-primary);
+  background-color: rgba(232, 115, 74, 0.1);
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.broadcastContent {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-base);
+  max-height: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* 进度条 */
+.progressSection {
+  padding: 0 var(--spacing-base);
+  margin-bottom: var(--spacing-sm);
+}
+
+.progressBar {
+  width: 100%;
+  height: 8px;
+  background-color: var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: 4px;
+  transition: width 0.3s linear;
+}
+
+.timeDisplay {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-xs) 0;
+}
+
+.timeText {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 播放控制按钮 */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-base) 0;
+}
+
+.controlBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  min-height: 60px;
+  font-size: 28px;
+  color: var(--color-text);
+  background-color: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: opacity var(--transition-fast), transform 0.1s;
+}
+
+.controlBtn:active {
+  opacity: 0.7;
+  transform: scale(0.95);
+}
+
+.playBtn {
+  min-width: 80px;
+  min-height: 80px;
+  font-size: 36px;
+  color: #ffffff;
+  background-color: var(--color-primary);
+  border: none;
+}
+
+.playBtn:active {
+  opacity: 0.85;
+  transform: scale(0.95);
+}
+
+/* 分类标签 */
+.categorySection {
+  padding: 0 var(--spacing-base) var(--spacing-sm);
+}
+
+.categoryTabs {
+  display: flex;
+  gap: var(--spacing-xs);
+  overflow-x: auto;
+  padding-bottom: var(--spacing-xs);
+  -webkit-overflow-scrolling: touch;
+}
+
+.categoryTab {
+  flex-shrink: 0;
+  min-height: var(--min-touch-target);
+  padding: var(--spacing-xs) var(--spacing-base);
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.categoryTabActive {
+  color: #ffffff;
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.categoryTab:active {
+  opacity: 0.8;
+}
+
+/* 推荐列表 */
+.listSection {
+  flex: 1;
+  padding: 0 var(--spacing-base);
+}
+
+.listTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-sm);
+}
+
+.listCard {
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-base);
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  min-height: 60px;
+  transition: background-color var(--transition-fast);
+}
+
+.listItem:last-child {
+  border-bottom: none;
+}
+
+.listItem:active {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.listItemActive {
+  background-color: rgba(232, 115, 74, 0.08);
+}
+
+.listItemIndex {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  min-width: 28px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.listItemInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.listItemTitle {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.listItemMeta {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.listItemDuration {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+/* 空状态 */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl) var(--spacing-base);
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 64px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.emptyText {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+}
+
+.loadingText {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+}
+
+/* 错误状态 */
+.errorBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl) var(--spacing-base);
+}
+
+.errorText {
+  font-size: var(--font-size-lg);
+  color: var(--color-danger);
+  text-align: center;
+}
+
+.retryBtn {
+  min-height: var(--min-touch-target);
+  padding: var(--spacing-xs) var(--spacing-lg);
+  background-color: var(--color-primary);
+  color: #ffffff;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+}
+
+.retryBtn:active {
+  opacity: 0.85;
+}

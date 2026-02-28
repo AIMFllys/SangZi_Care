@@ -1,0 +1,193 @@
+/* ============================================
+   MedicineTimeline — 用药时间线样式
+   适老化设计：大字体、高对比度、大触控区域
+   ============================================ */
+
+/* 时间线容器 */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* 时段分组 */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.groupHeader {
+  padding: var(--spacing-xs) 0;
+}
+
+.groupLabel {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* 分组内的项列表 */
+.groupItems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* 单条用药项 */
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-base);
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--color-border);
+  min-height: var(--min-touch-target);
+}
+
+.item.taken {
+  border-left-color: var(--color-success);
+  opacity: 0.8;
+}
+
+.item.pending {
+  border-left-color: var(--color-primary);
+}
+
+.item.delayed {
+  border-left-color: var(--color-warning);
+}
+
+.item.skipped {
+  border-left-color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+/* 时间标签 */
+.itemTime {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+/* 药品信息区 */
+.itemBody {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  gap: var(--spacing-sm);
+  min-width: 0;
+}
+
+.itemInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.medicineName {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dosage {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+/* 操作区 */
+.itemAction {
+  flex-shrink: 0;
+}
+
+/* 确认服药按钮 — 大触控区域 */
+.confirmBtn {
+  min-width: var(--min-touch-target);
+  min-height: var(--min-touch-target);
+  padding: var(--spacing-xs) var(--spacing-base);
+  background-color: var(--color-success);
+  color: #ffffff;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  user-select: none;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.confirmBtn:active {
+  transform: scale(0.95);
+  opacity: 0.85;
+}
+
+.confirmBtn:focus-visible {
+  outline: 3px solid var(--color-success);
+  outline-offset: 2px;
+}
+
+/* 状态标签 */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: calc(var(--font-size-base) - 2px);
+  font-weight: 600;
+  border-radius: var(--border-radius-sm);
+}
+
+.badge_taken {
+  background-color: rgba(46, 125, 50, 0.12);
+  color: var(--color-success);
+}
+
+.badge_delayed {
+  background-color: rgba(249, 168, 37, 0.12);
+  color: var(--color-warning);
+}
+
+.badge_skipped {
+  background-color: rgba(117, 117, 117, 0.12);
+  color: var(--color-text-secondary);
+}
+
+.badge_pending {
+  background-color: rgba(232, 115, 74, 0.12);
+  color: var(--color-primary);
+}
+
+/* 空状态 */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl) var(--spacing-base);
+  gap: var(--spacing-sm);
+}
+
+.emptyIcon {
+  font-size: 48px;
+}
+
+.emptyText {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .confirmBtn {
+    transition: none;
+  }
+}

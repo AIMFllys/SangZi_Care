@@ -1,0 +1,176 @@
+# 桑梓智护 API 测试文件
+# 使用 VS Code 的 REST Client 插件运行这些请求
+# 或使用 curl/Postman 等工具
+
+### 变量定义
+@baseUrl = http://localhost:8000
+@apiPrefix = /api/v1
+
+### 1. 健康检查
+GET {{baseUrl}}/health
+
+### 2. 用户注册 - 老年人
+POST {{baseUrl}}{{apiPrefix}}/auth/register
+Content-Type: application/json
+
+{
+  "phone": "13800138000",
+  "password": "password123",
+  "name": "张大爷",
+  "role": "elder"
+}
+
+### 3. 用户注册 - 家属
+POST {{baseUrl}}{{apiPrefix}}/auth/register
+Content-Type: application/json
+
+{
+  "phone": "13800138001",
+  "password": "password123",
+  "name": "张小明",
+  "role": "family"
+}
+
+### 4. 用户登录
+# @name login
+POST {{baseUrl}}{{apiPrefix}}/auth/login
+Content-Type: application/json
+
+{
+  "phone": "13800138000",
+  "password": "password123"
+}
+
+### 5. 获取当前用户信息
+# 需要先登录获取 token
+@token = {{login.response.body.access_token}}
+
+GET {{baseUrl}}{{apiPrefix}}/users/me
+Authorization: Bearer {{token}}
+
+### 6. 创建用药计划
+POST {{baseUrl}}{{apiPrefix}}/medicine/plans
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "medicine_name": "降压药",
+  "dosage": "1片",
+  "frequency": "每日两次",
+  "time_slots": ["08:00", "20:00"],
+  "start_date": "2024-01-01",
+  "notes": "饭后服用"
+}
+
+### 7. 获取用药计划列表
+GET {{baseUrl}}{{apiPrefix}}/medicine/plans
+Authorization: Bearer {{token}}
+
+### 8. 创建健康记录 - 血压
+POST {{baseUrl}}{{apiPrefix}}/health/records
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "record_type": "blood_pressure",
+  "value": {
+    "systolic": 120,
+    "diastolic": 80
+  },
+  "recorded_at": "2024-01-01T08:00:00Z",
+  "notes": "早晨测量"
+}
+
+### 9. 创建健康记录 - 血糖
+POST {{baseUrl}}{{apiPrefix}}/health/records
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "record_type": "blood_sugar",
+  "value": {
+    "glucose": 5.6
+  },
+  "recorded_at": "2024-01-01T08:00:00Z",
+  "notes": "空腹血糖"
+}
+
+### 10. 获取健康记录列表
+GET {{baseUrl}}{{apiPrefix}}/health/records?limit=10
+Authorization: Bearer {{token}}
+
+### 11. AI 对话
+POST {{baseUrl}}{{apiPrefix}}/ai/chat
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "message": "你好，今天天气怎么样？",
+  "user_id": "user-id-here"
+}
+
+### 12. 文字转语音（TTS）
+POST {{baseUrl}}{{apiPrefix}}/ai/voice/tts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "text": "您好，这是语音测试",
+  "voice_type": "BV700_V2_streaming"
+}
+
+### 13. 发送消息
+POST {{baseUrl}}{{apiPrefix}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "receiver_id": "receiver-user-id",
+  "content": "你好，今天感觉怎么样？",
+  "message_type": "text"
+}
+
+### 14. 获取消息列表
+GET {{baseUrl}}{{apiPrefix}}/messages?limit=20
+Authorization: Bearer {{token}}
+
+### 15. 发起紧急呼叫
+POST {{baseUrl}}{{apiPrefix}}/emergency/call
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "location": {
+    "latitude": 39.9042,
+    "longitude": 116.4074,
+    "address": "北京市东城区"
+  }
+}
+
+### 16. 获取紧急呼叫记录
+GET {{baseUrl}}{{apiPrefix}}/emergency/calls?limit=10
+Authorization: Bearer {{token}}
+
+### 17. 获取健康广播列表
+GET {{baseUrl}}{{apiPrefix}}/radio/broadcasts?limit=10
+Authorization: Bearer {{token}}
+
+### 18. 创建家庭绑定
+POST {{baseUrl}}{{apiPrefix}}/family/bind
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "elder_phone": "13800138000",
+  "relationship": "儿子"
+}
+
+### 19. 获取家庭成员列表
+GET {{baseUrl}}{{apiPrefix}}/family/members
+Authorization: Bearer {{token}}
+
+### 20. 获取用药提醒
+GET {{baseUrl}}{{apiPrefix}}/medicine/reminders?date=2024-01-01
+Authorization: Bearer {{token}}
+
+###

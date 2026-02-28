@@ -1,0 +1,65 @@
+/* ============================================
+   家属端主题 — 专属样式覆盖
+   标准蓝色调、常规字体
+   ============================================ */
+
+[data-theme='family'] body {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* 标题层级 */
+[data-theme='family'] h1 {
+  font-size: var(--font-size-hero);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+[data-theme='family'] h2 {
+  font-size: var(--font-size-title);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+[data-theme='family'] h3 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* 按钮 — 最小触控区域 44×44px */
+[data-theme='family'] button,
+[data-theme='family'] [role='button'],
+[data-theme='family'] a[href] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* 输入框 */
+[data-theme='family'] input,
+[data-theme='family'] textarea,
+[data-theme='family'] select {
+  font-size: var(--font-size-base);
+  min-height: 44px;
+  padding: var(--spacing-sm) var(--spacing-base);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  background-color: #ffffff;
+}
+
+[data-theme='family'] input:focus,
+[data-theme='family'] textarea:focus,
+[data-theme='family'] select:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-color: var(--color-primary);
+}
+
+/* 卡片样式 */
+[data-theme='family'] .card {
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-base);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+}

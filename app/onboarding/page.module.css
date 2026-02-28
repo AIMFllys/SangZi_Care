@@ -1,0 +1,112 @@
+/* ============================================
+   角色选择页样式
+   适老化设计：大字体、大按钮、高对比度
+   ============================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: var(--spacing-lg);
+  background-color: var(--color-bg);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.title {
+  font-size: var(--font-size-hero);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-sm);
+}
+
+.subtitle {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  width: 100%;
+  max-width: 400px;
+}
+
+.roleCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl) var(--spacing-lg);
+  border-radius: var(--border-radius);
+  border: 2px solid transparent;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  min-height: 160px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.roleCard:active {
+  transform: scale(0.97);
+}
+
+.roleCard:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 长辈卡片 — 暖色调 */
+.elderCard {
+  background: linear-gradient(135deg, #fff8f0 0%, #ffe8d6 100%);
+  border-color: #e8734a;
+}
+
+.elderCard:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* 家属卡片 — 蓝色调 */
+.familyCard {
+  background: linear-gradient(135deg, #f0f7ff 0%, #d6e8ff 100%);
+  border-color: #1976d2;
+}
+
+.familyCard:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.roleEmoji {
+  font-size: 56px;
+  line-height: 1;
+}
+
+.roleLabel {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.roleDesc {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+}

@@ -1,0 +1,141 @@
+/* ============================================
+   聊天详情页样式
+   适老化：大字体、大按钮、清晰布局
+   ============================================ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--color-bg);
+}
+
+/* 顶部栏 */
+.header {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-base);
+  gap: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-card);
+  flex-shrink: 0;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--min-touch-target);
+  min-height: var(--min-touch-target);
+  font-size: var(--font-size-xl);
+  color: var(--color-text);
+  background: none;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.backBtn:active {
+  opacity: 0.7;
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  flex: 1;
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+}
+
+/* 底部输入区域 */
+.inputArea {
+  flex-shrink: 0;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-bg-card);
+  padding: var(--spacing-xs);
+}
+
+/* 模式切换按钮 */
+.modeToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--min-touch-target);
+  min-height: var(--min-touch-target);
+  font-size: var(--font-size-xl);
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--border-radius-sm);
+  transition: opacity var(--transition-fast);
+}
+
+.modeToggle:active {
+  opacity: 0.7;
+}
+
+/* 文字输入行 */
+.textInputRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) 0;
+}
+
+.textInput {
+  flex: 1;
+  min-height: var(--min-touch-target);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.textInput:focus {
+  border-color: var(--color-primary);
+}
+
+.textInput::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.sendBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  min-height: var(--min-touch-target);
+  padding: 0 var(--spacing-sm);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: #ffffff;
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.sendBtn:active:not(:disabled) {
+  opacity: 0.85;
+}
+
+.sendBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

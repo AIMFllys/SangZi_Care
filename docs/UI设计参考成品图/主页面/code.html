@@ -1,0 +1,120 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>桑梓智护 - 首页</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<style type="text/tailwindcss">
+        :root {
+            --primary-orange: #FF8F44;
+            --primary-orange-dark: #F57C00;
+            --primary-orange-light: #FFE0CC;
+            --secondary-green: #4CAF50;
+            --emergency-red: #D32F2F;
+            --emergency-red-dark: #B71C1C;
+            --bg-warm: #FFF9F2;
+            --text-dark: #1A1A1A;
+            --text-gray: #4A4A4A;
+            --card-surface: #FFFFFF;
+        }
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: var(--bg-warm);
+            color: var(--text-dark);
+            -webkit-font-smoothing: antialiased;
+        }
+        .voice-pulse {
+            animation: pulse-ring 3s infinite;
+        }
+        @keyframes pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 143, 68, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 40px rgba(255, 143, 68, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 143, 68, 0);
+            }
+        }
+        .safe-area-top {
+            padding-top: env(safe-area-inset-top, 44px);
+        }
+        .safe-area-bottom {
+            padding-bottom: env(safe-area-inset-bottom, 34px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="h-screen w-screen overflow-hidden flex flex-col relative bg-[var(--bg-warm)]">
+<header class="safe-area-top w-full flex flex-col z-10 px-6 pt-6">
+<div class="mb-4">
+<h1 class="text-[36px] font-black text-[var(--text-dark)] leading-tight tracking-tight">
+            早上好，张爷爷
+        </h1>
+</div>
+<div class="w-full bg-[var(--card-surface)] rounded-[32px] p-8 shadow-sm border border-orange-100/80 flex items-center justify-between">
+<div class="flex flex-col gap-1">
+<span class="text-[56px] font-black text-[var(--text-dark)] leading-none tracking-tight">10:30</span>
+<span class="text-[24px] font-bold text-[var(--text-gray)] mt-1">3月15日 星期日</span>
+</div>
+<div class="h-20 w-[2px] bg-orange-100 mx-4"></div>
+<div class="flex flex-col items-center min-w-[100px]">
+<span class="material-symbols-outlined text-[var(--primary-orange)] text-[64px]" style="font-variation-settings: 'FILL' 1, 'wght' 600;">
+                wb_sunny
+            </span>
+<span class="text-[28px] font-black text-[var(--text-dark)] mt-[-4px]">24° 晴</span>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col items-center justify-center relative w-full px-6 z-10 py-4">
+<div class="relative flex flex-col items-center justify-center w-full my-auto">
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="w-[520px] h-[520px] rounded-full bg-[var(--primary-orange)] opacity-[0.03]"></div>
+</div>
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="w-[400px] h-[400px] rounded-full bg-[var(--primary-orange)] opacity-[0.06]"></div>
+</div>
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="w-[300px] h-[300px] rounded-full bg-gradient-to-b from-[var(--primary-orange-light)] to-[var(--bg-warm)] opacity-40"></div>
+</div>
+<button class="voice-pulse relative z-20 w-[240px] h-[240px] rounded-full bg-gradient-to-br from-[var(--primary-orange)] to-[var(--primary-orange-dark)] shadow-[0_24px_48px_rgba(245,124,0,0.3),inset_0_4px_12px_rgba(255,255,255,0.4)] flex flex-col items-center justify-center active:scale-95 transition-all duration-300 ring-8 ring-white/40 border-4 border-white/20">
+<span class="material-symbols-outlined text-white text-[100px] drop-shadow-lg" style="font-variation-settings: 'FILL' 1, 'wght' 600;">
+                mic
+            </span>
+</button>
+<div class="mt-10 text-center flex flex-col items-center gap-2 relative z-30">
+<h2 class="text-[40px] font-black text-[var(--text-dark)] tracking-wide">点我说话</h2>
+</div>
+</div>
+</main>
+<div class="relative w-full z-20 flex flex-col items-center bg-[var(--bg-warm)] pb-4">
+<div class="flex flex-col items-center justify-center text-[var(--text-gray)] mb-8 opacity-70">
+<span class="material-symbols-outlined text-[40px] mb-[-4px]">
+            keyboard_arrow_up
+        </span>
+<span class="text-[20px] font-bold">上滑更多功能</span>
+</div>
+<div class="safe-area-bottom w-full flex justify-center px-6 pb-6">
+<button class="flex items-center gap-5 bg-[var(--emergency-red)] text-white px-6 py-6 rounded-[28px] shadow-[0_8px_20px_rgba(211,47,47,0.25)] active:bg-[var(--emergency-red-dark)] active:scale-[0.98] transition-all w-full max-w-[420px] justify-center h-[96px]">
+<div class="bg-white/20 w-14 h-14 rounded-full flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[36px]" style="font-variation-settings: 'FILL' 1;">
+                    e911_emergency
+                </span>
+</div>
+<span class="text-[30px] font-bold tracking-wide leading-none">紧急呼叫 (SOS)</span>
+</button>
+</div>
+</div>
+
+</body></html>

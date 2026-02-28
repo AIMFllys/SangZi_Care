@@ -1,0 +1,101 @@
+/* ============================================
+   FunctionCards — 功能卡片列表样式
+   ============================================ */
+
+/* 容器 */
+.container {
+  width: 100%;
+  padding: 0 var(--spacing-base);
+}
+
+/* 网格布局：2列 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-sm);
+}
+
+/* 单个卡片 — 最小高度 80px */
+.card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-height: 80px;
+  padding: var(--spacing-base);
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  border: none;
+  cursor: pointer;
+  user-select: none;
+  text-align: left;
+  width: 100%;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.card:active {
+  transform: scale(0.96);
+  box-shadow: var(--shadow-md);
+}
+
+.card:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* 图标 */
+.cardIcon {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* 文字内容区 */
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* 卡片标题 */
+.cardTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 状态提示 */
+.cardStatus {
+  font-size: calc(var(--font-size-base) - 2px);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 状态类型颜色 */
+.status_normal {
+  color: var(--color-text-secondary);
+}
+
+.status_warning {
+  color: var(--color-warning);
+  font-weight: 600;
+}
+
+.status_urgent {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

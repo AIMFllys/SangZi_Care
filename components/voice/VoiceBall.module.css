@@ -1,0 +1,216 @@
+/* ============================================
+   VoiceBall — 语音球组件样式
+   状态: idle / listening / processing / responding
+   ============================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* --- 语音球外层（承载涟漪动画） --- */
+.ballWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- 语音球主体 --- */
+.ball {
+  position: relative;
+  z-index: 2;
+  width: 40vw;
+  height: 40vw;
+  min-width: 120px;
+  min-height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: none;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: var(--shadow-lg);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.ball:active {
+  transform: scale(0.95);
+}
+
+/* --- 球内图标 --- */
+.icon {
+  font-size: calc(40vw * 0.28);
+  line-height: 1;
+}
+
+/* --- 球内状态文字 --- */
+.label {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  opacity: 0.95;
+}
+
+/* --- 状态指示文字（球下方） --- */
+.statusText {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  text-align: center;
+  min-height: 1.6em;
+}
+
+/* ============================================
+   涟漪动画层（listening 状态）
+   ============================================ */
+.ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40vw;
+  height: 40vw;
+  min-width: 120px;
+  min-height: 120px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ripple1 {
+  background: rgba(232, 115, 74, 0.25);
+  animation: rippleExpand 2s ease-out infinite;
+}
+
+.ripple2 {
+  background: rgba(232, 115, 74, 0.15);
+  animation: rippleExpand 2s ease-out 0.6s infinite;
+}
+
+.ripple3 {
+  background: rgba(232, 115, 74, 0.08);
+  animation: rippleExpand 2s ease-out 1.2s infinite;
+}
+
+@keyframes rippleExpand {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   Idle — 柔和脉冲呼吸
+   ============================================ */
+.idle .ball {
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: var(--shadow-lg), 0 0 0 0 rgba(232, 115, 74, 0.3);
+  }
+  50% {
+    box-shadow: var(--shadow-lg), 0 0 0 12px rgba(232, 115, 74, 0);
+  }
+}
+
+/* ============================================
+   Listening — 涟漪扩散 + 球体微放大
+   ============================================ */
+.listening .ball {
+  animation: listenScale 1.5s ease-in-out infinite;
+  background: linear-gradient(135deg, var(--color-primary), #e05530);
+}
+
+@keyframes listenScale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* ============================================
+   Processing — 旋转光环
+   ============================================ */
+.processing .ball {
+  animation: none;
+}
+
+.processingRing {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(40vw + 16px);
+  height: calc(40vw + 16px);
+  min-width: 136px;
+  min-height: 136px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: var(--color-primary-light);
+  border-right-color: var(--color-primary);
+  transform: translate(-50%, -50%);
+  animation: spin 1s linear infinite;
+  pointer-events: none;
+  z-index: 3;
+}
+
+@keyframes spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* ============================================
+   Responding — 发光效果
+   ============================================ */
+.responding .ball {
+  animation: glow 1.5s ease-in-out infinite;
+  background: linear-gradient(135deg, var(--color-success), #1b5e20);
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: var(--shadow-lg), 0 0 20px rgba(46, 125, 50, 0.4);
+  }
+  50% {
+    box-shadow: var(--shadow-lg), 0 0 40px rgba(46, 125, 50, 0.7);
+  }
+}
+
+/* ============================================
+   Reduced motion — 无障碍
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .idle .ball,
+  .listening .ball,
+  .responding .ball {
+    animation: none;
+  }
+
+  .ripple1,
+  .ripple2,
+  .ripple3 {
+    animation: none;
+    display: none;
+  }
+
+  .processingRing {
+    animation: none;
+    border-color: var(--color-primary-light);
+  }
+}

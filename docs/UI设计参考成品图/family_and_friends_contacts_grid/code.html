@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>亲友联系人列表</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#2b8cee",
+                    "accent-orange": "#ff6b00",
+                    "background-light": "#f6f7f8",
+                    "background-dark": "#101922",
+                },
+                fontFamily: {
+                    "display": ["Noto Sans SC", "Lexend", "sans-serif"]
+                },
+                borderRadius: {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "2xl": "1rem",
+                    "3xl": "1.5rem",
+                    "full": "9999px"
+                },
+                boxShadow: {
+                    "nav": "0 -4px 20px rgba(0,0,0,0.05)",
+                    "card": "0 2px 12px rgba(0,0,0,0.04)"
+                }
+            },
+        },
+    }
+</script>
+<style>
+    body {
+        min-height: max(884px, 100dvh);
+    }
+    .text-shadow-sm {
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }.tap-target {
+        min-height: 48px;
+        min-width: 48px;
+    }
+</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden pb-28">
+<div class="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto bg-slate-50 dark:bg-slate-900 shadow-xl overflow-hidden">
+<div class="sticky top-0 z-10 flex items-center bg-white dark:bg-slate-900 p-5 border-b border-slate-100 dark:border-slate-800 shadow-sm">
+<div class="flex-1">
+<h2 class="text-slate-900 dark:text-white text-3xl font-bold leading-tight tracking-tight">亲友联系人</h2>
+<p class="text-slate-500 dark:text-slate-400 text-base mt-1">随时与您的至亲保持联系</p>
+</div>
+<a class="flex items-center justify-center w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-size: 32px;">arrow_forward</span>
+</a>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-4">
+<div class="group relative flex flex-col overflow-hidden rounded-3xl bg-white dark:bg-slate-800 shadow-card border border-slate-100 dark:border-slate-700">
+<div class="relative h-40 w-full bg-slate-200 dark:bg-slate-700 overflow-hidden" data-alt="Portrait of an elderly woman's daughter smiling">
+<div class="absolute inset-0" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAULQRAhSZKCCVjyjA7-oJgBqG1yazDf3FGNw0rK4vsZvH2nxBo2hwS_aQ3abYWjen8y9KHX9AM03YWlsN6Yay3bzQwvSWGH_mXYn0oftPQ9uVDQeNWCzzI4lfLia6MLRF8szNEEQfd4d_JmI8tDrd8SgzdajhYMCWh0riY4H8Y2o1r1u5bTeOhE-HkFzZtfWO1iodY8KUsQsl3t8aQnKZrec9CYMXPyZ6JlAVFy7CTZGbuovJeQo-FhnpfvmpTcJyNWqmbR9Lbjllj'); background-size: cover; background-position: center 20%;"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-4 w-full flex items-end">
+<div>
+<p class="text-white/90 text-base font-medium mb-0">女儿</p>
+<h3 class="text-white text-3xl font-bold leading-none text-shadow-sm">丽华</h3>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 gap-3 bg-white dark:bg-slate-800">
+<button class="flex-1 flex flex-col items-center justify-center gap-1 py-4 px-2 rounded-2xl bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 active:bg-green-100 active:scale-95 transition-all shadow-sm border border-green-100 dark:border-green-800">
+<span class="material-symbols-outlined filled" style="font-variation-settings: 'FILL' 1; font-size: 36px;">call</span>
+<span class="text-xl font-bold">电话</span>
+</button>
+<button class="flex-1 flex flex-col items-center justify-center gap-1 py-4 px-2 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-primary dark:text-blue-400 active:bg-blue-100 active:scale-95 transition-all shadow-sm border border-blue-100 dark:border-blue-800">
+<span class="material-symbols-outlined filled" style="font-variation-settings: 'FILL' 1; font-size: 36px;">chat_bubble</span>
+<span class="text-xl font-bold">消息</span>
+</button>
+</div>
+</div>
+<div class="group relative flex flex-col overflow-hidden rounded-3xl bg-white dark:bg-slate-800 shadow-card border border-slate-100 dark:border-slate-700">
+<div class="relative h-40 w-full bg-slate-200 dark:bg-slate-700 overflow-hidden" data-alt="Portrait of a young boy smiling broadly">
+<div class="absolute inset-0" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDVSvVCYSLBzbbgDIRY3j0n1QbACfdgDm9wDcuqepT71bNfR4KdO_Si9pSHN2JGM7lF0_7I6dLyQGQkF9LlwNY-MN4HAzyy9uqfSiejSqWpKBHQ7_ANfIaGqsp5UcEC7Y1J22UyZINKjiTaoxX_-VMCtO78DMIM76hXmYPJsOtAwsTFHSgUudjKUxDY27qlLiLIO2lXvw1Tlv83h5Kg_1MM7DlKx6lei55OoUR9H9tZRKansxulVbq1r2_PL5pdLP3xF2yFRFN_AKGn'); background-size: cover; background-position: center 20%;"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-4 w-full flex items-end">
+<div>
+<p class="text-white/90 text-base font-medium mb-0">孙子</p>
+<h3 class="text-white text-3xl font-bold leading-none text-shadow-sm">小明</h3>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 gap-3 bg-white dark:bg-slate-800">
+<button class="flex-1 flex flex-col items-center justify-center gap-1 py-4 px-2 rounded-2xl bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 active:bg-green-100 active:scale-95 transition-all shadow-sm border border-green-100 dark:border-green-800">
+<span class="material-symbols-outlined filled" style="font-variation-settings: 'FILL' 1; font-size: 36px;">call</span>
+<span class="text-xl font-bold">电话</span>
+</button>
+<button class="flex-1 flex flex-col items-center justify-center gap-1 py-4 px-2 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-primary dark:text-blue-400 active:bg-blue-100 active:scale-95 transition-all shadow-sm border border-blue-100 dark:border-blue-800">
+<span class="material-symbols-outlined filled" style="font-variation-settings: 'FILL' 1; font-size: 36px;">chat_bubble</span>
+<span class="text-xl font-bold">消息</span>
+</button>
+</div>
+</div>
+<div class="group relative flex flex-col overflow-hidden rounded-3xl bg-white dark:bg-slate-800 shadow-card border border-slate-100 dark:border-slate-700">
+<div class="relative h-40 w-full bg-slate-200 dark:bg-slate-700 overflow-hidden" data-alt="Portrait of a middle aged man looking professional">
+<div class="absolute inset-0" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCghu_9ouNWM6toAauHV_n48hjD-_jDs4jrU-k6sSjrhnlSlP1CIZ_AoM-Iy5G34rLtzD6k3AS7G1Udz-Vy-jz43Qyk0W9KFM4tAK7s36xoOLO3xH2slUxc8XmmXe1ctfDp2frRjFXeqmqkG7B3arZZUxfHto36skEqpykEilDPt-sTcsEHwFRCVxqzmBaimxKOz8hQKt1cLS9f77SpknfBnD7ki1XFmwz7-ZGU1ZK1_Bknwq3Z_sMdDigrpjUt4Sw2Yke553YVQ2S6'); background-size: cover; background-position: center 20%;"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-4 w-full flex items-end">
+<div>
+<p class="text-white/90 text-base font-medium mb-0">儿子</p>
+<h3 class="text-white text-3xl font-bold leading-none text-shadow-sm">王伟</h3>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 gap-3 bg-white dark:bg-slate-800">
+<button class="flex-1 flex flex-col items-center justify-center gap-1 py-4 px-2 rounded-2xl bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 active:bg-green-100 active:scale-95 transition-all shadow-sm border border-green-100 dark:border-green-800">
+<span class="material-symbols-outlined filled" style="font-variation-settings: 'FILL' 1; font-size: 36px;">call</span>
+<span class="text-xl font-bold">电话</span>
+</button>
+<button class="flex-1 flex flex-col items-center justify-center gap-1 py-4 px-2 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-primary dark:text-blue-400 active:bg-blue-100 active:scale-95 transition-all shadow-sm border border-blue-100 dark:border-blue-800">
+<span class="material-symbols-outlined filled" style="font-variation-settings: 'FILL' 1; font-size: 36px;">chat_bubble</span>
+<span class="text-xl font-bold">消息</span>
+</button>
+</div>
+</div>
+<div class="group relative flex flex-col overflow-hidden rounded-3xl bg-white dark:bg-slate-800 shadow-card border border-slate-100 dark:border-slate-700">
+<div class="relative h-40 w-full bg-slate-200 dark:bg-slate-700 overflow-hidden" data-alt="Portrait of an older woman looking kind">
+<div class="absolute inset-0" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD9C7K6mPqhOmv8DI8g3GZrnll6UWIEQ3DSCZWMplTsq_btDTeiFrhY89kykCQ5QVf1tUfldgOHcHB3mQZ7hJJV597hCAXa2rJghUY8616RK9S_mnGKXz995Brv9tsH0YzniQ1UtbRzOph2D1FMI8CcpT-dO_ZmCT5i9H4nkcC1rp5BWQ3NUDUvOcxt024cTcbmwty0gclLbhczHCNLYR57_t_3jrMAb3NooQReA351bYW_6cFiEDP6nYNCeFNsWylrp9UrymTno9ZA'); background-size: cover; background-position: center 20%;"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-4 w-full flex items-end">
+<div>
+<p class="text-white/90 text-base font-medium mb-0">妹妹</p>
+<h3 class="text-white text-3xl font-bold leading-none text-shadow-sm">张敏</h3>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 gap-3 bg-white dark:bg-slate-800">
+<button class="flex-1 flex flex-col items-center justify-center gap-1 py-4 px-2 rounded-2xl bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 active:bg-green-100 active:scale-95 transition-all shadow-sm border border-green-100 dark:border-green-800">
+<span class="material-symbols-outlined filled" style="font-variation-settings: 'FILL' 1; font-size: 36px;">call</span>
+<span class="text-xl font-bold">电话</span>
+</button>
+<button class="flex-1 flex flex-col items-center justify-center gap-1 py-4 px-2 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-primary dark:text-blue-400 active:bg-blue-100 active:scale-95 transition-all shadow-sm border border-blue-100 dark:border-blue-800">
+<span class="material-symbols-outlined filled" style="font-variation-settings: 'FILL' 1; font-size: 36px;">chat_bubble</span>
+<span class="text-xl font-bold">消息</span>
+</button>
+</div>
+</div>
+<button class="flex w-full items-center justify-center gap-4 rounded-3xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 p-8 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group mb-6">
+<div class="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+<span class="material-symbols-outlined" style="font-size: 36px;">add</span>
+</div>
+<span class="text-slate-600 dark:text-slate-300 text-2xl font-bold">添加亲友</span>
+</button>
+<div class="h-24"></div> 
+</div>
+<div class="fixed bottom-0 z-20 w-full max-w-md bg-white dark:bg-slate-900 shadow-nav border-t border-slate-100 dark:border-slate-800 rounded-t-3xl pb-2">
+<div class="flex items-end justify-between px-2 pt-2 pb-3 relative">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-size: 28px;">mic</span>
+<p class="text-xs font-medium">语音</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-900 dark:text-white font-bold" href="#">
+<span class="material-symbols-outlined filled" style="font-variation-settings: 'FILL' 1; font-size: 28px;">group</span>
+<p class="text-xs font-bold">亲属</p>
+</a>
+<div class="relative flex flex-1 flex-col items-center justify-end -mt-8">
+<button class="flex h-16 w-16 items-center justify-center rounded-full bg-accent-orange text-white shadow-lg hover:bg-orange-600 transition-colors ring-4 ring-white dark:ring-slate-900">
+<span class="material-symbols-outlined" style="font-size: 32px;">grid_view</span>
+</button>
+<p class="text-xs font-medium text-accent-orange mt-1">功能</p>
+</div>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-size: 28px;">dashboard</span>
+<p class="text-xs font-medium">看板</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-size: 28px;">person</span>
+<p class="text-xs font-medium">我的</p>
+</a>
+</div>
+</div>
+</div>
+
+</body></html>

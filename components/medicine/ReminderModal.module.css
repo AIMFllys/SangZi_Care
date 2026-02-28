@@ -1,0 +1,185 @@
+/* ============================================
+   ReminderModal — 用药提醒全屏弹窗样式
+   适老化设计：超大字体、超大按钮、高对比度
+   ============================================ */
+
+/* 全屏遮罩层 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.6);
+  animation: fadeIn var(--transition-normal) ease;
+}
+
+/* 弹窗主体 — 全屏 */
+.modal {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+  overflow-y: auto;
+}
+
+/* 头部区域 */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-lg);
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.headerIcon {
+  font-size: 56px;
+  line-height: 1;
+}
+
+.headerTitle {
+  font-size: var(--font-size-hero);
+  font-weight: 700;
+  text-align: center;
+}
+
+.headerTime {
+  font-size: var(--font-size-xl);
+  opacity: 0.9;
+}
+
+/* 药品列表区域 */
+.medicineList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-base);
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+}
+
+/* 单个药品卡片 */
+.medicineCard {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-base);
+  padding: var(--spacing-lg);
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  border-left: 5px solid var(--color-primary);
+}
+
+.medicineIcon {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.medicineInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.medicineName {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.medicineDosage {
+  font-size: var(--font-size-xl);
+  color: var(--color-text-secondary);
+}
+
+/* 底部按钮区域 */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-base);
+  padding: var(--spacing-lg);
+  padding-bottom: calc(var(--spacing-xl) + env(safe-area-inset-bottom, 0px));
+  background-color: var(--color-bg);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 超大"已吃药"按钮 — 绿色 */
+.confirmBtn {
+  width: 100%;
+  min-height: 72px;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background-color: var(--color-success);
+  color: #ffffff;
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  user-select: none;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  box-shadow: var(--shadow-md);
+}
+
+.confirmBtn:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+.confirmBtn:focus-visible {
+  outline: 4px solid var(--color-success);
+  outline-offset: 3px;
+}
+
+/* "等会吃"按钮 */
+.delayBtn {
+  width: 100%;
+  min-height: 60px;
+  padding: var(--spacing-base) var(--spacing-xl);
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  user-select: none;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.delayBtn:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+.delayBtn:focus-visible {
+  outline: 4px solid var(--color-text-secondary);
+  outline-offset: 3px;
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .overlay {
+    animation: none;
+  }
+
+  .confirmBtn,
+  .delayBtn {
+    transition: none;
+  }
+}

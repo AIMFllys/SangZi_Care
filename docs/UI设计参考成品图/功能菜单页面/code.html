@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Function List - Sangzi Zhihu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        :root {
+            --app-bg: #F5F7FA;
+            --primary-blue: #2E5CDB;
+            --primary-orange: #FF6B00;
+            --primary-green: #2E7D32;
+            --primary-red: #D32F2F;
+            --primary-purple: #7B1FA2;
+            --text-dark: #1A1A1A;
+            --text-gray: #555555;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: var(--app-bg);
+            color: var(--text-dark);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .safe-area-top {
+            padding-top: env(safe-area-inset-top);
+        }
+        .safe-area-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }.touch-target {
+            min-height: 48px;
+            min-width: 48px;
+        }
+        .card-active:active {
+            transform: scale(0.98);
+            filter: brightness(0.95);
+        }
+        .nav-shadow {
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+        }
+        .center-btn-shadow {
+            box-shadow: 0 8px 16px rgba(255, 107, 0, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="h-screen flex flex-col overflow-hidden bg-[var(--app-bg)] safe-area-top safe-area-bottom">
+<header class="flex items-center px-6 py-4 bg-white shadow-sm z-10 shrink-0">
+<button aria-label="返回" class="flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-full w-14 h-14 touch-target card-active shadow-sm border border-gray-300 mr-4">
+<span class="material-symbols-outlined text-4xl font-bold">arrow_back</span>
+</button>
+<h1 class="text-3xl font-bold text-[var(--text-dark)] tracking-wide">功能菜单</h1>
+</header>
+<main class="flex-1 overflow-y-auto p-4 space-y-6 pb-28">
+<button class="w-full bg-white rounded-3xl p-6 shadow-[var(--card-shadow)] flex items-center justify-between card-active border-l-8 border-[var(--primary-orange)] relative overflow-hidden group">
+<div class="flex flex-col items-start z-10 w-3/4">
+<div class="flex items-center mb-2">
+<span class="material-symbols-outlined text-[var(--primary-orange)] text-4xl mr-3 font-bold fill-1">medication</span>
+<span class="text-3xl font-bold text-[var(--text-dark)]">用药管家</span>
+</div>
+<div class="bg-orange-100 text-orange-900 px-4 py-2 rounded-xl mt-1">
+<p class="text-xl font-medium">⚠️ 今天还有 <span class="text-2xl font-bold text-[var(--primary-orange)]">2</span> 次服药</p>
+</div>
+</div>
+<div class="absolute right-[-10px] top-[-10px] opacity-10">
+<span class="material-symbols-outlined text-9xl">medication</span>
+</div>
+<span class="material-symbols-outlined text-gray-400 text-5xl z-10">chevron_right</span>
+</button>
+<button class="w-full bg-white rounded-3xl p-6 shadow-[var(--card-shadow)] flex items-center justify-between card-active border-l-8 border-[var(--primary-blue)] relative overflow-hidden">
+<div class="flex flex-col items-start z-10 w-3/4">
+<div class="flex items-center mb-2">
+<span class="material-symbols-outlined text-[var(--primary-blue)] text-4xl mr-3 font-bold fill-1">favorite</span>
+<span class="text-3xl font-bold text-[var(--text-dark)]">健康记录</span>
+</div>
+<div class="bg-blue-100 text-blue-900 px-4 py-2 rounded-xl mt-1">
+<p class="text-xl font-medium">最近血压: <span class="text-2xl font-bold text-[var(--primary-blue)]">135/88</span></p>
+</div>
+</div>
+<div class="absolute right-[-10px] top-[-10px] opacity-10">
+<span class="material-symbols-outlined text-9xl">favorite</span>
+</div>
+<span class="material-symbols-outlined text-gray-400 text-5xl z-10">chevron_right</span>
+</button>
+<button class="w-full bg-white rounded-3xl p-6 shadow-[var(--card-shadow)] flex items-center justify-between card-active border-l-8 border-[var(--primary-green)] relative overflow-hidden">
+<div class="flex flex-col items-start z-10">
+<div class="flex items-center mb-2">
+<span class="material-symbols-outlined text-[var(--primary-green)] text-4xl mr-3 font-bold fill-1">restaurant_menu</span>
+<span class="text-3xl font-bold text-[var(--text-dark)]">语音点餐</span>
+</div>
+<p class="text-xl text-[var(--text-gray)] mt-1 pl-1">想吃什么，直接说出来</p>
+</div>
+<div class="absolute right-[-10px] top-[-10px] opacity-10">
+<span class="material-symbols-outlined text-9xl">restaurant_menu</span>
+</div>
+<span class="material-symbols-outlined text-gray-400 text-5xl z-10">chevron_right</span>
+</button>
+<button class="w-full bg-white rounded-3xl p-6 shadow-[var(--card-shadow)] flex items-center justify-between card-active border-l-8 border-[var(--primary-purple)] relative overflow-hidden">
+<div class="flex flex-col items-start z-10">
+<div class="flex items-center mb-2">
+<span class="material-symbols-outlined text-[var(--primary-purple)] text-4xl mr-3 font-bold fill-1">radio</span>
+<span class="text-3xl font-bold text-[var(--text-dark)]">健康广播</span>
+</div>
+<p class="text-xl text-[var(--text-gray)] mt-1 pl-1">养生知识，每天听一听</p>
+</div>
+<div class="absolute right-[-10px] top-[-10px] opacity-10">
+<span class="material-symbols-outlined text-9xl">radio</span>
+</div>
+<span class="material-symbols-outlined text-gray-400 text-5xl z-10">chevron_right</span>
+</button>
+<div class="pt-4 pb-8 flex justify-center">
+<button class="flex items-center justify-center space-x-2 text-gray-500 py-4 px-8 rounded-full bg-gray-200 w-full card-active">
+<span class="material-symbols-outlined text-3xl">settings</span>
+<span class="text-2xl font-bold">设置与帮助</span>
+</button>
+</div>
+</main>
+<div class="fixed bottom-0 left-0 w-full bg-white nav-shadow rounded-t-[2rem] z-50 safe-area-bottom">
+<div class="flex justify-around items-end px-2 pb-2 pt-3 h-[90px] relative">
+<button class="flex flex-col items-center justify-center w-1/5 space-y-1 text-gray-500 active:text-[var(--primary-orange)] group">
+<span class="material-symbols-outlined text-4xl font-medium group-active:font-bold">mic</span>
+<span class="text-lg font-medium">语音</span>
+</button>
+<button class="flex flex-col items-center justify-center w-1/5 space-y-1 text-gray-500 active:text-[var(--primary-orange)] group">
+<span class="material-symbols-outlined text-4xl font-medium group-active:font-bold">diversity_3</span>
+<span class="text-lg font-medium">亲属</span>
+</button>
+<div class="w-1/5 relative flex justify-center">
+<button class="absolute -top-10 bg-[var(--primary-orange)] text-white rounded-full w-20 h-20 flex items-center justify-center center-btn-shadow border-4 border-white active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-5xl">grid_view</span>
+</button>
+<div class="flex flex-col items-center justify-end h-full pt-10 pb-[2px]">
+<span class="text-lg font-bold text-[var(--primary-orange)]">功能</span>
+</div>
+</div>
+<button class="flex flex-col items-center justify-center w-1/5 space-y-1 text-gray-500 active:text-[var(--primary-orange)] group">
+<span class="material-symbols-outlined text-4xl font-medium group-active:font-bold">dashboard</span>
+<span class="text-lg font-medium">看板</span>
+</button>
+<button class="flex flex-col items-center justify-center w-1/5 space-y-1 text-gray-500 active:text-[var(--primary-orange)] group">
+<span class="material-symbols-outlined text-4xl font-medium group-active:font-bold">person</span>
+<span class="text-lg font-medium">我的</span>
+</button>
+</div>
+</div>
+</body></html>

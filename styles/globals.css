@@ -1,0 +1,246 @@
+/* ============================================
+   桑梓智护 — 全局样式 + 适老化CSS变量系统
+   ============================================ */
+
+/* --- Base Reset --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* ============================================
+   老年人端主题 CSS 变量
+   暖色调、大字体、高对比度
+   最小字体 20px，标题 ≥ 28px
+   最小触控区域 48×48px
+   对比度 ≥ 4.5:1
+   ============================================ */
+:root[data-theme='elder'] {
+  /* 字体大小 */
+  --font-size-base: 20px;
+  --font-size-lg: 24px;
+  --font-size-xl: 28px;
+  --font-size-title: 32px;
+  --font-size-hero: 36px;
+
+  /* 触控 */
+  --min-touch-target: 48px;
+
+  /* 颜色 — 暖色调高对比度 */
+  --color-primary: #e8734a;
+  --color-primary-light: #f5a882;
+  --color-primary-dark: #c45a30;
+  --color-bg: #fff8f0;
+  --color-bg-card: #ffffff;
+  --color-text: #2d1b0e;
+  --color-text-secondary: #6d4c30;
+  --color-danger: #d32f2f;
+  --color-success: #2e7d32;
+  --color-warning: #f9a825;
+  --color-border: #e0c8b0;
+
+  /* 间距 */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-base: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* 圆角 */
+  --border-radius: 16px;
+  --border-radius-sm: 8px;
+  --border-radius-full: 9999px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 3px rgba(45, 27, 14, 0.08);
+  --shadow-md: 0 4px 12px rgba(45, 27, 14, 0.12);
+  --shadow-lg: 0 8px 24px rgba(45, 27, 14, 0.16);
+
+  /* 过渡 */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+}
+
+/* ============================================
+   家属端主题 CSS 变量
+   标准蓝色调、常规字体
+   ============================================ */
+:root[data-theme='family'] {
+  /* 字体大小 */
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-title: 24px;
+  --font-size-hero: 28px;
+
+  /* 触控 */
+  --min-touch-target: 44px;
+
+  /* 颜色 — 标准蓝色调 */
+  --color-primary: #1976d2;
+  --color-primary-light: #63a4ff;
+  --color-primary-dark: #004ba0;
+  --color-bg: #ffffff;
+  --color-bg-card: #f5f5f5;
+  --color-text: #212121;
+  --color-text-secondary: #757575;
+  --color-danger: #d32f2f;
+  --color-success: #2e7d32;
+  --color-warning: #f9a825;
+  --color-border: #e0e0e0;
+
+  /* 间距 */
+  --spacing-xs: 6px;
+  --spacing-sm: 8px;
+  --spacing-base: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+
+  /* 圆角 */
+  --border-radius: 12px;
+  --border-radius-sm: 6px;
+  --border-radius-full: 9999px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.14);
+
+  /* 过渡 */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+}
+
+/* ============================================
+   工具类 — Utility Classes
+   ============================================ */
+
+/* 文字大小 */
+.text-base { font-size: var(--font-size-base); }
+.text-lg   { font-size: var(--font-size-lg); }
+.text-xl   { font-size: var(--font-size-xl); }
+.text-title { font-size: var(--font-size-title); font-weight: 700; }
+.text-hero  { font-size: var(--font-size-hero); font-weight: 700; }
+
+/* 文字颜色 */
+.text-primary   { color: var(--color-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-danger    { color: var(--color-danger); }
+.text-success   { color: var(--color-success); }
+
+/* 背景 */
+.bg-primary { background-color: var(--color-primary); color: #ffffff; }
+.bg-card    { background-color: var(--color-bg-card); }
+.bg-danger  { background-color: var(--color-danger); color: #ffffff; }
+.bg-success { background-color: var(--color-success); color: #ffffff; }
+
+/* 间距 */
+.p-base  { padding: var(--spacing-base); }
+.p-lg    { padding: var(--spacing-lg); }
+.px-base { padding-left: var(--spacing-base); padding-right: var(--spacing-base); }
+.py-base { padding-top: var(--spacing-base); padding-bottom: var(--spacing-base); }
+.m-base  { margin: var(--spacing-base); }
+.gap-base { gap: var(--spacing-base); }
+.gap-sm   { gap: var(--spacing-sm); }
+
+/* 触控区域 — 确保最小可点击区域 */
+.touch-target {
+  min-width: var(--min-touch-target);
+  min-height: var(--min-touch-target);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 布局 */
+.flex        { display: flex; }
+.flex-col    { display: flex; flex-direction: column; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.flex-1      { flex: 1; }
+.w-full      { width: 100%; }
+
+/* 圆角 */
+.rounded    { border-radius: var(--border-radius); }
+.rounded-sm { border-radius: var(--border-radius-sm); }
+.rounded-full { border-radius: var(--border-radius-full); }
+
+/* 阴影 */
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+
+/* 交互反馈 */
+.interactive {
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.interactive:active {
+  transform: scale(0.96);
+  opacity: 0.85;
+}
+
+/* 无障碍 — 屏幕阅读器专用 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

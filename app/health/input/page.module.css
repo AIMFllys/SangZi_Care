@@ -1,0 +1,383 @@
+/* ============================================
+   健康数据录入页样式
+   适老化设计：超大数字输入、大按钮、高对比度
+   ============================================ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  padding-bottom: var(--spacing-xl);
+}
+
+/* 顶部栏 */
+.header {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-base);
+  gap: var(--spacing-sm);
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--min-touch-target);
+  min-height: var(--min-touch-target);
+  font-size: var(--font-size-xl);
+  color: var(--color-text);
+  background: none;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.backBtn:active {
+  opacity: 0.7;
+}
+
+.title {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  color: var(--color-text);
+  flex: 1;
+}
+
+/* 记录类型选择器 */
+.typeSection {
+  padding: 0 var(--spacing-base) var(--spacing-sm);
+}
+
+.typeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.typeCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+  padding: var(--spacing-sm);
+  background-color: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.typeCard:active {
+  opacity: 0.85;
+}
+
+.typeCardSelected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.typeIcon {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.typeLabel {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+}
+
+.typeCardSelected .typeLabel {
+  color: #ffffff;
+}
+
+/* 录入方式切换 */
+.methodToggle {
+  display: flex;
+  margin: 0 var(--spacing-base) var(--spacing-sm);
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.methodTab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--min-touch-target);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  gap: var(--spacing-xs);
+}
+
+.methodTabActive {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+/* 表单区域 */
+.formSection {
+  padding: 0 var(--spacing-base);
+  flex: 1;
+}
+
+.fieldGroup {
+  margin-bottom: var(--spacing-base);
+}
+
+.fieldLabel {
+  display: block;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-xs);
+}
+
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.numberInput {
+  flex: 1;
+  min-height: 56px;
+  padding: var(--spacing-sm) var(--spacing-base);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  background-color: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  text-align: center;
+  outline: none;
+  transition: border-color var(--transition-fast);
+  -moz-appearance: textfield;
+}
+
+.numberInput::-webkit-outer-spin-button,
+.numberInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.numberInput:focus {
+  border-color: var(--color-primary);
+}
+
+.numberInput::placeholder {
+  font-size: var(--font-size-lg);
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.inputError {
+  border-color: var(--color-danger);
+}
+
+.fieldUnit {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.fieldSeparator {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+/* 血糖类型切换 */
+.sugarToggle {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.sugarBtn {
+  flex: 1;
+  min-height: var(--min-touch-target);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sugarBtnActive {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+/* 语音录入区域 */
+.voiceSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-lg) 0;
+  gap: var(--spacing-base);
+}
+
+.micBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  font-size: 40px;
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-md);
+}
+
+.micBtn:active {
+  transform: scale(0.95);
+}
+
+.micBtnListening {
+  background-color: var(--color-danger);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.voiceHint {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.voiceTranscript {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-base);
+  font-size: var(--font-size-lg);
+  color: var(--color-text);
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius);
+  text-align: center;
+  min-height: 48px;
+  word-break: break-all;
+}
+
+/* 可选字段 */
+.optionalSection {
+  padding: 0 var(--spacing-base);
+  margin-top: var(--spacing-sm);
+}
+
+.textarea {
+  width: 100%;
+  min-height: 72px;
+  padding: var(--spacing-sm) var(--spacing-base);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background-color: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.textarea:focus {
+  border-color: var(--color-primary);
+}
+
+.textarea::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+/* 错误提示 */
+.errorText {
+  display: block;
+  font-size: var(--font-size-base);
+  color: var(--color-danger);
+  margin-top: 4px;
+}
+
+/* 提交按钮 */
+.submitSection {
+  padding: var(--spacing-base);
+}
+
+.submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 56px;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: #ffffff;
+  background-color: var(--color-success);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.submitBtn:active {
+  opacity: 0.85;
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 成功提示 */
+.successOverlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+}
+
+.successCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-base);
+  padding: var(--spacing-xl);
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.successIcon {
+  font-size: 56px;
+}
+
+.successText {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-success);
+}

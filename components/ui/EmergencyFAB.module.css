@@ -1,0 +1,172 @@
+/* ============================================================
+   EmergencyFAB — 紧急呼叫浮动按钮 + 全屏状态弹窗
+   需求: 10.1, 10.2, 3.7
+   ============================================================ */
+
+/* ---- FAB 按钮 ---- */
+
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  z-index: 900;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-danger, #D32F2F);
+  color: #fff;
+  border: none;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(211, 47, 47, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.fab:active {
+  transform: scale(0.92);
+  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.5);
+}
+
+/* ---- 全屏遮罩 ---- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ---- 倒计时数字 ---- */
+
+.countdown {
+  font-size: 120px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 16px;
+  animation: pulse 1s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+
+/* ---- 状态文字 ---- */
+
+.statusText {
+  font-size: var(--font-size-xl, 28px);
+  color: #fff;
+  text-align: center;
+  margin-bottom: 40px;
+  line-height: 1.5;
+}
+
+/* ---- 按钮容器 ---- */
+
+.actions {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* ---- 取消按钮 ---- */
+
+.cancelBtn {
+  flex: 1;
+  min-height: 60px;
+  border-radius: var(--border-radius, 16px);
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: var(--font-size-lg, 24px);
+  font-weight: 600;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cancelBtn:active {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ---- 立即拨打按钮 ---- */
+
+.confirmBtn {
+  flex: 1;
+  min-height: 60px;
+  border-radius: var(--border-radius, 16px);
+  background: var(--color-danger, #D32F2F);
+  color: #fff;
+  font-size: var(--font-size-lg, 24px);
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
+  transition: background 0.15s ease;
+}
+
+.confirmBtn:active {
+  background: #b71c1c;
+}
+
+/* ---- 重置按钮 ---- */
+
+.resetBtn {
+  min-height: 60px;
+  min-width: 200px;
+  border-radius: var(--border-radius, 16px);
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: var(--font-size-lg, 24px);
+  font-weight: 600;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.resetBtn:active {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ---- 大字提示（无权限等） ---- */
+
+.largeHint {
+  font-size: var(--font-size-title, 32px);
+  color: #fff;
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  font-weight: 700;
+}
+
+/* ---- 加载动画点 ---- */
+
+.dots::after {
+  content: '';
+  animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+  0%   { content: ''; }
+  25%  { content: '.'; }
+  50%  { content: '..'; }
+  75%  { content: '...'; }
+  100% { content: ''; }
+}

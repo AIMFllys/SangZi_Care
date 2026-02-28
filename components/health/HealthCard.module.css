@@ -1,0 +1,110 @@
+/* ============================================
+   健康数据卡片样式
+   适老化设计：大字体、高对比度、大触控区域
+   ============================================ */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-base);
+  min-height: 120px;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  border: 2px solid transparent;
+  user-select: none;
+}
+
+.card:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+.cardSelected {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.cardAbnormal {
+  border-color: var(--color-danger);
+}
+
+/* 顶部：图标 + 名称 */
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.icon {
+  font-size: var(--font-size-xl);
+  line-height: 1;
+}
+
+.label {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* 异常标记 */
+.abnormalBadge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  padding: 2px 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: var(--color-danger);
+  border-radius: var(--border-radius-full);
+}
+
+/* 数值区域 */
+.valueSection {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.value {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.valueAbnormal {
+  color: var(--color-danger);
+}
+
+.unit {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+/* 时间 */
+.time {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-top: auto;
+}
+
+/* 暂无数据 */
+.noData {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: var(--spacing-xs);
+  color: var(--color-text-secondary);
+}
+
+.noDataText {
+  font-size: var(--font-size-base);
+}

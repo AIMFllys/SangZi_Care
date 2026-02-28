@@ -1,0 +1,29 @@
+{
+  "name": "sangzi-smart-care",
+  "version": "0.1.0",
+  "private": true,
+  "description": "桑梓智护 - 智护银龄 APP (面向老年人的智能养老移动应用)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zustand": "^5.0.5"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "jsdom": "^28.1.0",
+    "typescript": "^5.8.3",
+    "vitest": "^4.0.18"
+  }
+}

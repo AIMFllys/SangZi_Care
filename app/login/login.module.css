@@ -1,0 +1,113 @@
+/* ============================================
+   登录页样式 — 适老化大字体设计
+   ============================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100dvh;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  background-color: var(--color-bg);
+}
+
+/* Logo 区域 */
+.logoSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10vh;
+  margin-bottom: var(--spacing-xl);
+}
+
+.logoIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--border-radius);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-base);
+  box-shadow: var(--shadow-md);
+}
+
+.logoEmoji {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.appTitle {
+  font-size: var(--font-size-hero);
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: 2px;
+}
+
+.appSubtitle {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* 表单区域 */
+.form {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* 手机号输入行 */
+.phoneRow {
+  display: flex;
+  align-items: stretch;
+  gap: var(--spacing-sm);
+}
+
+.countryCode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  padding: 0 var(--spacing-sm);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text);
+  background-color: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  flex-shrink: 0;
+}
+
+.phoneInput {
+  flex: 1;
+}
+
+/* 验证码输入行 */
+.codeRow {
+  display: flex;
+  align-items: stretch;
+  gap: var(--spacing-sm);
+}
+
+.codeInput {
+  flex: 1;
+}
+
+.sendCodeBtn {
+  flex-shrink: 0;
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+/* 错误提示 */
+.errorMessage {
+  font-size: var(--font-size-base);
+  color: var(--color-danger);
+  text-align: center;
+  padding: var(--spacing-sm) var(--spacing-base);
+  background-color: rgba(211, 47, 47, 0.08);
+  border-radius: var(--border-radius-sm);
+}

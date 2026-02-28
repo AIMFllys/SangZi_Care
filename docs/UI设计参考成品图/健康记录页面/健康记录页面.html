@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>老人端健康记录页</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2b8cee",
+                        "nav-orange": "#ff6b00",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "Noto Sans SC", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 flex flex-col min-h-screen overflow-hidden">
+<header class="flex items-center justify-between px-5 py-4 bg-white dark:bg-[#1e2936] shadow-sm z-10">
+<button class="flex items-center justify-center p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100" style="font-size: 32px;">arrow_back</span>
+</button>
+<h1 class="text-xl font-bold text-slate-900 dark:text-slate-100">健康记录</h1>
+<button class="flex items-center justify-center p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100" style="font-size: 32px;">settings</span>
+</button>
+</header>
+<main class="flex-1 overflow-y-auto no-scrollbar pb-32 p-4 space-y-6">
+<section class="bg-white dark:bg-[#1e2936] rounded-xl shadow-md overflow-hidden border border-slate-100 dark:border-slate-700">
+<div class="bg-primary h-3"></div> 
+<div class="p-6">
+<div class="flex items-start justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-red-600 dark:text-red-400" style="font-size: 32px;">cardiology</span>
+</div>
+<div>
+<p class="text-lg font-medium text-slate-500 dark:text-slate-400">最新血压</p>
+<p class="text-sm text-slate-400 dark:text-slate-500">今天 上午 08:30</p>
+</div>
+</div>
+<span class="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-3 py-1 rounded-full text-sm font-bold">正常</span>
+</div>
+<div class="flex items-baseline gap-2 mb-2">
+<span class="text-5xl font-bold text-slate-900 dark:text-white tracking-tight">128/82</span>
+<span class="text-xl text-slate-500 dark:text-slate-400 font-medium">mmHg</span>
+</div>
+<p class="text-slate-600 dark:text-slate-300 text-lg">
+                    您的血压处于理想范围内，请继续保持。
+                </p>
+</div>
+<div class="w-full h-40 bg-cover bg-center" data-alt="Medical stethoscope and heart shape on blue background" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBklhNTOpNKHSFtdkrAm8ouiM_iLDnO9xRYLbhE8OosJV4HgNDMnr5bsBp2lxacCS1CZHMFlQy3huWMMXEUVP_-1fIGNxNTbqdD54luefE7QTxAr9pwOEd1bLfIoSjWcLWFvMkLt33oO57AvJ5tB-HAt2IcxVOHaUP3ZDWmD_S_w-qkQfKa--7p76G7-g7CiwVCyWpQBgDhiaXu7NMBRnaulqGZcqmGjf8ZeAVbPW89yPtJ2wVyX2HvQzHK-GF11rrwk0ihxMBPOhVZ');">
+<div class="w-full h-full bg-gradient-to-t from-white dark:from-[#1e2936] to-transparent"></div>
+</div>
+</section>
+<div class="flex items-center justify-between px-2 pt-2">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white">最近记录</h2>
+<button class="text-primary font-medium text-lg">查看全部</button>
+</div>
+<div class="space-y-4">
+<div class="bg-white dark:bg-[#1e2936] p-5 rounded-xl shadow-sm flex items-center justify-between border border-slate-100 dark:border-slate-700 active:scale-[0.98] transition-transform">
+<div class="flex items-center gap-5">
+<div class="w-16 h-16 rounded-full bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-pink-600 dark:text-pink-400" style="font-size: 36px;">monitor_heart</span>
+</div>
+<div>
+<p class="text-slate-500 dark:text-slate-400 text-lg mb-1">心率</p>
+<p class="text-3xl font-bold text-slate-900 dark:text-white">72 <span class="text-lg text-slate-500 dark:text-slate-400 font-normal">bpm</span></p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600" style="font-size: 32px;">chevron_right</span>
+</div>
+<div class="bg-white dark:bg-[#1e2936] p-5 rounded-xl shadow-sm flex items-center justify-between border border-slate-100 dark:border-slate-700 active:scale-[0.98] transition-transform">
+<div class="flex items-center gap-5">
+<div class="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-blue-600 dark:text-blue-400" style="font-size: 36px;">monitor_weight</span>
+</div>
+<div>
+<p class="text-slate-500 dark:text-slate-400 text-lg mb-1">体重</p>
+<p class="text-3xl font-bold text-slate-900 dark:text-white">65 <span class="text-lg text-slate-500 dark:text-slate-400 font-normal">kg</span></p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600" style="font-size: 32px;">chevron_right</span>
+</div>
+<div class="bg-white dark:bg-[#1e2936] p-5 rounded-xl shadow-sm flex items-center justify-between border border-slate-100 dark:border-slate-700 active:scale-[0.98] transition-transform">
+<div class="flex items-center gap-5">
+<div class="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-purple-600 dark:text-purple-400" style="font-size: 36px;">water_drop</span>
+</div>
+<div>
+<p class="text-slate-500 dark:text-slate-400 text-lg mb-1">血糖</p>
+<p class="text-3xl font-bold text-slate-900 dark:text-white">5.4 <span class="text-lg text-slate-500 dark:text-slate-400 font-normal">mmol/L</span></p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600" style="font-size: 32px;">chevron_right</span>
+</div>
+</div>
+<button class="w-full bg-primary hover:bg-blue-600 text-white rounded-xl py-6 shadow-lg shadow-blue-500/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all mt-4">
+<span class="material-symbols-outlined" style="font-size: 40px;">add_circle</span>
+<span class="text-2xl font-bold">添加新记录</span>
+</button>
+<div class="h-6"></div> 
+</main>
+<nav class="bg-white dark:bg-[#1e2936] rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.05)] px-6 pb-safe pt-2 z-20 fixed bottom-0 w-full border-t border-slate-50/50 dark:border-slate-800">
+<div class="flex justify-between items-end h-20 pb-4">
+<a class="flex flex-1 flex-col items-center justify-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-nav-orange dark:hover:text-nav-orange transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' 0;">mic</span>
+<span class="text-sm font-medium">语音</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-nav-orange dark:hover:text-nav-orange transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' 1;">groups</span>
+<span class="text-sm font-medium">亲属</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end relative z-30 group" href="#">
+<div class="absolute -top-12 transform group-active:scale-95 transition-transform duration-200">
+<div class="bg-nav-orange text-white rounded-full p-4 shadow-xl shadow-orange-500/30 border-[6px] border-background-light dark:border-background-dark flex items-center justify-center w-20 h-20">
+<span class="material-symbols-outlined" style="font-size: 40px;">grid_view</span>
+</div>
+</div>
+<span class="text-nav-orange text-sm font-bold mt-10">功能</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-nav-orange dark:hover:text-nav-orange transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' 0;">dashboard</span>
+<span class="text-sm font-medium">看板</span>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-nav-orange dark:hover:text-nav-orange transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' 0;">person</span>
+<span class="text-sm font-medium">我的</span>
+</a>
+</div>
+<div class="h-1 w-full"></div>
+</nav>
+
+</body></html>

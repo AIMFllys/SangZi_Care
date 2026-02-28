@@ -1,0 +1,53 @@
+/* ============================================
+   Greeting — 问候语与天气信息样式
+   ============================================ */
+
+/* 容器 */
+.container {
+  width: 100%;
+  text-align: center;
+  padding: var(--spacing-base) var(--spacing-base) 0;
+}
+
+/* 问候语 — 大字体、暖色 */
+.greeting {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.3;
+  margin: 0 0 var(--spacing-xs);
+}
+
+/* 天气行 */
+.weather {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  min-height: var(--min-touch-target);
+}
+
+/* 天气图标 */
+.weatherIcon {
+  font-size: var(--font-size-lg);
+  line-height: 1;
+}
+
+/* 天气文字 */
+.weatherText {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+/* 天气占位 */
+.weatherPlaceholder {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .container * {
+    transition: none !important;
+  }
+}

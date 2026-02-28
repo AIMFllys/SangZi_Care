@@ -1,0 +1,215 @@
+/* ============================================
+   VoicePanel — 语音面板样式
+   从屏幕顶部下滑拉出，展示AI对话历史
+   ============================================ */
+
+/* --- 遮罩层 --- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  pointer-events: none;
+}
+
+.overlayOpen {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* --- 面板主体 --- */
+.panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 101;
+  max-height: 80vh;
+  background: var(--color-bg);
+  border-bottom-left-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  transform: translateY(-100%);
+  transition: transform var(--transition-normal);
+}
+
+.panelOpen {
+  transform: translateY(0);
+}
+
+/* --- 面板头部 --- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-base) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.closeButton {
+  min-width: var(--min-touch-target);
+  min-height: var(--min-touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--transition-fast);
+}
+
+.closeButton:active {
+  background: var(--color-border);
+}
+
+/* --- 状态指示条 --- */
+.stateBar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-lg);
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.stateIcon {
+  display: inline-flex;
+  font-size: var(--font-size-lg);
+}
+
+.stateDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-success);
+  animation: blink 1.4s ease-in-out infinite;
+}
+
+.stateDotListening {
+  background: var(--color-primary);
+}
+
+.stateDotProcessing {
+  background: var(--color-warning);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* --- 对话列表区域 --- */
+.messageList {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-base) var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  -webkit-overflow-scrolling: touch;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl) 0;
+  gap: var(--spacing-sm);
+  color: var(--color-text-secondary);
+}
+
+.emptyIcon {
+  font-size: 48px;
+}
+
+.emptyText {
+  font-size: var(--font-size-base);
+  text-align: center;
+}
+
+/* --- 聊天气泡 --- */
+.bubble {
+  max-width: 80%;
+  padding: var(--spacing-sm) var(--spacing-base);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.bubbleUser {
+  align-self: flex-end;
+  background: var(--color-primary);
+  color: #ffffff;
+  border-bottom-right-radius: var(--border-radius-sm);
+}
+
+.bubbleAI {
+  align-self: flex-start;
+  background: var(--color-bg-card);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-bottom-left-radius: var(--border-radius-sm);
+}
+
+.bubbleLabel {
+  font-size: calc(var(--font-size-base) - 2px);
+  color: var(--color-text-secondary);
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+
+.bubbleUserLabel {
+  text-align: right;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* --- 拖拽手柄 --- */
+.handle {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-xs) 0 var(--spacing-sm);
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+.handleBar {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-border);
+}
+
+/* ============================================
+   Reduced motion — 无障碍
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .overlay {
+    transition: none;
+  }
+
+  .panel {
+    transition: none;
+  }
+
+  .stateDot {
+    animation: none;
+  }
+}

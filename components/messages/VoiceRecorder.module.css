@@ -1,0 +1,114 @@
+/* ============================================
+   语音录制组件样式
+   适老化：超大麦克风按钮、清晰状态指示
+   ============================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-base);
+  gap: var(--spacing-sm);
+}
+
+/* 录音时长 */
+.timer {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-danger);
+}
+
+/* 实时转写 */
+.transcript {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-base);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius-sm);
+  text-align: center;
+  min-height: 40px;
+  word-break: break-all;
+}
+
+/* 麦克风按钮 — 超大 80px+ */
+.micBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  font-size: 40px;
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-md);
+}
+
+.micBtn:active {
+  transform: scale(0.95);
+}
+
+.micBtnRecording {
+  background-color: var(--color-danger);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* 提示文字 */
+.hint {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+/* 操作按钮 */
+.actions {
+  display: flex;
+  gap: var(--spacing-base);
+  width: 100%;
+  margin-top: var(--spacing-xs);
+}
+
+.cancelBtn,
+.sendBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--min-touch-target);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.cancelBtn {
+  background-color: var(--color-bg-card);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.sendBtn {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.sendBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cancelBtn:active,
+.sendBtn:active:not(:disabled) {
+  opacity: 0.85;
+}

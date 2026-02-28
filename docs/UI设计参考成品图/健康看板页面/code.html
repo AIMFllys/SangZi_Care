@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>桑梓智护 - 健康看板</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        :root {
+            --primary-orange: #FF8F44;
+            --primary-orange-dark: #F57C00;
+            --primary-orange-light: #FFE0CC;
+            --secondary-green: #4CAF50;
+            --emergency-red: #D32F2F;
+            --emergency-red-dark: #B71C1C;
+            --bg-warm: #FFF9F2;
+            --text-dark: #1A1A1A;
+            --text-gray: #4A4A4A;
+            --card-surface: #FFFFFF;
+            --nav-bg: #FFFFFF;
+        }
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: var(--bg-warm);
+            color: var(--text-dark);
+            -webkit-font-smoothing: antialiased;
+        }
+        .safe-area-top {
+            padding-top: env(safe-area-inset-top, 44px);
+        }
+        .safe-area-bottom {
+            padding-bottom: env(safe-area-inset-bottom, 34px);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="h-screen w-screen overflow-hidden flex flex-col relative bg-[var(--bg-warm)]">
+<header class="safe-area-top w-full flex flex-col z-10 px-5 pt-4 bg-[var(--bg-warm)] pb-4 shrink-0">
+<div class="flex items-center justify-between mb-4">
+<h1 class="text-[32px] font-black text-[var(--text-dark)] leading-tight tracking-tight">
+                健康看板
+            </h1>
+<div class="bg-white/80 p-2 rounded-full border border-orange-100">
+<span class="material-symbols-outlined text-[var(--primary-orange)] text-[28px]" style="font-variation-settings: 'FILL' 1;">
+                    account_circle
+                </span>
+</div>
+</div>
+<div class="w-full bg-[var(--card-surface)] rounded-[24px] p-5 shadow-sm border border-orange-100/80 flex items-center justify-between">
+<div class="flex flex-col gap-1">
+<span class="text-[16px] font-bold text-[var(--text-gray)]">今日状态</span>
+<span class="text-[28px] font-black text-[var(--secondary-green)] leading-none mt-1">健康良好</span>
+</div>
+<div class="h-12 w-[1px] bg-gray-100 mx-2"></div>
+<div class="flex flex-col items-end">
+<span class="text-[14px] text-[var(--text-gray)]">上次更新</span>
+<span class="text-[18px] font-bold text-[var(--text-dark)]">10:30</span>
+</div>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto no-scrollbar w-full px-5 pb-24 z-10">
+<div class="flex flex-col gap-5 pt-2">
+<div class="w-full bg-white rounded-[28px] p-6 shadow-sm border border-orange-50 relative overflow-hidden">
+<div class="absolute right-[-20px] top-[-20px] w-32 h-32 bg-red-50 rounded-full opacity-50"></div>
+<div class="flex items-center justify-between relative z-10 mb-4">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-500">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</div>
+<span class="text-[22px] font-bold text-[var(--text-dark)]">心率</span>
+</div>
+<span class="text-[16px] text-[var(--text-gray)]">正常范围</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-[56px] font-black text-[var(--text-dark)] leading-none">72</span>
+<span class="text-[20px] font-medium text-[var(--text-gray)]">次/分</span>
+</div>
+<div class="mt-4 h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full w-1/2 bg-red-400 rounded-full ml-[25%]"></div>
+</div>
+</div>
+<div class="w-full bg-white rounded-[28px] p-6 shadow-sm border border-orange-50 relative overflow-hidden">
+<div class="absolute right-[-20px] top-[-20px] w-32 h-32 bg-blue-50 rounded-full opacity-50"></div>
+<div class="flex items-center justify-between relative z-10 mb-4">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">blood_pressure</span>
+</div>
+<span class="text-[22px] font-bold text-[var(--text-dark)]">血压</span>
+</div>
+<span class="px-3 py-1 bg-green-100 text-green-700 text-[14px] font-bold rounded-full">正常</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-[56px] font-black text-[var(--text-dark)] leading-none">128</span>
+<span class="text-[24px] text-[var(--text-gray)] font-bold">/ 82</span>
+<span class="text-[20px] font-medium text-[var(--text-gray)] ml-1">mmHg</span>
+</div>
+</div>
+<div class="w-full bg-white rounded-[28px] p-6 shadow-sm border border-orange-50 relative overflow-hidden">
+<div class="absolute right-[-20px] top-[-20px] w-32 h-32 bg-green-50 rounded-full opacity-50"></div>
+<div class="flex items-center justify-between relative z-10 mb-4">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">directions_walk</span>
+</div>
+<span class="text-[22px] font-bold text-[var(--text-dark)]">今日步数</span>
+</div>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-[56px] font-black text-[var(--text-dark)] leading-none">2,341</span>
+<span class="text-[20px] font-medium text-[var(--text-gray)]">步</span>
+</div>
+<p class="mt-2 text-[16px] text-[var(--text-gray)]">目标: 5,000 步</p>
+<div class="mt-3 h-3 w-full bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full w-[46%] bg-green-500 rounded-full"></div>
+</div>
+</div>
+<div class="w-full bg-white rounded-[28px] p-6 shadow-sm border border-orange-50 relative overflow-hidden mb-6">
+<div class="absolute right-[-20px] top-[-20px] w-32 h-32 bg-indigo-50 rounded-full opacity-50"></div>
+<div class="flex items-center justify-between relative z-10 mb-4">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">bedtime</span>
+</div>
+<span class="text-[22px] font-bold text-[var(--text-dark)]">睡眠质量</span>
+</div>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-[56px] font-black text-[var(--text-dark)] leading-none">7.5</span>
+<span class="text-[20px] font-medium text-[var(--text-gray)]">小时</span>
+</div>
+</div>
+</div>
+</main>
+<nav class="fixed bottom-0 w-full bg-[var(--nav-bg)] border-t border-gray-100 safe-area-bottom pb-2 pt-2 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+<div class="grid grid-cols-5 h-16 items-end">
+<button class="flex flex-col items-center justify-center gap-1 h-full w-full active:opacity-70 transition-opacity">
+<span class="material-symbols-outlined text-[var(--text-gray)] text-[28px]" style="font-variation-settings: 'FILL' 0, 'wght' 400;">
+                    mic
+                </span>
+<span class="text-[12px] font-medium text-[var(--text-gray)]">语音</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 h-full w-full active:opacity-70 transition-opacity">
+<span class="material-symbols-outlined text-[var(--text-gray)] text-[28px]" style="font-variation-settings: 'FILL' 0, 'wght' 400;">
+                    diversity_3
+                </span>
+<span class="text-[12px] font-medium text-[var(--text-gray)]">亲属</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 h-full w-full active:opacity-70 transition-opacity">
+<span class="material-symbols-outlined text-[var(--text-gray)] text-[28px]" style="font-variation-settings: 'FILL' 0, 'wght' 400;">
+                    grid_view
+                </span>
+<span class="text-[12px] font-medium text-[var(--text-gray)]">功能</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 h-full w-full relative">
+<div class="absolute -top-1 w-12 h-1 bg-[var(--primary-orange)] rounded-b-full"></div>
+<span class="material-symbols-outlined text-[var(--primary-orange)] text-[30px]" style="font-variation-settings: 'FILL' 1, 'wght' 600;">
+                    ecg_heart
+                </span>
+<span class="text-[12px] font-bold text-[var(--primary-orange)]">看板</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 h-full w-full active:opacity-70 transition-opacity">
+<span class="material-symbols-outlined text-[var(--text-gray)] text-[28px]" style="font-variation-settings: 'FILL' 0, 'wght' 400;">
+                    person
+                </span>
+<span class="text-[12px] font-medium text-[var(--text-gray)]">我的</span>
+</button>
+</div>
+</nav>
+
+</body></html>

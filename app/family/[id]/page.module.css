@@ -1,0 +1,344 @@
+/* ============================================================
+   桑梓智护 — 家属/老人详情页样式
+   ============================================================ */
+
+.container {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding-bottom: 32px;
+}
+
+/* 顶部导航 */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.backButton {
+  font-size: 28px;
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 8px;
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.backButton:active {
+  background: var(--color-bg);
+}
+
+.title {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* 用户信息卡片 */
+.profileCard {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 20px;
+  background: var(--color-surface);
+  margin: 16px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 32px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profileInfo {
+  flex: 1;
+}
+
+.userName {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 4px;
+}
+
+.userRelation {
+  font-size: var(--font-size-body);
+  color: var(--color-primary);
+  margin: 0 0 4px;
+}
+
+.lastActive {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* 操作按钮行 */
+.actionRow {
+  display: flex;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+
+.actionButton {
+  flex: 1;
+  padding: 16px;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  min-height: 56px;
+  transition: opacity 0.15s;
+}
+
+.actionButton:active {
+  opacity: 0.85;
+}
+
+/* 通用区块 */
+.section {
+  background: var(--color-surface);
+  margin: 0 16px 16px;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-subtitle);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 16px;
+}
+
+/* 健康数据网格 */
+.healthGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.healthItem {
+  background: var(--color-bg);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.healthIcon {
+  font-size: 24px;
+}
+
+.healthLabel {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+
+.healthValue {
+  font-size: var(--font-size-subtitle);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.healthUnit {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+
+.abnormalBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--color-danger, #e53e3e);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+/* 用药进度 */
+.medicineProgress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 12px;
+  background: var(--color-bg);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.progressText {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+/* 用药列表 */
+.medicineList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.medicineItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--color-bg);
+  border-radius: 10px;
+}
+
+.medicineName {
+  flex: 1;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.medicineTime {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+
+.medicineStatus {
+  font-size: var(--font-size-small);
+}
+
+.status_taken { color: #38a169; }
+.status_pending { color: #d69e2e; }
+.status_skipped { color: #e53e3e; }
+.status_delayed { color: #dd6b20; }
+
+/* AI对话记录 */
+.conversationList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.conversationItem {
+  background: var(--color-bg);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.convUserInput {
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  margin: 0 0 6px;
+}
+
+.convAiResponse {
+  font-size: var(--font-size-body);
+  color: var(--color-primary);
+  margin: 0 0 6px;
+}
+
+.convTime {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* 老年人端家属信息 */
+.elderFamilyInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.infoRow:last-child {
+  border-bottom: none;
+}
+
+.infoLabel {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.infoValue {
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+/* 状态文字 */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+}
+
+.emptyText {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin: 8px 0 0;
+}
+
+.loadingText {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin: 8px 0 0;
+}

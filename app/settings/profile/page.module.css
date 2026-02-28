@@ -1,0 +1,253 @@
+/* ============================================
+   个人信息编辑页样式
+   适老化设计：大字体、大触控区域、高对比度
+   ============================================ */
+
+.container {
+  min-height: 100dvh;
+  background-color: var(--color-bg);
+  padding-bottom: var(--spacing-xl);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-lg);
+}
+
+.backButton {
+  background: none;
+  border: none;
+  font-size: var(--font-size-xl);
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  min-width: var(--min-touch-target);
+  min-height: var(--min-touch-target);
+  display: flex;
+  align-items: center;
+}
+
+.title {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* --- Form sections --- */
+
+.section {
+  padding: 0 var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-sm);
+}
+
+.formGroup {
+  margin-bottom: var(--spacing-base);
+}
+
+.formLabel {
+  display: block;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-xs);
+}
+
+.formInput {
+  width: 100%;
+  min-height: var(--min-touch-target);
+  padding: var(--spacing-sm) var(--spacing-base);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background-color: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.formInput:focus {
+  border-color: var(--color-primary);
+}
+
+.formInputError {
+  border-color: var(--color-danger);
+}
+
+.formError {
+  font-size: calc(var(--font-size-base) - 2px);
+  color: var(--color-danger);
+  margin-top: 4px;
+}
+
+/* --- Gender selector --- */
+
+.genderGrid {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.genderChip {
+  flex: 1;
+  min-height: var(--min-touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--color-bg-card);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.genderChipActive {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+/* --- Chronic diseases --- */
+
+.diseaseList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+
+.diseaseTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: calc(var(--font-size-base) - 2px);
+  font-weight: 500;
+  background-color: #fff0e6;
+  color: #c45a30;
+  border-radius: var(--border-radius-full);
+  border: none;
+  cursor: default;
+}
+
+.diseaseRemove {
+  background: none;
+  border: none;
+  font-size: var(--font-size-base);
+  color: #c45a30;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.diseaseInputRow {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.diseaseInput {
+  flex: 1;
+  min-height: var(--min-touch-target);
+  padding: var(--spacing-sm) var(--spacing-base);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background-color: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  outline: none;
+}
+
+.diseaseInput:focus {
+  border-color: var(--color-primary);
+}
+
+.diseaseAddBtn {
+  min-width: var(--min-touch-target);
+  min-height: var(--min-touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+}
+
+.diseaseAddBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Save button --- */
+
+.saveButton {
+  display: block;
+  width: calc(100% - var(--spacing-lg) * 2);
+  margin: var(--spacing-xl) auto 0;
+  min-height: 56px;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+
+.saveButton:active {
+  transform: scale(0.97);
+}
+
+.saveButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* --- Status banners --- */
+
+.successBanner {
+  margin: 0 var(--spacing-lg) var(--spacing-base);
+  padding: var(--spacing-sm) var(--spacing-base);
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  text-align: center;
+}
+
+.errorBanner {
+  margin: 0 var(--spacing-lg) var(--spacing-base);
+  padding: var(--spacing-sm) var(--spacing-base);
+  background-color: #fce4ec;
+  color: #c62828;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* --- Loading --- */
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+}

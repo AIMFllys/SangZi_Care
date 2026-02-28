@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Medication Reminder - Sangzi Zhihu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        :root {
+            --primary-green: #2E7D32;
+            --secondary-orange: #F57C00;
+            --alert-red: #D32F2F;
+            --bg-cream: #FFF9E6;
+            --text-dark: #1A1A1A;
+            --surface-white: #FFFFFF;
+        }
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--text-dark);}
+        .safe-area-top {
+            padding-top: env(safe-area-inset-top, 20px);
+        }
+        .safe-area-bottom {
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+        .pulse-ring {
+            animation: pulse-ring 2s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 124, 0, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(245, 124, 0, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 124, 0, 0); }
+        }
+        .voice-wave {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 24px;
+        }
+        .voice-bar {
+            background-color: var(--secondary-orange);
+            width: 4px;
+            border-radius: 2px;
+            animation: sound 1s infinite ease-in-out;
+        }
+        .voice-bar:nth-child(1) { height: 10px; animation-delay: 0.1s; }
+        .voice-bar:nth-child(2) { height: 16px; animation-delay: 0.2s; }
+        .voice-bar:nth-child(3) { height: 22px; animation-delay: 0.3s; }
+        .voice-bar:nth-child(4) { height: 14px; animation-delay: 0.4s; }
+        .voice-bar:nth-child(5) { height: 10px; animation-delay: 0.5s; }
+        @keyframes sound {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(1.5); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="h-screen w-full flex justify-center overflow-hidden bg-gray-900">
+<div class="w-full max-w-md h-full bg-[var(--bg-cream)] relative flex flex-col shadow-2xl overflow-hidden">
+<div class="safe-area-top w-full flex justify-between items-center px-6 py-2 text-[var(--text-dark)] z-20">
+<span class="font-bold text-lg">09:41</span>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xl">signal_cellular_alt</span>
+<span class="material-symbols-outlined text-xl">wifi</span>
+<span class="material-symbols-outlined text-xl">battery_full</span>
+</div>
+</div>
+<button class="absolute top-14 right-4 z-50 bg-[var(--alert-red)] text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform border-4 border-white">
+<span class="font-bold text-xl">SOS</span>
+</button>
+<main class="flex-1 flex flex-col items-center justify-center px-6 relative z-10 safe-area-bottom pb-8">
+<div class="bg-white/80 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-3 shadow-sm mb-8 border border-orange-100">
+<div class="voice-wave">
+<div class="voice-bar"></div>
+<div class="voice-bar"></div>
+<div class="voice-bar"></div>
+<div class="voice-bar"></div>
+<div class="voice-bar"></div>
+</div>
+<span class="text-[var(--secondary-orange)] font-bold text-lg">语音提醒中...</span>
+</div>
+<div class="w-32 h-32 bg-orange-100 rounded-full flex items-center justify-center mb-6 pulse-ring text-[var(--secondary-orange)]">
+<span class="material-symbols-outlined text-[80px]">medication_liquid</span>
+</div>
+<h1 class="text-4xl font-extrabold text-[var(--text-dark)] mb-2 text-center tracking-tight leading-tight">该吃药啦！</h1>
+<p class="text-xl text-gray-600 mb-10 text-center font-medium">请服用您的晨间药物</p>
+<div class="w-full bg-[var(--surface-white)] rounded-3xl p-6 shadow-md border-l-8 border-[var(--secondary-orange)] mb-10">
+<div class="space-y-6">
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-blue-600 text-4xl">pill</span>
+</div>
+<div>
+<h3 class="text-2xl font-bold text-[var(--text-dark)]">氨氯地平</h3>
+<p class="text-xl text-gray-500 font-medium">1 片</p>
+</div>
+</div>
+<div class="h-px bg-gray-100 w-full"></div>
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 bg-pink-100 rounded-2xl flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-pink-600 text-4xl">water_drop</span>
+</div>
+<div>
+<h3 class="text-2xl font-bold text-[var(--text-dark)]">鱼油</h3>
+<p class="text-xl text-gray-500 font-medium">2 粒</p>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full space-y-5">
+<button class="w-full bg-[var(--primary-green)] active:bg-green-800 text-white rounded-3xl py-6 shadow-xl transform active:scale-[0.98] transition-all flex items-center justify-center gap-3 group">
+<span class="material-symbols-outlined text-4xl group-hover:animate-bounce">check_circle</span>
+<span class="text-3xl font-bold">我已吃药</span>
+</button>
+<button class="w-full bg-white active:bg-gray-50 text-gray-600 border-2 border-gray-200 rounded-3xl py-4 flex items-center justify-center gap-2 transform active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-2xl">snooze</span>
+<span class="text-xl font-bold">15分钟后再提醒</span>
+</button>
+</div>
+</main>
+</div>
+</body></html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Emergency SOS Active - Sangzi Zhihu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f48c25", // Orange
+                        "primary-content": "#ffffff",
+                        "primary-dark": "#c26309",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221910",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased min-h-screen flex flex-col">
+<!-- Top Status Bar Simulation (iOS style) -->
+<div class="h-12 w-full flex items-center justify-between px-6 pt-2 bg-transparent absolute top-0 left-0 z-50">
+<span class="text-slate-900 dark:text-slate-100 font-bold text-sm">9:41</span>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100 text-[18px]">signal_cellular_alt</span>
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100 text-[18px]">wifi</span>
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100 text-[18px]">battery_full</span>
+</div>
+</div>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col items-center justify-between pt-16 pb-10 px-6 relative overflow-hidden">
+<!-- Pulsing Background Effect (Visual representation using absolute div behind content) -->
+<div class="absolute inset-0 bg-primary/10 dark:bg-primary/20 z-0"></div>
+<div class="absolute -top-40 -right-40 w-96 h-96 bg-primary/20 rounded-full blur-3xl z-0"></div>
+<div class="absolute -bottom-40 -left-40 w-96 h-96 bg-primary/20 rounded-full blur-3xl z-0"></div>
+<!-- Header Section -->
+<div class="w-full z-10 flex flex-col items-center text-center mt-4">
+<div class="w-16 h-1 bg-primary/30 rounded-full mb-6 mx-auto"></div>
+<div class="flex items-center gap-3 mb-4 text-primary">
+<span class="material-symbols-outlined text-4xl animate-pulse">sos</span>
+<h2 class="text-xl font-bold uppercase tracking-widest">紧急求助</h2>
+</div>
+<h1 class="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2 leading-tight">救援正在路上</h1>
+<p class="text-slate-600 dark:text-slate-400 text-lg">正在通知您的紧急联系人...</p>
+</div>
+<!-- Emergency Contacts Section -->
+<div class="w-full z-10 my-8">
+<div class="flex justify-center items-center gap-4">
+<!-- Contact 1 -->
+<div class="flex flex-col items-center gap-2">
+<div class="relative">
+<div class="w-20 h-20 rounded-full border-4 border-primary p-1 bg-white dark:bg-slate-800 shadow-lg" data-alt="Portrait of elderly woman's daughter" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCW4KBjUlUQOBK19wlOVjTvIYo0zDAoTheG-or1AsqSOBRo1CgDnnrNRxC6zvShNTrJklP0tFTdcVmaQPtny4m0JGdQS4nT6sVzoDuuo-MliZoY1GwIHMAknwOb_9dtNkFB-XJkd9NGIsOm-5ddjGiyr8zV6njzyeKkuWyiObKQUWAbdTHn8prtzGT4ROTAC9crqCYUyCxIWAkMOzivLgi16Yg3XR2zniaD4U8J2XPwRb97NeNSwxnlvOKYu7Rlv4hcTeHI1VVWgXev'); background-size: cover; background-position: center;">
+</div>
+<div class="absolute -bottom-1 -right-1 bg-primary text-white rounded-full p-1.5 flex items-center justify-center border-2 border-white dark:border-slate-900">
+<span class="material-symbols-outlined text-xs font-bold">call</span>
+</div>
+</div>
+<span class="font-medium text-slate-900 dark:text-slate-100">大女儿</span>
+</div>
+<!-- Animated Connection Line -->
+<div class="h-1 w-8 bg-primary/30 rounded-full overflow-hidden">
+<div class="h-full w-full bg-primary origin-left animate-[grow_1.5s_ease-in-out_infinite]"></div>
+</div>
+<!-- Contact 2 -->
+<div class="flex flex-col items-center gap-2">
+<div class="relative">
+<div class="w-24 h-24 rounded-full border-4 border-primary p-1 bg-white dark:bg-slate-800 shadow-xl z-10" data-alt="Portrait of elderly woman's son" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCll9LsnHhmMs5V801eJggQu2-RQ-FA1JPYuuJKlPnHYOweSVWjec9fUQsYJxPzYsAQSI0Z8GdysCGRXKnHBb1r8PKeTRBib158XzcUzmvIRPfPeKQ0mt54jUxwgBtpKH5tDPGBYsw5Mo94gWENpgp584x2vt-CzIFhJsrAqwIhG0vmIhdLwa99dILx_mS8dDc2yEYJdIP0zohX2_pAgjDj-SVSbwGP01l1v5RXpOHoD10CK88SSefYWWsBk5kxwES5GoUGHcfnHbfM'); background-size: cover; background-position: center;">
+</div>
+<div class="absolute -bottom-1 -right-1 bg-primary text-white rounded-full p-2 flex items-center justify-center border-2 border-white dark:border-slate-900">
+<span class="material-symbols-outlined text-sm font-bold">call</span>
+</div>
+</div>
+<span class="font-bold text-lg text-slate-900 dark:text-slate-100">儿子</span>
+</div>
+<!-- Animated Connection Line -->
+<div class="h-1 w-8 bg-primary/30 rounded-full overflow-hidden">
+<div class="h-full w-full bg-primary origin-left animate-[grow_1.5s_ease-in-out_infinite_0.5s]"></div>
+</div>
+<!-- Contact 3 -->
+<div class="flex flex-col items-center gap-2">
+<div class="relative">
+<div class="w-20 h-20 rounded-full border-4 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined text-4xl">local_police</span>
+</div>
+<div class="absolute -bottom-1 -right-1 bg-slate-400 text-white rounded-full p-1.5 flex items-center justify-center border-2 border-white dark:border-slate-900">
+<span class="material-symbols-outlined text-xs font-bold">hourglass_top</span>
+</div>
+</div>
+<span class="font-medium text-slate-500 dark:text-slate-400">急救中心</span>
+</div>
+</div>
+</div>
+<!-- Timer Section -->
+<div class="w-full z-10 flex flex-col items-center justify-center mb-8">
+<div class="relative flex items-center justify-center">
+<!-- Outer Pulse Ring -->
+<div class="absolute inset-0 rounded-full border-4 border-primary/20 scale-150 animate-ping"></div>
+<div class="absolute inset-0 rounded-full border-4 border-primary/40 scale-125"></div>
+<!-- Timer Circle -->
+<div class="w-40 h-40 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-2xl border-8 border-primary relative z-10">
+<div class="flex flex-col items-center">
+<span class="text-6xl font-bold text-primary tabular-nums tracking-tighter">05</span>
+<span class="text-xs font-bold uppercase text-slate-400 tracking-wider mt-1">秒</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Status Indicators -->
+<div class="w-full z-10 flex flex-col gap-3 mb-8">
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+<span class="material-symbols-outlined">my_location</span>
+</div>
+<div class="flex-1">
+<p class="font-bold text-slate-900 dark:text-slate-100">位置已发送</p>
+<p class="text-sm text-slate-500 dark:text-slate-400">123 Maple Street, Apt 4B...</p>
+</div>
+<span class="material-symbols-outlined text-green-500">check_circle</span>
+</div>
+<div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
+<span class="material-symbols-outlined animate-pulse">mic</span>
+</div>
+<div class="flex-1">
+<p class="font-bold text-slate-900 dark:text-slate-100">正在录音</p>
+<div class="flex items-center gap-1 mt-1 h-2">
+<div class="w-1 h-2 bg-red-400 rounded-full animate-[bounce_1s_infinite]"></div>
+<div class="w-1 h-3 bg-red-400 rounded-full animate-[bounce_1.2s_infinite]"></div>
+<div class="w-1 h-2 bg-red-400 rounded-full animate-[bounce_0.8s_infinite]"></div>
+<div class="w-1 h-3 bg-red-400 rounded-full animate-[bounce_1.1s_infinite]"></div>
+<div class="w-1 h-2 bg-red-400 rounded-full animate-[bounce_0.9s_infinite]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Button -->
+<div class="w-full z-10 mt-auto">
+<button class="w-full bg-slate-200 dark:bg-slate-700 active:bg-slate-300 dark:active:bg-slate-600 text-slate-700 dark:text-slate-200 h-16 rounded-full flex items-center justify-center gap-3 font-bold text-xl shadow-sm hover:shadow-md transition-all transform hover:scale-[1.02]"><span class="material-symbols-outlined">close</span> 取消呼叫</button>
+</div>
+</div>
+</body></html>

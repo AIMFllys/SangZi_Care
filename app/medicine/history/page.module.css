@@ -1,0 +1,177 @@
+/* ============================================
+   用药历史页样式
+   适老化设计：大字体、高对比度、大触控区域
+   ============================================ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  padding-bottom: 80px;
+}
+
+/* 顶部栏 */
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-base);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--min-touch-target);
+  min-height: var(--min-touch-target);
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+  font-weight: 600;
+  border-radius: var(--border-radius-sm);
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+.backLink:active {
+  opacity: 0.7;
+}
+
+.title {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* 分组区域 */
+.section {
+  padding: 0 var(--spacing-base) var(--spacing-base);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+/* 计划卡片 */
+.planCard {
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-base);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* 状态指示器 */
+.indicator {
+  width: 6px;
+  border-radius: var(--border-radius-full);
+  flex-shrink: 0;
+}
+
+.indicatorActive {
+  background-color: var(--color-success);
+}
+
+.indicatorInactive {
+  background-color: var(--color-border);
+}
+
+/* 卡片内容 */
+.cardContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.medicineName {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.dosage {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+.scheduleTimes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.timeTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--spacing-xs);
+  background-color: var(--color-bg);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+.dateRange {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+/* 空状态 */
+.emptySection {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+}
+
+.loadingText {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+}
+
+/* 错误状态 */
+.errorBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl) var(--spacing-base);
+}
+
+.errorText {
+  font-size: var(--font-size-lg);
+  color: var(--color-danger);
+  text-align: center;
+}
+
+.retryBtn {
+  min-height: var(--min-touch-target);
+  padding: var(--spacing-xs) var(--spacing-lg);
+  background-color: var(--color-primary);
+  color: #ffffff;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+}
+
+.retryBtn:active {
+  opacity: 0.85;
+}

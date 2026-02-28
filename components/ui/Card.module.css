@@ -1,0 +1,28 @@
+.card {
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+}
+
+.padding-sm {
+  padding: var(--spacing-sm);
+}
+
+.padding-md {
+  padding: var(--spacing-base);
+}
+
+.padding-lg {
+  padding: var(--spacing-lg);
+}
+
+.interactive {
+  cursor: pointer;
+  user-select: none;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.interactive:active {
+  transform: scale(0.97);
+  box-shadow: var(--shadow-sm);
+}

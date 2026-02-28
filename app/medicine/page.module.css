@@ -1,0 +1,174 @@
+/* ============================================
+   用药管家页面样式
+   适老化设计：大字体、高对比度
+   ============================================ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  padding-bottom: 80px; /* 为 FAB 留空间 */
+}
+
+/* 顶部栏 */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-base) var(--spacing-base) var(--spacing-sm);
+}
+
+.title {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.addPlanBtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--min-touch-target);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-base);
+  color: #ffffff;
+  background-color: var(--color-primary);
+  font-weight: 700;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.addPlanBtn:active {
+  opacity: 0.85;
+}
+
+.historyLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: var(--min-touch-target);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-base);
+  color: var(--color-primary);
+  font-weight: 600;
+  border-radius: var(--border-radius-sm);
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+.historyLink:active {
+  opacity: 0.7;
+}
+
+/* 进度区域 */
+.progressSection {
+  padding: 0 var(--spacing-base) var(--spacing-base);
+}
+
+.progressCard {
+  background-color: var(--color-bg-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-base);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.progressHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.progressLabel {
+  font-size: var(--font-size-lg);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.progressValue {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.progressBarTrack {
+  width: 100%;
+  height: 12px;
+  background-color: var(--color-border);
+  border-radius: var(--border-radius-full);
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background-color: var(--color-success);
+  border-radius: var(--border-radius-full);
+  transition: width 0.4s ease;
+}
+
+.progressStats {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+/* 时间线区域 */
+.timelineSection {
+  flex: 1;
+  padding: 0 var(--spacing-base);
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+}
+
+.loadingText {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+}
+
+/* 错误状态 */
+.errorBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl) var(--spacing-base);
+}
+
+.errorText {
+  font-size: var(--font-size-lg);
+  color: var(--color-danger);
+  text-align: center;
+}
+
+.retryBtn {
+  min-height: var(--min-touch-target);
+  padding: var(--spacing-xs) var(--spacing-lg);
+  background-color: var(--color-primary);
+  color: #ffffff;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+}
+
+.retryBtn:active {
+  opacity: 0.85;
+}

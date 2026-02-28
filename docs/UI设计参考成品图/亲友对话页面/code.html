@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Wu Hua Voice Chat for Seniors</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        :root {
+            --primary-color: #FF8F5E;--primary-dark: #E66A35;
+            --bg-color: #FFF9F5;
+            --chat-bg: #F2F4F6;
+            --bubble-self: #FF8F5E;
+            --bubble-other: #FFFFFF;
+            --text-dark: #1F2937;
+            --text-light: #F9FAFB;
+            --border-color: #E5E7EB;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--chat-bg);
+            -webkit-font-smoothing: antialiased;
+        }
+        .safe-area-top {
+            padding-top: env(safe-area-inset-top);
+        }
+        .safe-area-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }.scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .voice-wave {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 24px;
+        }
+        .voice-bar {
+            width: 4px;
+            background-color: currentColor;
+            border-radius: 2px;
+            animation: wave 1.2s ease-in-out infinite;
+        }
+        .voice-bar:nth-child(1) { height: 12px; animation-delay: 0.1s; }
+        .voice-bar:nth-child(2) { height: 20px; animation-delay: 0.2s; }
+        .voice-bar:nth-child(3) { height: 16px; animation-delay: 0.3s; }
+        .voice-bar:nth-child(4) { height: 22px; animation-delay: 0.1s; }
+        .voice-bar:nth-child(5) { height: 14px; animation-delay: 0.4s; }
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.8); }
+            50% { transform: scaleY(1.2); }
+        }
+        .chat-bubble-tail-left::before {
+            content: "";
+            position: absolute;
+            left: -10px;
+            top: 20px;
+            width: 0;
+            height: 0;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-right: 12px solid var(--bubble-other);
+        }
+        .chat-bubble-tail-right::before {
+            content: "";
+            position: absolute;
+            right: -10px;
+            top: 20px;
+            width: 0;
+            height: 0;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-left: 12px solid var(--bubble-self);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="h-screen w-screen flex flex-col overflow-hidden text-[var(--text-dark)] bg-[var(--chat-bg)]">
+<header class="bg-white shadow-sm z-10 shrink-0">
+<div class="safe-area-top bg-white"></div>
+<div class="h-16 flex items-center justify-between px-4">
+<button class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200">
+<span class="material-symbols-outlined text-4xl text-gray-800">arrow_back</span>
+</button>
+<div class="flex flex-col items-center">
+<h1 class="text-2xl font-bold tracking-wide">女儿 (李华)</h1>
+<div class="flex items-center gap-1 text-green-600">
+<span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+<span class="text-sm font-medium">在线</span>
+</div>
+</div>
+<button class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 active:bg-gray-200">
+<span class="material-symbols-outlined text-4xl text-gray-800">videocam</span>
+</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto scrollbar-hide p-4 space-y-8 bg-[#F2F4F6]">
+<div class="flex justify-center my-4">
+<span class="bg-gray-200 text-gray-600 px-4 py-1 rounded-full text-sm font-medium">今天 10:30</span>
+</div>
+<div class="flex gap-3">
+<div class="flex-shrink-0 w-14 h-14 rounded-full bg-pink-100 border-2 border-white overflow-hidden flex items-center justify-center">
+<img alt="女儿头像" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZw6mS6zi-3AWo0g6evDplR15gB8h5BkU3LE07YUn42ISAwClr5QSnsqwoxyzyiDn_XOm5Fjqr53czBq0I-jWYxWfXgbWJJNEYsZ4P45RV1sjGS3DIsEUnHb_FnpAEPArACtj15afs2TRi-n5wG0Md87KC9Ei-66L5KXoHc0NehSUrJcPNP5wtdAjilc91DPE_4lMSL3deHow7_rk1JEeJevByWqq2a2j3gb04jGaVjN422K_qFjvX5vPUGCujmG1rYVItAAamAJFA"/>
+</div>
+<div class="flex flex-col items-start max-w-[80%]">
+<span class="text-gray-500 text-sm ml-2 mb-1">女儿</span>
+<div class="relative bg-white p-5 rounded-2xl rounded-tl-none shadow-sm chat-bubble-tail-left active:bg-gray-50 transition-colors w-64 border border-gray-100">
+<div class="flex items-center gap-4">
+<button class="w-12 h-12 bg-pink-500 rounded-full flex items-center justify-center text-white shadow-sm">
+<span class="material-symbols-outlined text-3xl">play_arrow</span>
+</button>
+<div class="voice-wave text-pink-500">
+<div class="voice-bar h-3"></div>
+<div class="voice-bar h-5"></div>
+<div class="voice-bar h-4"></div>
+<div class="voice-bar h-6"></div>
+<div class="voice-bar h-3"></div>
+<div class="voice-bar h-2"></div>
+<div class="voice-bar h-4"></div>
+<div class="voice-bar h-3"></div>
+</div>
+<span class="text-xl font-bold text-gray-700 ml-auto">12"</span>
+</div>
+<div class="mt-3 pt-3 border-t border-gray-100">
+<p class="text-lg text-gray-800 leading-relaxed">妈，今天可能会下雨，出门记得带伞哦。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="flex gap-3 flex-row-reverse">
+<div class="flex-shrink-0 w-14 h-14 rounded-full bg-[var(--primary-color)] border-2 border-white overflow-hidden flex items-center justify-center">
+<span class="text-white font-bold text-xl">我</span>
+</div>
+<div class="flex flex-col items-end max-w-[80%]">
+<span class="text-gray-500 text-sm mr-2 mb-1">我</span>
+<div class="relative bg-[var(--bubble-self)] p-5 rounded-2xl rounded-tr-none shadow-md chat-bubble-tail-right w-56 active:opacity-90 transition-opacity">
+<div class="flex items-center flex-row-reverse gap-4">
+<span class="material-symbols-outlined text-white text-3xl opacity-80">graphic_eq</span>
+<div class="voice-wave text-white flex-row-reverse">
+<div class="voice-bar bg-white h-3"></div>
+<div class="voice-bar bg-white h-5"></div>
+<div class="voice-bar bg-white h-4"></div>
+<div class="voice-bar bg-white h-2"></div>
+</div>
+<span class="text-xl font-bold text-white mr-auto">5"</span>
+</div>
+<div class="mt-3 pt-3 border-t border-white/30">
+<p class="text-lg text-white leading-relaxed">好的，知道了。</p>
+</div>
+</div>
+<span class="text-xs text-gray-400 mt-1 mr-1">已读</span>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="flex-shrink-0 w-14 h-14 rounded-full bg-pink-100 border-2 border-white overflow-hidden flex items-center justify-center">
+<img alt="女儿头像" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-1MWBgpsJwsCE9dvhEGg1W1sx6T4e_QgHr52DuSQo_eFo7KEO9qkV_mjLoZeYtSwt0Hs-Fi7VQGpy50UyurQSjQQMoIKPVZ9zgRzMFFTQufoLtuKENZDa5oOXP6MQnGOOL7ZsEezijr60Lut4uKe1EBECpvRTZudAaPTI7YN60s9DpDZkzVnT1TWskrd2F6kVRkrsbJqubMStNJb74qxz5B8H3XtdRMRVwTv2DRiSR1gNSkalL3_PoDMjApzyb3XLzp5nVHPqS_Qj"/>
+</div>
+<div class="flex flex-col items-start max-w-[80%]">
+<span class="text-gray-500 text-sm ml-2 mb-1">女儿</span>
+<div class="relative bg-white p-5 rounded-2xl rounded-tl-none shadow-sm chat-bubble-tail-left border border-gray-100">
+<p class="text-2xl text-gray-800 leading-normal font-medium">晚饭想吃什么？</p>
+</div>
+</div>
+</div>
+<div class="h-32"></div>
+</main>
+<footer class="bg-white border-t border-gray-200 shrink-0 pb-safe z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<div class="p-4 safe-area-bottom">
+<div class="flex items-center gap-4">
+<button class="flex flex-col items-center gap-1 p-2 rounded-xl active:bg-gray-100 transition-colors">
+<span class="material-symbols-outlined text-3xl text-gray-500">keyboard</span>
+<span class="text-xs text-gray-500 font-medium">打字</span>
+</button>
+<button class="flex-1 h-24 bg-[var(--primary-color)] active:bg-[var(--primary-dark)] rounded-3xl shadow-lg shadow-orange-200 flex items-center justify-center gap-3 transition-all transform active:scale-[0.98] select-none touch-manipulation group relative overflow-hidden">
+<div class="absolute inset-0 bg-white opacity-0 group-active:opacity-10 transition-opacity"></div>
+<span class="material-symbols-outlined text-5xl text-white">mic</span>
+<span class="text-3xl font-bold text-white tracking-widest">按住 说话</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 rounded-xl active:bg-gray-100 transition-colors">
+<span class="material-symbols-outlined text-3xl text-gray-500">add_circle</span>
+<span class="text-xs text-gray-500 font-medium">更多</span>
+</button>
+</div>
+<div class="text-center mt-3">
+<p class="text-gray-400 text-sm">松开手指发送语音</p>
+</div>
+</div>
+</footer>
+
+</body></html>
