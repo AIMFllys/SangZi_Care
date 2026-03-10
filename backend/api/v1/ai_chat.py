@@ -98,22 +98,14 @@ async def ai_chat(req: ChatRequest, user: dict = Depends(require_auth)):
     # Call doubao LLM
     reply = await doubao_service.chat(messages, user_id)
 
-    # Save user message to ai_conversations
+    # Save conversation turn to ai_conversations (one row = one turn)
     if last_user_content:
         postgrest.from_("ai_conversations").insert({
             "user_id": user_id,
-            "role": "user",
-            "content": last_user_content,
+            "user_input": last_user_content,
+            "ai_response": reply,
             "session_id": session_id,
         }).execute()
-
-    # Save assistant response to ai_conversations
-    postgrest.from_("ai_conversations").insert({
-        "user_id": user_id,
-        "role": "assistant",
-        "content": reply,
-        "session_id": session_id,
-    }).execute()
 
     return ChatResponse(reply=reply, session_id=session_id)
 
@@ -162,10 +154,11 @@ async def ai_summary(user_id: str, user: dict = Depends(require_auth)):
         return SummaryResponse(summary="暂无对话记录", message_count=0)
 
     # Build conversation list for summary generation (reverse to chronological)
-    conversations = [
-        {"role": row.get("role", "user"), "content": row.get("content", "")}
-        for row in reversed(rows)
-    ]
+    # Each row contains user_input and ai_response as one turn
+    conversations = []
+    for row in reversed(rows):
+        conversations.append({"role": "user", "content": row.get("user_input", "")})
+        conversations.append({"role": "assistant", "content": row.get("ai_response", "")})
 
     summary = await doubao_service.generate_summary(conversations, user_id)
 
@@ -228,18 +221,12 @@ async def ai_voice_session(websocket: WebSocket):
                 messages = [{"role": "user", "content": content}]
                 reply = await doubao_service.chat(messages, user_id)
 
-                # Save conversation if user is identified
+                # Save conversation turn if user is identified (one row = one turn)
                 if user_id:
                     postgrest.from_("ai_conversations").insert({
                         "user_id": user_id,
-                        "role": "user",
-                        "content": content,
-                        "session_id": session_id,
-                    }).execute()
-                    postgrest.from_("ai_conversations").insert({
-                        "user_id": user_id,
-                        "role": "assistant",
-                        "content": reply,
+                        "user_input": content,
+                        "ai_response": reply,
                         "session_id": session_id,
                     }).execute()
 

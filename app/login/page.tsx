@@ -217,13 +217,13 @@ export default function LoginPage() {
             type="button"
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <RefreshCw size={20} color="var(--primary)" />
+            <RefreshCw size={20} color="var(--accent-primary)" />
           </button>
         </div>
 
         {/* Code input + send button */}
         <div className={styles.codeRow}>
-          <div className={styles.codeInput}>
+          <div className={styles.codeInputField}>
             <div className={styles.inputPrefix}><KeyRound size={20} color="var(--text-muted)" /></div>
             <Input
               type="text"
@@ -233,6 +233,7 @@ export default function LoginPage() {
               placeholder="请输入验证码"
               maxLength={CODE_LENGTH}
               aria-label="验证码"
+              className={styles.plainInput}
             />
           </div>
           <button
