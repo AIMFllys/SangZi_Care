@@ -2,12 +2,28 @@
 
 import logging
 import smtplib
+import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from core.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _create_ssl_context() -> ssl.SSLContext:
+    """创建兼容阿里云 SMTP 的 SSL 上下文。
+
+    Python 3.12+ 对 SSL 默认要求更加严格，部分 SMTP 服务器
+    （如阿里云邮件推送）可能不符合新的默认安全策略，
+    因此需要手动创建一个兼容性更好的 SSL context。
+    """
+    ctx = ssl.create_default_context()
+    # 允许与旧版 TLS 服务器兼容
+    ctx.set_ciphers("DEFAULT:@SECLEVEL=1")
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    return ctx
 
 
 def send_verification_email(to_email: str, code: str, expires_minutes: int = 5) -> bool:
@@ -58,24 +74,44 @@ def send_verification_email(to_email: str, code: str, expires_minutes: int = 5) 
     msg["Subject"] = subject
     msg.attach(MIMEText(html_body, "html", "utf-8"))
 
+    ssl_ctx = _create_ssl_context()
+
+    # ── 方式 1：SMTP_SSL（端口 465），使用自定义 SSL context ──
     try:
-        # 尝试 SSL 连接 (端口 465)
-        with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
+        with smtplib.SMTP_SSL(
+            settings.SMTP_HOST, settings.SMTP_PORT,
+            timeout=10, context=ssl_ctx,
+        ) as server:
             server.login(settings.SMTP_USER, settings.SMTP_PASS)
             server.sendmail(settings.SMTP_USER, [to_email], msg.as_string())
-        logger.info("验证码邮件已发送至 %s", to_email)
+        logger.info("验证码邮件已通过 SSL (端口 %s) 发送至 %s", settings.SMTP_PORT, to_email)
         return True
     except Exception as e:
-        logger.error("SSL 连接失败，尝试 STARTTLS: %s", str(e))
-        
-        # 备用方案：尝试 STARTTLS (端口 25 或 587)
-        try:
-            with smtplib.SMTP(settings.SMTP_HOST, 25, timeout=10) as server:
-                server.starttls()
-                server.login(settings.SMTP_USER, settings.SMTP_PASS)
-                server.sendmail(settings.SMTP_USER, [to_email], msg.as_string())
-            logger.info("验证码邮件已通过 STARTTLS 发送至 %s", to_email)
-            return True
-        except Exception:
-            logger.exception("发送验证码邮件失败 (所有方式): %s", to_email)
-            return False
+        logger.warning("SSL 连接 (端口 %s) 失败: %s", settings.SMTP_PORT, e)
+
+    # ── 方式 2：STARTTLS（端口 587） ──
+    try:
+        with smtplib.SMTP(settings.SMTP_HOST, 587, timeout=10) as server:
+            server.ehlo()
+            server.starttls(context=ssl_ctx)
+            server.ehlo()
+            server.login(settings.SMTP_USER, settings.SMTP_PASS)
+            server.sendmail(settings.SMTP_USER, [to_email], msg.as_string())
+        logger.info("验证码邮件已通过 STARTTLS (端口 587) 发送至 %s", to_email)
+        return True
+    except Exception as e:
+        logger.warning("STARTTLS 连接 (端口 587) 失败: %s", e)
+
+    # ── 方式 3：STARTTLS（端口 25，最后手段） ──
+    try:
+        with smtplib.SMTP(settings.SMTP_HOST, 25, timeout=10) as server:
+            server.ehlo()
+            server.starttls(context=ssl_ctx)
+            server.ehlo()
+            server.login(settings.SMTP_USER, settings.SMTP_PASS)
+            server.sendmail(settings.SMTP_USER, [to_email], msg.as_string())
+        logger.info("验证码邮件已通过 STARTTLS (端口 25) 发送至 %s", to_email)
+        return True
+    except Exception:
+        logger.exception("发送验证码邮件失败 (所有方式均不可用): %s", to_email)
+        return False
