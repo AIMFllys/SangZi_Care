@@ -1,6 +1,7 @@
-"""认证模块 — 短信验证码登录/注册、Token刷新。
+"""认证模块 — 邮箱验证码登录/注册、Token刷新。
 
-MVP阶段验证码存储在内存中，生产环境应替换为Redis + 真实短信服务。
+验证码存储在内存中（MVP），生产环境应替换为 Redis。
+邮件通过阿里云邮件推送服务 (SMTP) 发送。
 """
 
 import logging
@@ -10,10 +11,11 @@ from datetime import datetime, timezone
 
 import jwt
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 from core.security import create_access_token, create_refresh_token, decode_token
 from models.user import UserResponse
+from services.email_service import send_verification_email
 from services.supabase_client import postgrest
 
 logger = logging.getLogger(__name__)
@@ -26,7 +28,7 @@ router = APIRouter(prefix="/auth", tags=["认证"])
 
 
 class SendCodeRequest(BaseModel):
-    phone: str
+    email: EmailStr
 
 
 class SendCodeResponse(BaseModel):
@@ -35,7 +37,7 @@ class SendCodeResponse(BaseModel):
 
 
 class VerifyRequest(BaseModel):
-    phone: str
+    email: EmailStr
     code: str
 
 
@@ -57,13 +59,13 @@ class RefreshResponse(BaseModel):
 
 # ---------------------------------------------------------------------------
 # In-memory verification code store
-# phone -> (code, expiry_timestamp, last_send_timestamp)
+# email -> (code, expiry_timestamp, last_send_timestamp)
 # ---------------------------------------------------------------------------
 
 _verification_codes: dict[str, tuple[str, float, float]] = {}
 
 CODE_EXPIRE_SECONDS = 300  # 5 minutes
-RATE_LIMIT_SECONDS = 60    # 1 code per phone per 60s
+RATE_LIMIT_SECONDS = 60    # 1 code per email per 60s
 
 
 # ---------------------------------------------------------------------------
@@ -73,12 +75,12 @@ RATE_LIMIT_SECONDS = 60    # 1 code per phone per 60s
 
 @router.post("/send-code", response_model=SendCodeResponse)
 async def send_code(req: SendCodeRequest):
-    """发送短信验证码（MVP: 存内存 + 日志输出）。"""
-    phone = req.phone
+    """发送邮箱验证码。"""
+    email = req.email.lower().strip()
 
     # Rate limit check
-    if phone in _verification_codes:
-        _, _, last_send = _verification_codes[phone]
+    if email in _verification_codes:
+        _, _, last_send = _verification_codes[email]
         elapsed = time.time() - last_send
         if elapsed < RATE_LIMIT_SECONDS:
             raise HTTPException(
@@ -88,10 +90,15 @@ async def send_code(req: SendCodeRequest):
 
     code = str(random.randint(100000, 999999))
     now = time.time()
-    _verification_codes[phone] = (code, now + CODE_EXPIRE_SECONDS, now)
+    _verification_codes[email] = (code, now + CODE_EXPIRE_SECONDS, now)
 
-    # In production this would call an SMS gateway; for MVP just log it.
-    logger.info("验证码 [%s] -> %s (expires in %ds)", phone, code, CODE_EXPIRE_SECONDS)
+    # 发送验证码邮件
+    success = send_verification_email(email, code, CODE_EXPIRE_SECONDS // 60)
+    if not success:
+        _verification_codes.pop(email, None)
+        raise HTTPException(status_code=500, detail="验证码邮件发送失败，请稍后重试")
+
+    logger.info("验证码已发送至 %s (expires in %ds)", email, CODE_EXPIRE_SECONDS)
 
     return SendCodeResponse(success=True, expires_in=CODE_EXPIRE_SECONDS)
 
@@ -99,11 +106,11 @@ async def send_code(req: SendCodeRequest):
 @router.post("/verify", response_model=VerifyResponse)
 async def verify(req: VerifyRequest):
     """验证码登录/注册。新用户自动创建账户。"""
-    phone = req.phone
+    email = req.email.lower().strip()
     code = req.code
 
     # Look up stored code
-    stored = _verification_codes.get(phone)
+    stored = _verification_codes.get(email)
     if stored is None:
         raise HTTPException(status_code=400, detail="验证码错误")
 
@@ -111,7 +118,7 @@ async def verify(req: VerifyRequest):
 
     # Check expiry first
     if time.time() > expiry:
-        _verification_codes.pop(phone, None)
+        _verification_codes.pop(email, None)
         raise HTTPException(status_code=400, detail="验证码已过期")
 
     # Check code match
@@ -119,10 +126,10 @@ async def verify(req: VerifyRequest):
         raise HTTPException(status_code=400, detail="验证码错误")
 
     # Code is valid — remove it so it can't be reused
-    _verification_codes.pop(phone, None)
+    _verification_codes.pop(email, None)
 
-    # Look up user by phone
-    result = postgrest.from_("users").select("*").eq("phone", phone).execute()
+    # Look up user by email
+    result = postgrest.from_("users").select("*").eq("email", email).execute()
     rows = result.data or []
 
     is_new_user = False
@@ -132,10 +139,11 @@ async def verify(req: VerifyRequest):
     else:
         # Auto-create new user
         is_new_user = True
-        default_name = f"用户{phone[-4:]}"
+        # 从邮箱前缀生成默认昵称
+        default_name = email.split("@")[0]
         new_user = {
             "name": default_name,
-            "phone": phone,
+            "email": email,
             "role": "elder",
         }
         insert_result = postgrest.from_("users").insert(new_user).execute()

@@ -19,6 +19,13 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 1440
 
+    # SMTP (Aliyun Email Push)
+    SMTP_HOST: str = "smtpdm.aliyun.com"
+    SMTP_PORT: int = 465
+    SMTP_USER: str = ""
+    SMTP_PASS: str = ""
+    SMTP_FROM_NAME: str = "桑梓智护"
+
     # Volcano Engine – Ark (LLM)
     VOLCANO_ARK_API_KEY: str = ""
     VOLCANO_ARK_BASE_URL: str = "https://ark.cn-beijing.volces.com/api/v3"

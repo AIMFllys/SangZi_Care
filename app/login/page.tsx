@@ -19,14 +19,14 @@ interface VerifyResponse {
   is_new_user: boolean;
 }
 
-const PHONE_REGEX = /^1[3-9]\d{9}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CODE_LENGTH = 6;
 const COUNTDOWN_SECONDS = 60;
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
 
@@ -58,19 +58,19 @@ export default function LoginPage() {
     }, 1000);
   }, []);
 
-  // --- Phone validation ---
-  const isPhoneValid = PHONE_REGEX.test(phone);
+  // --- Validation ---
+  const isEmailValid = EMAIL_REGEX.test(email);
   const isCodeValid = code.length === CODE_LENGTH && /^\d+$/.test(code);
 
   // --- Send verification code ---
   const handleSendCode = async () => {
-    if (!isPhoneValid || countdown > 0 || sendingCode) return;
+    if (!isEmailValid || countdown > 0 || sendingCode) return;
     setError('');
     setSendingCode(true);
     try {
       await fetchApi<SendCodeResponse>('/api/v1/auth/send-code', {
         method: 'POST',
-        body: { phone },
+        body: { email },
       });
       startCountdown();
     } catch (err) {
@@ -82,13 +82,13 @@ export default function LoginPage() {
 
   // --- Login ---
   const handleLogin = async () => {
-    if (!isPhoneValid || !isCodeValid || loggingIn) return;
+    if (!isEmailValid || !isCodeValid || loggingIn) return;
     setError('');
     setLoggingIn(true);
     try {
       const res = await fetchApi<VerifyResponse>('/api/v1/auth/verify', {
         method: 'POST',
-        body: { phone, code },
+        body: { email, code },
       });
 
       localStorage.setItem('token', res.access_token);
@@ -130,17 +130,16 @@ export default function LoginPage() {
 
       {/* Form */}
       <div className={styles.form}>
-        {/* Phone input */}
-        <div className={styles.phoneRow}>
-          <span className={styles.countryCode}>+86</span>
-          <div className={styles.phoneInput}>
+        {/* Email input */}
+        <div className={styles.emailRow}>
+          <span className={styles.emailIcon}>📧</span>
+          <div className={styles.emailInput}>
             <Input
-              type="tel"
-              value={phone}
-              onChange={setPhone}
-              placeholder="请输入手机号"
-              maxLength={11}
-              aria-label="手机号"
+              type="email"
+              value={email}
+              onChange={setEmail}
+              placeholder="请输入邮箱地址"
+              aria-label="邮箱地址"
             />
           </div>
         </div>
@@ -163,7 +162,7 @@ export default function LoginPage() {
               variant="secondary"
               size="md"
               fullWidth
-              disabled={!isPhoneValid || countdown > 0}
+              disabled={!isEmailValid || countdown > 0}
               loading={sendingCode}
               onClick={handleSendCode}
             >
@@ -184,7 +183,7 @@ export default function LoginPage() {
           variant="primary"
           size="lg"
           fullWidth
-          disabled={!isPhoneValid || !isCodeValid}
+          disabled={!isEmailValid || !isCodeValid}
           loading={loggingIn}
           onClick={handleLogin}
         >

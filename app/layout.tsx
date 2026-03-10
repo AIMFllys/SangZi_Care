@@ -4,17 +4,14 @@ import { ReactNode, useEffect, useState } from 'react';
 import '@/styles/globals.css';
 import '@/styles/elder-theme.css';
 import '@/styles/family-theme.css';
+import TabBar from '@/components/layout/TabBar';
 import EmergencyFAB from '@/components/ui/EmergencyFAB';
+import { AuthProvider } from '@/components/providers/AuthProvider';
 
 export type UserRole = 'elder' | 'family';
 
 /**
- * 根布局 — 基于用户角色切换 data-theme 属性
- *
- * 主题切换逻辑：
- * 1. 初始化时从 localStorage 读取已保存的角色
- * 2. 默认使用老年人端主题（elder）
- * 3. 角色变更时更新 data-theme 并持久化到 localStorage
+ * 根布局 — data-theme 主题切换 + 全局底部导航
  */
 export default function RootLayout({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<UserRole>('elder');
@@ -35,7 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem('user_role', theme);
     } catch {
-      // localStorage 不可用时静默失败
+      // 静默失败
     }
   }, [theme]);
 
@@ -49,8 +46,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <title>桑梓智护</title>
       </head>
       <body>
-        {children}
-        <EmergencyFAB />
+        <div className="device-wrapper">
+          <AuthProvider>
+            <main className="page-content">
+              {children}
+            </main>
+            <EmergencyFAB />
+            <TabBar />
+          </AuthProvider>
+        </div>
       </body>
     </html>
   );

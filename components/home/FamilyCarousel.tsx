@@ -6,10 +6,30 @@ import { useUserStore } from '@/stores/userStore';
 import { useFamilyStore, type FamilyBindWithUser } from '@/stores/familyStore';
 import { jsBridge } from '@/lib/jsbridge';
 import { ROUTES } from '@/lib/constants';
-import styles from './FamilyCarousel.module.css';
 
 // ---- 内部常量 ----
 const SWIPE_THRESHOLD = 50;
+
+// ---- 工具函数 ----
+function formatRelativeTime(isoString: string): string {
+  const now = Date.now();
+  const then = new Date(isoString).getTime();
+  const diffMs = now - then;
+
+  if (Number.isNaN(diffMs) || diffMs < 0) return '刚刚';
+
+  const minutes = Math.floor(diffMs / 60_000);
+  if (minutes < 1) return '刚刚';
+  if (minutes < 60) return `${minutes}分钟前`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}小时前`;
+
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}天前`;
+
+  return new Date(isoString).toLocaleDateString('zh-CN');
+}
 
 // ---- 子组件：老年人端家属卡片 ----
 
@@ -22,39 +42,38 @@ function ElderFamilyCard({ bind, onCall }: ElderFamilyCardProps) {
   const { user, bind: bindData } = bind;
   const initial = user.name?.charAt(0) ?? '?';
 
-  // 格式化最近联系时间
   const lastContact = user.last_active_at
     ? formatRelativeTime(user.last_active_at)
     : '暂无联系';
 
   return (
-    <div className={styles.card} role="group" aria-label={`家属 ${user.name}`}>
-      <div className={styles.cardHeader}>
-        <div className={styles.avatar} aria-hidden="true">
+    <div className="bg-white rounded-[28px] p-8 shadow-[0_4px_12px_rgba(0,0,0,0.08)] flex flex-col gap-8 w-full mr-4 flex-shrink-0 snap-center" role="group" aria-label={`家属 ${user.name}`}>
+      <div className="flex items-center gap-6">
+        <div className="w-24 h-24 rounded-full bg-[#FFF3E8] overflow-hidden flex items-center justify-center flex-shrink-0" aria-hidden="true">
           {user.avatar_url ? (
-            <img src={user.avatar_url} alt="" />
+            <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
           ) : (
-            initial
+            <span className="text-4xl font-bold text-[var(--color-primary)]">{initial}</span>
           )}
         </div>
-        <div className={styles.userInfo}>
-          <div className={styles.userName}>{user.name}</div>
-          <div className={styles.relation}>{bindData.relation}</div>
+        <div className="flex flex-col">
+          <div className="text-4xl font-bold text-[var(--color-text)]">{user.name}</div>
+          <div className="text-2xl text-[var(--color-text-secondary)] mt-1">{bindData.relation}</div>
         </div>
       </div>
 
-      <div className={styles.summaryRow}>
-        <span className={styles.summaryLabel}>最近联系：</span>
-        <span className={styles.summaryValue}>{lastContact}</span>
+      <div className="bg-[#FFF9F2] rounded-[20px] p-5 flex items-center justify-between">
+        <span className="text-xl text-[var(--color-text-secondary)]">最近联系：</span>
+        <span className="text-2xl font-bold text-[var(--color-text)]">{lastContact}</span>
       </div>
 
-      <div className={styles.actions}>
+      <div className="flex w-full">
         <button
-          className={styles.callBtn}
-          onClick={() => onCall(user.phone)}
+          className="w-full interactive bg-[var(--color-primary)] text-white text-3xl font-bold py-6 rounded-[28px] flex items-center justify-center gap-3 shadow-[0_8px_20px_rgba(255,143,68,0.25)] active:scale-[0.98] transition-transform"
+          onClick={() => onCall(user.phone || '')}
           aria-label={`打电话给${user.name}`}
         >
-          📞 打电话
+          <span>📞</span> 打电话
         </button>
       </div>
     </div>
@@ -84,45 +103,46 @@ function FamilyElderCard({ bind, onCall, onDetail }: FamilyElderCardProps) {
     : '--';
 
   return (
-    <div className={styles.card} role="group" aria-label={`老人 ${user.name}`}>
-      <div className={styles.cardHeader}>
-        <div className={styles.avatar} aria-hidden="true">
+    <div className="bg-white rounded-[28px] p-6 shadow-[0_4px_12px_rgba(0,0,0,0.08)] flex flex-col gap-6 w-[85vw] max-w-[400px] mr-4 flex-shrink-0 snap-center" role="group" aria-label={`老人 ${user.name}`}>
+      <div className="flex items-center gap-4">
+        <div className="w-16 h-16 rounded-full bg-[#FFF3E8] overflow-hidden flex items-center justify-center flex-shrink-0" aria-hidden="true">
           {user.avatar_url ? (
-            <img src={user.avatar_url} alt="" />
+            <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
           ) : (
-            initial
+            <span className="text-2xl font-bold text-[var(--color-primary)]">{initial}</span>
           )}
         </div>
-        <div className={styles.userInfo}>
-          <div className={styles.userName}>{user.name}</div>
-          <div className={styles.relation}>{bindData.relation}</div>
+        <div className="flex flex-col">
+          <div className="text-2xl font-bold text-[var(--color-text)]">{user.name}</div>
+          <div className="text-lg text-[var(--color-text-secondary)]">{bindData.relation}</div>
         </div>
       </div>
 
-      <div className={styles.summaryRow}>
-        <span className={styles.summaryLabel}>今日用药：</span>
-        <span className={styles.summaryValue}>{medText}</span>
+      <div className="flex flex-col gap-3">
+        <div className="bg-[#FFF9F2] rounded-xl p-4 flex items-center justify-between">
+          <span className="text-[var(--color-text-secondary)]">今日用药：</span>
+          <span className="text-lg font-bold text-[var(--color-text)]">{medText}</span>
+        </div>
+        <div className="bg-[#FFF9F2] rounded-xl p-4 flex items-center justify-between">
+          <span className="text-[var(--color-text-secondary)]">最近血压：</span>
+          <span className="text-lg font-bold text-[var(--color-text)]">{bpText}</span>
+        </div>
       </div>
 
-      <div className={styles.summaryRow}>
-        <span className={styles.summaryLabel}>最近血压：</span>
-        <span className={styles.summaryValue}>{bpText}</span>
-      </div>
-
-      <div className={styles.actions}>
+      <div className="flex gap-3 mt-auto">
         <button
-          className={styles.callBtn}
-          onClick={() => onCall(user.phone)}
+          className="interactive flex-1 bg-[var(--color-primary)] text-white font-bold py-4 rounded-[20px] flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(255,143,68,0.25)]"
+          onClick={() => onCall(user.phone || '')}
           aria-label={`打电话给${user.name}`}
         >
-          📞 打电话
+          <span>📞</span> 打电话
         </button>
         <button
-          className={styles.detailBtn}
+          className="interactive flex-1 bg-[#FFF3E8] text-[var(--color-text)] font-bold py-4 rounded-[20px] flex items-center justify-center gap-2"
           onClick={() => onDetail(user.id)}
           aria-label={`查看${user.name}的详细信息`}
         >
-          📋 详细查看
+          <span>📋</span> 查看
         </button>
       </div>
     </div>
@@ -140,7 +160,7 @@ interface GuideCardProps {
 function GuideCard({ isElder, onNavigate }: GuideCardProps) {
   return (
     <div
-      className={styles.guideCard}
+      className="interactive bg-white/50 backdrop-blur-xl border-2 border-dashed border-[var(--color-primary-light)] rounded-[28px] p-10 flex flex-col items-center justify-center text-center gap-4 w-full h-[300px] flex-shrink-0 snap-center cursor-pointer"
       role="button"
       tabIndex={0}
       onClick={onNavigate}
@@ -152,39 +172,19 @@ function GuideCard({ isElder, onNavigate }: GuideCardProps) {
       }}
       aria-label={isElder ? '添加家属' : '绑定老人'}
     >
-      <span className={styles.guideIcon} aria-hidden="true">➕</span>
-      <span className={styles.guideText}>
+      <div className="w-20 h-20 rounded-full bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center text-4xl mb-2" aria-hidden="true">
+        ➕
+      </div>
+      <span className="text-3xl font-bold text-[var(--color-text)]">
         {isElder ? '添加家属' : '绑定老人'}
       </span>
-      <span className={styles.guideHint}>
+      <span className="text-xl text-[var(--color-text-secondary)] px-4">
         {isElder
           ? '绑定家属后，他们可以关注您的健康'
           : '绑定老人后，您可以查看他们的健康状况'}
       </span>
     </div>
   );
-}
-
-// ---- 工具函数 ----
-
-function formatRelativeTime(isoString: string): string {
-  const now = Date.now();
-  const then = new Date(isoString).getTime();
-  const diffMs = now - then;
-
-  if (Number.isNaN(diffMs) || diffMs < 0) return '刚刚';
-
-  const minutes = Math.floor(diffMs / 60_000);
-  if (minutes < 1) return '刚刚';
-  if (minutes < 60) return `${minutes}分钟前`;
-
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}小时前`;
-
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}天前`;
-
-  return new Date(isoString).toLocaleDateString('zh-CN');
 }
 
 // ---- 主组件 ----
@@ -259,13 +259,13 @@ export function FamilyCarousel() {
 
   return (
     <section
-      className={styles.carousel}
+      className="w-full overflow-hidden relative"
       aria-label="家属卡片轮播"
       aria-roledescription="carousel"
     >
       <div
-        className={styles.track}
-        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        className="flex transition-transform duration-500 ease-out px-6"
+        style={{ transform: `translateX(calc(-${currentIndex * 100}% - ${currentIndex * 16}px))` }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -275,7 +275,7 @@ export function FamilyCarousel() {
           activeBinds.map((bind, idx) => (
             <div
               key={bind.bind.id}
-              className={styles.slide}
+              className="w-full flex-shrink-0 flex items-center justify-center p-2"
               role="group"
               aria-roledescription="slide"
               aria-label={`第 ${idx + 1} 张，共 ${totalSlides} 张`}
@@ -293,7 +293,7 @@ export function FamilyCarousel() {
           ))
         ) : (
           <div
-            className={styles.slide}
+            className="w-full flex-shrink-0 flex items-center justify-center p-2"
             role="group"
             aria-roledescription="slide"
             aria-label="添加家属引导"
@@ -305,11 +305,11 @@ export function FamilyCarousel() {
 
       {/* 分页指示器 */}
       {totalSlides > 1 && (
-        <div className={styles.dots} role="tablist" aria-label="轮播分页">
+        <div className="flex justify-center items-center gap-3 mt-4" role="tablist" aria-label="轮播分页">
           {Array.from({ length: totalSlides }, (_, i) => (
             <button
               key={i}
-              className={`${styles.dot} ${i === currentIndex ? styles.dotActive : ''}`}
+              className={`h-3 rounded-full transition-all duration-300 ${i === currentIndex ? 'w-10 bg-[var(--color-primary)]' : 'w-3 bg-black/15'}`}
               role="tab"
               aria-selected={i === currentIndex}
               aria-label={`第 ${i + 1} 页`}

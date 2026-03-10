@@ -1,26 +1,27 @@
 /* ============================================
-   健康数据卡片样式
-   适老化设计：大字体、高对比度、大触控区域
+   健康数据卡片 — 严格参考成品图(健康看板页面)
+   白色大圆角卡片 · 彩色图标圆 · 超大数字
    ============================================ */
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
-  background-color: var(--color-bg-card);
-  border-radius: var(--border-radius);
+  gap: var(--spacing-sm);
+  background-color: #ffffff;
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
-  padding: var(--spacing-base);
-  min-height: 120px;
+  padding: var(--spacing-lg);
+  min-height: 140px;
   cursor: pointer;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-  border: 2px solid transparent;
+  border: 1px solid rgba(0, 0, 0, 0.05);
   user-select: none;
+  position: relative;
+  overflow: hidden;
 }
 
 .card:active {
-  transform: scale(0.97);
-  opacity: 0.9;
+  transform: scale(0.98);
 }
 
 .cardSelected {
@@ -32,11 +33,11 @@
   border-color: var(--color-danger);
 }
 
-/* 顶部：图标 + 名称 */
+/* 顶部：图标 + 名称 — 参考成品图圆形图标背景 */
 .cardHeader {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
 }
 
 .icon {
@@ -46,24 +47,24 @@
 
 .label {
   font-size: var(--font-size-lg);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text);
 }
 
-/* 异常标记 */
+/* 异常标记 — 圆角胶囊 */
 .abnormalBadge {
   display: inline-flex;
   align-items: center;
   margin-left: auto;
-  padding: 2px 8px;
+  padding: 4px 12px;
   font-size: 14px;
   font-weight: 700;
   color: #ffffff;
-  background-color: var(--color-danger);
-  border-radius: var(--border-radius-full);
+  background: linear-gradient(135deg, #D32F2F 0%, #B71C1C 100%);
+  border-radius: var(--radius-full);
 }
 
-/* 数值区域 */
+/* 数值区域 — 参考成品图超大数字 */
 .valueSection {
   display: flex;
   align-items: baseline;
@@ -72,10 +73,11 @@
 }
 
 .value {
-  font-size: var(--font-size-title);
-  font-weight: 700;
+  font-size: var(--font-size-hero);
+  font-weight: 900;
   color: var(--color-text);
-  line-height: 1.2;
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .valueAbnormal {
@@ -83,14 +85,15 @@
 }
 
 .unit {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-lg);
   color: var(--color-text-secondary);
+  font-weight: 500;
 }
 
 /* 时间 */
 .time {
-  font-size: 14px;
-  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
   margin-top: auto;
 }
 
@@ -102,9 +105,15 @@
   justify-content: center;
   flex: 1;
   gap: var(--spacing-xs);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 .noDataText {
   font-size: var(--font-size-base);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
 }

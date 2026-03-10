@@ -1,183 +1,69 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useUserStore } from '@/stores/userStore';
-import { useAuth } from '@/hooks/useAuth';
-import { ROUTES } from '@/lib/constants';
 import styles from './page.module.css';
 
-type ModalType = 'role' | 'logout' | null;
+const SETTING_ITEMS = [
+  { label: '个人信息', icon: '👤', color: styles.iconBlue, href: '/settings/profile' },
+  { label: '绑定管理', icon: '🔗', color: styles.iconOrange, href: '/settings/bind' },
+  { label: '无障碍设置', icon: '♿', color: styles.iconGreen, href: '/settings/accessibility' },
+  { label: '消息通知', icon: '🔔', color: styles.iconPurple, href: '' },
+  { label: '关于我们', icon: 'ℹ️', color: styles.iconBlue, href: '' },
+];
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { isReady } = useAuth();
-  const isElder = useUserStore((s) => s.isElder);
-  const setRole = useUserStore((s) => s.setRole);
+  const user = useUserStore((s) => s.user);
   const logout = useUserStore((s) => s.logout);
 
-  const [activeModal, setActiveModal] = useState<ModalType>(null);
-  const [switching, setSwitching] = useState(false);
-
-  const currentRoleLabel = isElder ? '长辈模式' : '家属模式';
-  const targetRole = isElder ? 'family' : 'elder';
-  const targetRoleLabel = isElder ? '家属模式' : '长辈模式';
-
-  async function handleRoleSwitch() {
-    if (switching) return;
-    setSwitching(true);
-    try {
-      await setRole(targetRole);
-      setActiveModal(null);
-    } catch {
-      // setRole handles rollback internally
-    } finally {
-      setSwitching(false);
-    }
-  }
-
-  function handleLogout() {
+  const handleLogout = () => {
     logout();
-    setActiveModal(null);
-    router.replace(ROUTES.LOGIN);
-  }
-
-  if (!isReady) {
-    return <div className={styles.loading}>加载中…</div>;
-  }
+    router.replace('/login');
+  };
 
   return (
-    <main className={styles.container}>
+    <div className={styles.page}>
       <div className={styles.header}>
-        <h1 className={styles.title}>设置</h1>
+        <h1 className={styles.title}>我的</h1>
       </div>
 
-      <nav className={styles.menuList} aria-label="设置菜单">
-        {/* 个人信息 */}
-        <Link href={ROUTES.SETTINGS_PROFILE} className={styles.menuItem}>
-          <span className={styles.menuIcon} aria-hidden="true">👤</span>
-          <div className={styles.menuContent}>
-            <div className={styles.menuLabel}>个人信息</div>
-            <div className={styles.menuDesc}>姓名、头像、出生日期</div>
-          </div>
-          <span className={styles.menuArrow} aria-hidden="true">›</span>
-        </Link>
-
-        {/* 绑定管理 */}
-        <Link href={ROUTES.SETTINGS_BIND} className={styles.menuItem}>
-          <span className={styles.menuIcon} aria-hidden="true">🔗</span>
-          <div className={styles.menuContent}>
-            <div className={styles.menuLabel}>绑定管理</div>
-            <div className={styles.menuDesc}>管理家属绑定关系</div>
-          </div>
-          <span className={styles.menuArrow} aria-hidden="true">›</span>
-        </Link>
-
-        {/* 无障碍设置 */}
-        <Link href={ROUTES.SETTINGS_ACCESSIBILITY} className={styles.menuItem}>
-          <span className={styles.menuIcon} aria-hidden="true">♿</span>
-          <div className={styles.menuContent}>
-            <div className={styles.menuLabel}>无障碍设置</div>
-            <div className={styles.menuDesc}>字体大小、语音速度</div>
-          </div>
-          <span className={styles.menuArrow} aria-hidden="true">›</span>
-        </Link>
-
-        {/* 角色切换 */}
-        <button
-          className={styles.roleSwitch}
-          onClick={() => setActiveModal('role')}
-          aria-label={`当前为${currentRoleLabel}，点击切换到${targetRoleLabel}`}
-        >
-          <span className={styles.menuIcon} aria-hidden="true">🔄</span>
-          <div className={styles.menuContent}>
-            <div className={styles.menuLabel}>角色切换</div>
-            <div className={styles.menuDesc}>切换长辈/家属模式</div>
-          </div>
-          <span
-            className={`${styles.roleBadge} ${isElder ? styles.roleBadgeElder : styles.roleBadgeFamily}`}
-          >
-            {currentRoleLabel}
-          </span>
-        </button>
-
-        {/* 退出登录 */}
-        <button
-          className={styles.logoutItem}
-          onClick={() => setActiveModal('logout')}
-          aria-label="退出登录"
-        >
-          <span className={styles.logoutLabel}>退出登录</span>
-        </button>
-      </nav>
-
-      {/* Role switch confirmation modal */}
-      {activeModal === 'role' && (
-        <div
-          className={styles.modalOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="role-modal-title"
-          onClick={() => !switching && setActiveModal(null)}
-        >
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h2 id="role-modal-title" className={styles.modalTitle}>切换角色</h2>
-            <p className={styles.modalMessage}>
-              确定要从「{currentRoleLabel}」切换到「{targetRoleLabel}」吗？
-              界面风格将随之改变。
-            </p>
-            <div className={styles.modalActions}>
-              <button
-                className={styles.modalBtnCancel}
-                onClick={() => setActiveModal(null)}
-                disabled={switching}
-              >
-                取消
-              </button>
-              <button
-                className={styles.modalBtnConfirm}
-                onClick={handleRoleSwitch}
-                disabled={switching}
-              >
-                {switching ? '切换中…' : '确认切换'}
-              </button>
-            </div>
-          </div>
+      {/* 用户卡片 */}
+      <div
+        className={`glass-card ${styles.userCard} interactive`}
+        onClick={() => router.push('/settings/profile')}
+      >
+        <div className={styles.userAvatar}>👤</div>
+        <div>
+          <div className={styles.userName}>{user?.name || '用户'}</div>
+          <div className={styles.userRole}>{user?.role === 'elder' ? '老年人端' : '家属端'}</div>
         </div>
-      )}
+      </div>
 
-      {/* Logout confirmation modal */}
-      {activeModal === 'logout' && (
-        <div
-          className={styles.modalOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="logout-modal-title"
-          onClick={() => setActiveModal(null)}
-        >
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h2 id="logout-modal-title" className={styles.modalTitle}>退出登录</h2>
-            <p className={styles.modalMessage}>
-              确定要退出登录吗？退出后需要重新验证手机号。
-            </p>
-            <div className={styles.modalActions}>
-              <button
-                className={styles.modalBtnCancel}
-                onClick={() => setActiveModal(null)}
-              >
-                取消
-              </button>
-              <button
-                className={styles.modalBtnDanger}
-                onClick={handleLogout}
-              >
-                退出登录
-              </button>
+      {/* 设置列表 */}
+      <div className={styles.section}>
+        <div className={styles.sectionLabel}>功能设置</div>
+        <div className={`glass-card-solid ${styles.settingsList}`}>
+          {SETTING_ITEMS.map((item) => (
+            <div
+              key={item.label}
+              className={styles.settingItem}
+              onClick={() => item.href && router.push(item.href)}
+            >
+              <div className={`${styles.settingIcon} ${item.color}`}>{item.icon}</div>
+              <span className={styles.settingLabel}>{item.label}</span>
+              <span className={styles.settingArrow}>›</span>
             </div>
-          </div>
+          ))}
         </div>
-      )}
-    </main>
+      </div>
+
+      {/* 退出登录 */}
+      <button className={styles.logoutBtn} onClick={handleLogout}>
+        退出登录
+      </button>
+
+      <p className={styles.version}>桑梓智护 v0.1.0</p>
+    </div>
   );
 }

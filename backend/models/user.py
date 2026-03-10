@@ -3,14 +3,14 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 
 # ---------- users 表 ----------
 
 class UserBase(BaseModel):
     name: str
-    phone: str
+    email: EmailStr
     role: str = Field(..., pattern=r"^(elder|family)$")
 
 
@@ -39,7 +39,7 @@ class UserRoleUpdate(BaseModel):
 class UserResponse(BaseModel):
     id: str
     name: str
-    phone: str
+    email: str
     role: str
     avatar_url: Optional[str] = None
     birth_date: Optional[str] = None
@@ -51,6 +51,9 @@ class UserResponse(BaseModel):
     last_active_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+    # 向后兼容：如果 DB 行中仍有 phone 字段，不报错
+    phone: Optional[str] = None
 
 
 # ---------- elder_family_binds 表 ----------

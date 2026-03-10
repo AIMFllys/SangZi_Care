@@ -1,177 +1,143 @@
-/* ============================================
-   用药历史页样式
-   适老化设计：大字体、高对比度、大触控区域
-   ============================================ */
-
+/* medicine history — 用药历史 */
 .page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: var(--color-bg);
-  padding-bottom: 80px;
+  min-height: 100dvh;
+  background: var(--bg-base);
+  padding: var(--safe-top) var(--space-lg) var(--space-lg);
 }
 
-/* 顶部栏 */
 .header {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-base);
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
 }
 
 .backLink {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: var(--min-touch-target);
-  min-height: var(--min-touch-target);
-  font-size: var(--font-size-lg);
-  color: var(--color-primary);
-  font-weight: 600;
-  border-radius: var(--border-radius-sm);
+  font-size: var(--font-body);
+  color: var(--accent-primary);
   text-decoration: none;
-  transition: opacity var(--transition-fast);
-}
-
-.backLink:active {
-  opacity: 0.7;
+  font-weight: 600;
 }
 
 .title {
-  font-size: var(--font-size-title);
+  font-size: var(--font-heading);
   font-weight: 700;
-  color: var(--color-text);
 }
 
-/* 分组区域 */
-.section {
-  padding: 0 var(--spacing-base) var(--spacing-base);
-}
-
-.sectionTitle {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: var(--spacing-sm);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
-/* 计划卡片 */
-.planCard {
-  background-color: var(--color-bg-card);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
-  padding: var(--spacing-base);
-  margin-bottom: var(--spacing-sm);
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-/* 状态指示器 */
-.indicator {
-  width: 6px;
-  border-radius: var(--border-radius-full);
-  flex-shrink: 0;
-}
-
-.indicatorActive {
-  background-color: var(--color-success);
-}
-
-.indicatorInactive {
-  background-color: var(--color-border);
-}
-
-/* 卡片内容 */
-.cardContent {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.medicineName {
-  font-size: var(--font-size-lg);
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-.dosage {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-}
-
-.scheduleTimes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-xs);
-}
-
-.timeTag {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px var(--spacing-xs);
-  background-color: var(--color-bg);
-  border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-}
-
-.dateRange {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-}
-
-/* 空状态 */
-.emptySection {
-  text-align: center;
-  padding: var(--spacing-lg);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
-}
-
-/* 加载状态 */
+/* 内容区 */
 .loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-xl);
+  padding: var(--space-2xl);
 }
 
 .loadingText {
-  font-size: var(--font-size-lg);
-  color: var(--color-text-secondary);
+  font-size: var(--font-body);
+  color: var(--text-secondary);
 }
 
-/* 错误状态 */
 .errorBox {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-xl) var(--spacing-base);
+  gap: var(--space-md);
+  padding: var(--space-2xl);
 }
 
 .errorText {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-body);
   color: var(--color-danger);
-  text-align: center;
 }
 
 .retryBtn {
-  min-height: var(--min-touch-target);
-  padding: var(--spacing-xs) var(--spacing-lg);
-  background-color: var(--color-primary);
-  color: #ffffff;
-  font-size: var(--font-size-base);
-  font-weight: 700;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-full);
+  background: var(--accent-primary);
+  color: white;
   border: none;
-  border-radius: var(--border-radius-sm);
+  font-size: var(--font-body);
   cursor: pointer;
 }
 
-.retryBtn:active {
-  opacity: 0.85;
+/* 分组 */
+.section {
+  margin-top: var(--space-xl);
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-title);
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+}
+
+.emptySection {
+  font-size: var(--font-body);
+  color: var(--text-muted);
+  padding: var(--space-lg);
+  text-align: center;
+}
+
+/* 用药计划卡片 */
+.planCard {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  margin-bottom: var(--space-md);
+  box-shadow: var(--shadow-card);
+}
+
+.indicator {
+  width: 4px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.indicatorActive {
+  background: var(--color-success);
+}
+
+.indicatorInactive {
+  background: var(--text-muted);
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.medicineName {
+  font-size: var(--font-body);
+  font-weight: 700;
+}
+
+.dosage {
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
+}
+
+.scheduleTimes {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.timeTag {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(59, 130, 246, 0.08);
+  font-size: var(--font-small);
+  color: #3b82f6;
+}
+
+.dateRange {
+  font-size: var(--font-small);
+  color: var(--text-muted);
 }

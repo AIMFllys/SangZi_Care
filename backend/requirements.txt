@@ -5,6 +5,7 @@ pyjwt
 python-multipart
 httpx
 pydantic-settings
+email-validator
 # Supabase sub-packages (installed individually to avoid storage3/pyiceberg C++ build issues)
 postgrest
 supabase-auth

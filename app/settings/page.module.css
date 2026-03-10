@@ -1,265 +1,152 @@
-/* ============================================
-   设置页样式
-   适老化设计：大字体、大触控区域、高对比度
-   ============================================ */
-
-.container {
+.page {
   min-height: 100dvh;
-  background-color: var(--color-bg);
-  padding-bottom: var(--spacing-xl);
+  padding: var(--safe-top) var(--space-lg) var(--space-lg);
+  background: var(--bg-base);
 }
 
 .header {
-  padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-lg);
+  padding: var(--space-xl) 0 var(--space-lg);
 }
 
 .title {
-  font-size: var(--font-size-title);
-  font-weight: 700;
-  color: var(--color-text);
+  font-size: var(--font-title);
+  font-weight: 800;
 }
 
-/* --- Menu list --- */
-
-.menuList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  padding: 0 var(--spacing-base);
-}
-
-.menuItem {
+/* 用户卡片 */
+.userCard {
   display: flex;
   align-items: center;
-  gap: var(--spacing-base);
-  width: 100%;
-  min-height: 64px;
-  padding: var(--spacing-base) var(--spacing-lg);
-  background-color: var(--color-bg-card);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-xl);
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-  -webkit-user-select: none;
-  user-select: none;
-  text-align: left;
-  border: none;
-  text-decoration: none;
-  color: inherit;
 }
 
-.menuItem:active {
-  transform: scale(0.98);
-  box-shadow: var(--shadow-md);
+.userAvatar {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--accent-soft), var(--accent-glow));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
 }
 
-.menuIcon {
-  font-size: var(--font-size-xl);
-  flex-shrink: 0;
-  width: 40px;
-  text-align: center;
+.userName {
+  font-size: var(--font-heading);
+  font-weight: 700;
 }
 
-.menuContent {
-  flex: 1;
-  min-width: 0;
-}
-
-.menuLabel {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.menuDesc {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
+.userRole {
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
   margin-top: 2px;
 }
 
-.menuArrow {
-  font-size: var(--font-size-lg);
-  color: var(--color-text-secondary);
-  flex-shrink: 0;
+/* 设置分组 */
+.section {
+  margin-bottom: var(--space-lg);
 }
 
-/* --- Role switch item --- */
+.sectionLabel {
+  font-size: var(--font-caption);
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 0 var(--space-md);
+  margin-bottom: var(--space-sm);
+}
 
-.roleSwitch {
+.settingsList {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.settingItem {
   display: flex;
   align-items: center;
-  gap: var(--spacing-base);
-  width: 100%;
-  min-height: 64px;
-  padding: var(--spacing-base) var(--spacing-lg);
-  background-color: var(--color-bg-card);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-  -webkit-user-select: none;
-  user-select: none;
-  text-align: left;
-  border: none;
-  color: inherit;
+  border-bottom: 1px solid var(--divider);
+  transition: background var(--duration-fast);
 }
 
-.roleSwitch:active {
-  transform: scale(0.98);
-  box-shadow: var(--shadow-md);
+.settingItem:last-child {
+  border-bottom: none;
 }
 
-.roleBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: var(--border-radius-full);
-  font-size: calc(var(--font-size-base) - 2px);
-  font-weight: 600;
-  flex-shrink: 0;
+.settingItem:active {
+  background: var(--accent-glow);
 }
 
-.roleBadgeElder {
-  background-color: #fff0e6;
-  color: #c45a30;
-}
-
-.roleBadgeFamily {
-  background-color: #e3f2fd;
-  color: #1565c0;
-}
-
-/* --- Logout button --- */
-
-.logoutItem {
+.settingIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-base);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.iconOrange {
+  background: rgba(251, 146, 60, 0.12);
+}
+
+.iconBlue {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.iconGreen {
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.iconPurple {
+  background: rgba(168, 85, 247, 0.12);
+}
+
+.iconRed {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.settingLabel {
+  flex: 1;
+  font-size: var(--font-body);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.settingArrow {
+  font-size: 16px;
+  color: var(--text-muted);
+}
+
+/* 退出 */
+.logoutBtn {
   width: 100%;
-  min-height: 64px;
-  padding: var(--spacing-base) var(--spacing-lg);
-  background-color: transparent;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-  -webkit-user-select: none;
-  user-select: none;
-  margin-top: var(--spacing-lg);
-  border: 2px solid var(--color-danger);
-}
-
-.logoutItem:active {
-  transform: scale(0.98);
-}
-
-.logoutLabel {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: none;
+  border: 1px solid var(--color-danger);
   color: var(--color-danger);
+  font-size: var(--font-body);
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: var(--space-xl);
+  transition: all var(--duration-fast);
 }
 
-/* --- Confirm modal overlay --- */
-
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: var(--spacing-lg);
+.logoutBtn:active {
+  background: var(--color-danger-soft);
+  transform: scale(0.98);
 }
 
-.modalContent {
-  background-color: var(--color-bg-card);
-  border-radius: var(--border-radius);
-  padding: var(--spacing-xl);
-  width: 100%;
-  max-width: 360px;
-  box-shadow: var(--shadow-lg);
+.version {
   text-align: center;
-}
-
-.modalTitle {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: var(--spacing-sm);
-}
-
-.modalMessage {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-lg);
-  line-height: 1.5;
-}
-
-.modalActions {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.modalBtnCancel {
-  flex: 1;
-  min-height: var(--min-touch-target);
-  border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform var(--transition-fast);
-  border: none;
-  background-color: var(--color-border);
-  color: var(--color-text);
-}
-
-.modalBtnCancel:active {
-  transform: scale(0.96);
-}
-
-.modalBtnConfirm {
-  flex: 1;
-  min-height: var(--min-touch-target);
-  border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform var(--transition-fast);
-  border: none;
-  background-color: var(--color-primary);
-  color: #ffffff;
-}
-
-.modalBtnConfirm:active {
-  transform: scale(0.96);
-}
-
-.modalBtnDanger {
-  flex: 1;
-  min-height: var(--min-touch-target);
-  border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform var(--transition-fast);
-  border: none;
-  background-color: var(--color-danger);
-  color: #ffffff;
-}
-
-.modalBtnDanger:active {
-  transform: scale(0.96);
-}
-
-/* --- Loading state --- */
-
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100dvh;
-  font-size: var(--font-size-lg);
-  color: var(--color-text-secondary);
+  font-size: var(--font-small);
+  color: var(--text-muted);
+  margin-top: var(--space-lg);
 }

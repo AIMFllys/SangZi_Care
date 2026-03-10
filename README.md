@@ -2,15 +2,45 @@
 
 > 面向老年人及其家属的智能养老移动应用 — "智护银龄" APP
 
+---
+
+## ⚡ 3 步快速启动
+
+```bash
+# 1. 双击启动脚本
+scripts\dev.bat
+
+# 2. 等待自动配置（约 10 秒）
+
+# 3. 访问应用
+http://localhost:3000
+```
+
+**就这么简单！** 脚本会自动检查环境、安装依赖、启动服务。
+
+📖 **新手？** 查看 [START_HERE.md](START_HERE.md) 获取详细指导
+
+---
+
 ## 🚀 快速开始本地测试
 
-**新手？5 分钟快速启动！**
+**新手？3 步快速启动！**
 
-1. **查看快速指南**: [QUICK_START.md](docs/03-tutorials/QUICK_START.md) ⭐
-2. **双击启动脚本**: `scripts/start-dev.bat` (Windows)
+1. **双击启动脚本**: `scripts\dev.bat` (Windows) ⭐
+2. **等待自动配置**: 脚本会自动检查环境、安装依赖、启动服务
 3. **访问应用**: http://localhost:3000
 
+**其他启动方式：**
+- PowerShell: `.\scripts\dev.ps1`
+- 手动启动: 查看 [本地开发指南](docs/本地开发指南.md)
+
+**开发工具：**
+- 🔍 检查状态: `scripts\check-status.bat`
+- 🛑 停止服务: `scripts\stop-dev.bat`
+- 🧪 测试环境: `scripts\test-env.bat`
+
 **需要帮助？**
+- 📖 [本地开发指南](docs/04-development/本地开发指南.md) ⭐
 - 📋 [配置检查清单](docs/03-tutorials/CHECKLIST.md)
 - 🔧 [故障排查指南](docs/03-tutorials/TROUBLESHOOTING.md)
 - 📚 [完整测试文档](docs/03-tutorials/LOCAL_TESTING_INDEX.md)

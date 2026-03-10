@@ -1,65 +1,27 @@
-/* ============================================
-   家属端主题 — 专属样式覆盖
-   标准蓝色调、常规字体
-   ============================================ */
+/* ============================================================
+ * Family 端主题 — 冷色系
+ * 低饱和冷蓝渐变 · 沉稳蓝主调 · 柔灰蓝文字
+ * ============================================================ */
 
-[data-theme='family'] body {
-  font-size: 16px;
-  line-height: 1.5;
-}
+[data-theme="family"] {
+  --bg-base: #f4f6fb;
+  --bg-elevated: #edf0f8;
+  --bg-card: rgba(255, 255, 255, 0.78);
+  --bg-card-solid: #ffffff;
+  --bg-input: rgba(255, 255, 255, 0.65);
 
-/* 标题层级 */
-[data-theme='family'] h1 {
-  font-size: var(--font-size-hero);
-  font-weight: 700;
-  line-height: 1.3;
-}
+  --accent: #3b6af5;
+  --accent-light: #7da2f7;
+  --accent-soft: rgba(59, 106, 245, 0.10);
+  --accent-glow: rgba(59, 106, 245, 0.06);
+  --accent-hover: #2d55d4;
+  --accent-text: #ffffff;
 
-[data-theme='family'] h2 {
-  font-size: var(--font-size-title);
-  font-weight: 600;
-  line-height: 1.3;
-}
+  --text-primary: #1a1f36;
+  --text-secondary: #6b7894;
+  --text-muted: #9ca7be;
 
-[data-theme='family'] h3 {
-  font-size: var(--font-size-xl);
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-/* 按钮 — 最小触控区域 44×44px */
-[data-theme='family'] button,
-[data-theme='family'] [role='button'],
-[data-theme='family'] a[href] {
-  min-height: 44px;
-  min-width: 44px;
-}
-
-/* 输入框 */
-[data-theme='family'] input,
-[data-theme='family'] textarea,
-[data-theme='family'] select {
-  font-size: var(--font-size-base);
-  min-height: 44px;
-  padding: var(--spacing-sm) var(--spacing-base);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
-  background-color: #ffffff;
-}
-
-[data-theme='family'] input:focus,
-[data-theme='family'] textarea:focus,
-[data-theme='family'] select:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-color: var(--color-primary);
-}
-
-/* 卡片样式 */
-[data-theme='family'] .card {
-  background-color: var(--color-bg-card);
-  border-radius: var(--border-radius);
-  padding: var(--spacing-base);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--color-border);
+  --border-light: rgba(107, 120, 148, 0.08);
+  --border-card: rgba(255, 255, 255, 0.4);
+  --divider: rgba(107, 120, 148, 0.08);
 }

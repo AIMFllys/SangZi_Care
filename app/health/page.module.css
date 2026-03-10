@@ -1,208 +1,221 @@
-/* ============================================
-   健康记录页面样式
-   适老化设计：大字体、高对比度
-   ============================================ */
-
 .page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: var(--color-bg);
-  padding-bottom: 80px;
+  min-height: 100dvh;
+  padding: var(--safe-top) var(--space-lg) var(--space-lg);
+  background: var(--bg-base);
 }
 
-/* 顶部栏 */
 .header {
   display: flex;
   align-items: center;
-  padding: var(--spacing-base);
-  gap: var(--spacing-sm);
-}
-
-.backBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: var(--min-touch-target);
-  min-height: var(--min-touch-target);
-  font-size: var(--font-size-xl);
-  color: var(--color-text);
-  background: none;
-  border: none;
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  transition: opacity var(--transition-fast);
-}
-
-.backBtn:active {
-  opacity: 0.7;
+  justify-content: space-between;
+  padding: var(--space-xl) 0 var(--space-lg);
 }
 
 .title {
-  font-size: var(--font-size-title);
-  font-weight: 700;
-  color: var(--color-text);
-  flex: 1;
+  font-size: var(--font-title);
+  font-weight: 800;
 }
 
-/* 健康卡片网格 */
-.cardsSection {
-  padding: 0 var(--spacing-base) var(--spacing-base);
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--accent-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
 }
 
-.cardsGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-sm);
-}
-
-/* 最后一个卡片居中（奇数个时） */
-.cardCentered {
-  grid-column: 1 / -1;
-  max-width: calc(50% - var(--spacing-sm) / 2);
-  justify-self: center;
-}
-
-/* 趋势区域 */
-.trendSection {
-  flex: 1;
-  padding: 0 var(--spacing-base);
-}
-
-.trendHeader {
+/* 状态摘要 */
+.statusCard {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--spacing-sm);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-lg);
+  background: var(--accent-glow);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
 }
 
-.trendTitle {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--color-text);
+.statusLabel {
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
 }
 
-.trendCard {
-  background-color: var(--color-bg-card);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
+.statusValue {
+  font-size: var(--font-heading);
+  font-weight: 800;
+  color: var(--color-success);
+  margin-top: var(--space-xs);
+}
+
+.statusTime {
+  font-size: var(--font-caption);
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.statusTimeValue {
+  font-size: var(--font-heading);
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* 健康数据卡 */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.healthCard {
+  padding: var(--space-lg);
+  position: relative;
   overflow: hidden;
 }
 
-/* 趋势列表 */
-.trendList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.trendItem {
+.healthCardHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-sm) var(--spacing-base);
-  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-md);
 }
 
-.trendItem:last-child {
-  border-bottom: none;
-}
-
-.trendDate {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  min-width: 100px;
-}
-
-.trendValue {
-  font-size: var(--font-size-lg);
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-.trendValueAbnormal {
-  color: var(--color-danger);
-}
-
-.trendUnit {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  margin-left: var(--spacing-xs);
-}
-
-.trendEmpty {
-  padding: var(--spacing-xl);
-  text-align: center;
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-}
-
-/* 底部操作 */
-.actions {
-  padding: var(--spacing-base);
-}
-
-.inputBtn {
+.healthCardIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 22px;
+}
+
+.iconHeart {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.iconBp {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.iconSteps {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.iconWeight {
+  background: rgba(168, 85, 247, 0.1);
+}
+
+.iconSugar {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.healthCardLabel {
+  font-size: var(--font-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-left: var(--space-sm);
+}
+
+.statusBadge {
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-small);
+  font-weight: 600;
+}
+
+.badgeNormal {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.badgeWarning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.healthValue {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.healthUnit {
+  font-size: var(--font-body);
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-left: var(--space-xs);
+}
+
+/* 进度条 */
+.progressBar {
   width: 100%;
-  min-height: 56px;
-  font-size: var(--font-size-lg);
+  height: 8px;
+  border-radius: 4px;
+  background: var(--border-light);
+  margin-top: var(--space-md);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width var(--duration-slow);
+}
+
+.progressFillRed {
+  background: var(--color-danger);
+}
+
+.progressFillGreen {
+  background: var(--color-success);
+}
+
+.progressFillBlue {
+  background: var(--color-info);
+}
+
+.healthCardBg {
+  position: absolute;
+  right: -20px;
+  bottom: -20px;
+  font-size: 80px;
+  opacity: 0.04;
+  pointer-events: none;
+}
+
+.goalText {
+  font-size: var(--font-caption);
+  color: var(--text-muted);
+  margin-top: var(--space-sm);
+}
+
+/* 添加记录按钮 */
+.addBtn {
+  width: 100%;
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: var(--font-body);
   font-weight: 700;
-  color: #ffffff;
-  background-color: var(--color-primary);
   border: none;
-  border-radius: var(--border-radius);
   cursor: pointer;
-  text-decoration: none;
-  transition: opacity var(--transition-fast);
-}
-
-.inputBtn:active {
-  opacity: 0.85;
-}
-
-/* 加载状态 */
-.loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-xl);
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+  box-shadow: 0 4px 20px var(--accent-soft);
+  transition: transform var(--duration-fast);
 }
 
-.loadingText {
-  font-size: var(--font-size-lg);
-  color: var(--color-text-secondary);
-}
-
-/* 错误状态 */
-.errorBox {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-xl) var(--spacing-base);
-}
-
-.errorText {
-  font-size: var(--font-size-lg);
-  color: var(--color-danger);
-  text-align: center;
-}
-
-.retryBtn {
-  min-height: var(--min-touch-target);
-  padding: var(--spacing-xs) var(--spacing-lg);
-  background-color: var(--color-primary);
-  color: #ffffff;
-  font-size: var(--font-size-base);
-  font-weight: 700;
-  border: none;
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-}
-
-.retryBtn:active {
-  opacity: 0.85;
+.addBtn:active {
+  transform: scale(0.97);
 }

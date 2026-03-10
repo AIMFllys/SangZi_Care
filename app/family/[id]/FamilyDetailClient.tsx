@@ -13,6 +13,7 @@ import { useFamilyStore } from '@/stores/familyStore';
 import { useHealthStore, formatHealthValue, RECORD_TYPE_CONFIG } from '@/stores/healthStore';
 import { useMedicineStore } from '@/stores/medicineStore';
 import { fetchApi } from '@/lib/api';
+import PageHeader from '@/components/layout/PageHeader';
 import { ROUTES } from '@/lib/constants';
 import styles from './page.module.css';
 
@@ -83,7 +84,7 @@ export default function FamilyDetailClient({ userId }: Props) {
       // 加载AI对话记录
       loadAiConversations();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, isElder]);
 
   async function loadAiConversations() {
@@ -116,16 +117,7 @@ export default function FamilyDetailClient({ userId }: Props) {
   if (!bind || !targetUser) {
     return (
       <main className={styles.container}>
-        <div className={styles.header}>
-          <button
-            className={styles.backButton}
-            onClick={() => router.back()}
-            aria-label="返回"
-          >
-            ‹ 返回
-          </button>
-          <h1 className={styles.title}>详情</h1>
-        </div>
+        <PageHeader title="详情" fallbackUrl="/" />
         <div className={styles.empty}>未找到该用户信息</div>
       </main>
     );
@@ -134,16 +126,7 @@ export default function FamilyDetailClient({ userId }: Props) {
   return (
     <main className={styles.container}>
       {/* 顶部导航 */}
-      <div className={styles.header}>
-        <button
-          className={styles.backButton}
-          onClick={() => router.back()}
-          aria-label="返回"
-        >
-          ‹ 返回
-        </button>
-        <h1 className={styles.title}>{isElder ? '家属详情' : '老人详情'}</h1>
-      </div>
+      <PageHeader title={isElder ? '家属详情' : '老人详情'} fallbackUrl="/" />
 
       {/* 用户基本信息卡片 */}
       <section className={styles.profileCard} aria-label="基本信息">

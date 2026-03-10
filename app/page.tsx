@@ -1,245 +1,242 @@
 'use client';
 
-// ============================================================
-// 桑梓智护 — 首页（老年人端 + 家属端条件渲染）
-// 老年人端: Greeting + VoiceBall + FamilyCarousel + FunctionCards + EmergencyFAB
-// 家属端:   Greeting + FamilyDashboard + FamilyCarousel + FunctionCards
-// 需求: 3.1–3.9
-// ============================================================
-
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { Greeting } from '@/components/home/Greeting';
-import VoiceBall from '@/components/voice/VoiceBall';
-import type { VoiceBallState } from '@/components/voice/VoiceBall';
-import VoicePanel from '@/components/voice/VoicePanel';
-import { FamilyCarousel } from '@/components/home/FamilyCarousel';
-import { FunctionCards } from '@/components/home/FunctionCards';
-import { useSwipeGesture } from '@/hooks/useSwipeGesture';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { useFamilyStore } from '@/stores/familyStore';
-import type { ElderHealthSummary, FamilyBindWithUser } from '@/stores/familyStore';
+import { useHealthStore, formatHealthValue } from '@/stores/healthStore';
+import { useMedicineStore, calcProgress } from '@/stores/medicineStore';
+import { useFamilyBinds } from '@/hooks/useFamilyBinds';
+import DataStateWrapper from '@/components/ui/DataStateWrapper';
 import styles from './page.module.css';
 
-// ---- 家属端：老人健康摘要卡片 ----
+/** 日期格式化 */
+function useCurrentTime() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(timer);
+  }, []);
 
-function ElderHealthCard({
-  bind,
-  summary,
-}: {
-  bind: FamilyBindWithUser;
-  summary: ElderHealthSummary | undefined;
-}) {
-  const { user } = bind;
-  const name = user.name || '未设置姓名';
-  const relation = bind.bind.relation || '家人';
+  const hours = now.getHours().toString().padStart(2, '0');
+  const mins = now.getMinutes().toString().padStart(2, '0');
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+  const weekday = weekdays[now.getDay()];
 
-  const medStatus = summary?.medicationStatus;
-  const bp = summary?.latestBloodPressure;
+  return { time: `${hours}:${mins}`, date: `${month}月${day}日 星期${weekday}`, hour: now.getHours() };
+}
+
+/** 时段问候语 */
+function getGreeting(hour: number): string {
+  if (hour < 6) return '夜深了';
+  if (hour < 11) return '早上好';
+  if (hour < 14) return '中午好';
+  if (hour < 18) return '下午好';
+  return '晚上好';
+}
+
+/* ==================================================================
+ * Elder 端首页 — 大语音球 + 时间卡 + SOS
+ * ================================================================== */
+function ElderHomeView() {
+  const router = useRouter();
+  const user = useUserStore((s) => s.user);
+  const { time, date, hour } = useCurrentTime();
+  const name = user?.name || '您';
 
   return (
-    <div className={styles.healthCard}>
-      <div className={styles.healthCardHeader}>
-        <div className={styles.healthCardAvatar}>
-          {user.avatar_url ? (
-            <img src={user.avatar_url} alt={name} className={styles.avatarImg} />
-          ) : (
-            <span className={styles.avatarFallback}>
-              {name.charAt(0)}
-            </span>
-          )}
+    <div className={styles.page}>
+      {/* 问候 */}
+      <div className={styles.greeting}>
+        <h1 className={styles.greetingText}>
+          {getGreeting(hour)}，
+          <br />
+          {name}
+        </h1>
+      </div>
+
+      {/* 时间天气卡 */}
+      <div className={`glass-card ${styles.timeCard}`}>
+        <div>
+          <div className={styles.time}>{time}</div>
+          <div className={styles.dateText}>{date}</div>
         </div>
-        <div className={styles.healthCardInfo}>
-          <span className={styles.healthCardName}>{name}</span>
-          <span className={styles.healthCardRelation}>{relation}</span>
+        <div className={styles.weather}>
+          <span className={styles.weatherIcon}>☀️</span>
+          <span className={styles.weatherTemp}>24° 晴</span>
         </div>
       </div>
 
-      <div className={styles.healthCardBody}>
-        {/* 用药状态 */}
-        <div className={styles.healthMetric}>
-          <span className={styles.metricIcon}>💊</span>
-          <div className={styles.metricContent}>
-            <span className={styles.metricLabel}>今日用药</span>
-            {medStatus ? (
-              <span className={styles.metricValue}>
-                {medStatus.completed}/{medStatus.total} 已完成
-              </span>
-            ) : (
-              <span className={styles.metricEmpty}>暂无用药计划</span>
-            )}
-          </div>
-          {medStatus && (
-            <div className={styles.progressBar}>
-              <div
-                className={styles.progressFill}
-                style={{
-                  width: `${medStatus.total > 0 ? (medStatus.completed / medStatus.total) * 100 : 0}%`,
-                }}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* 最近血压 */}
-        <div className={styles.healthMetric}>
-          <span className={styles.metricIcon}>❤️</span>
-          <div className={styles.metricContent}>
-            <span className={styles.metricLabel}>最近血压</span>
-            {bp ? (
-              <span className={styles.metricValue}>
-                {bp.systolic}/{bp.diastolic} mmHg
-              </span>
-            ) : (
-              <span className={styles.metricEmpty}>暂无记录</span>
-            )}
+      {/* 语音球 */}
+      <div className={styles.voiceSection}>
+        <div
+          className={styles.voiceBallWrapper}
+          onClick={() => router.push('/voice')}
+          role="button"
+          aria-label="点我说话，开启语音助手"
+        >
+          <div className={styles.voiceBallRing} />
+          <div className={styles.voiceBallRing} />
+          <div className={`${styles.voiceBall} interactive`}>
+            <span className={styles.voiceIcon}>🎙️</span>
           </div>
         </div>
+        <p className={styles.voiceLabel}>点我说话</p>
       </div>
+
+      {/* 上滑提示 */}
+      <div className={styles.swipeHint}>
+        <span className={styles.swipeArrow}>⌃</span>
+        <span>上滑更多功能</span>
+      </div>
+
+      {/* 紧急呼叫 */}
+      <button
+        className={styles.sosButton}
+        onClick={() => router.push('/settings')}
+        aria-label="紧急呼叫 SOS"
+      >
+        <span className={styles.sosIcon}>🆘</span>
+        紧急呼叫 (SOS)
+      </button>
     </div>
   );
 }
 
-// ---- 家属端首页视图 ----
-
+/* ==================================================================
+ * Family 端首页 — 家人看板
+ * ================================================================== */
 function FamilyHomeView() {
-  const binds = useFamilyStore((s) => s.binds);
-  const healthSummaries = useFamilyStore((s) => s.healthSummaries);
-  const fetchElderHealthSummary = useFamilyStore((s) => s.fetchElderHealthSummary);
+  const router = useRouter();
+  const { binds, isLoading: bindsLoading } = useFamilyBinds();
+  const latestRecords = useHealthStore((s) => s.latestRecords);
+  const fetchLatest = useHealthStore((s) => s.fetchLatest);
+  const todayTimeline = useMedicineStore((s) => s.todayTimeline);
+  const fetchTodayTimeline = useMedicineStore((s) => s.fetchTodayTimeline);
+  const [selectedElder, setSelectedElder] = useState(0);
 
-  // 拉取所有绑定老人的健康摘要
+  const elder = binds[selectedElder];
+
   useEffect(() => {
-    binds.forEach((b) => {
-      const elderId = b.bind.elder_id;
-      if (elderId && !healthSummaries[elderId]) {
-        fetchElderHealthSummary(elderId);
-      }
-    });
-  }, [binds, healthSummaries, fetchElderHealthSummary]);
+    if (elder) {
+      fetchLatest();
+      fetchTodayTimeline();
+    }
+  }, [elder, fetchLatest, fetchTodayTimeline]);
+
+  const medicineTotal = todayTimeline.length;
+  const medicineDone = todayTimeline.filter((t) => t.status === 'taken').length;
+
+  const bp = latestRecords.blood_pressure;
+  const bpDisplay = bp ? formatHealthValue('blood_pressure', bp.values) : '128/82';
+
+  // 模拟7天趋势数据
+  const trendData = [65, 72, 68, 75, 70, 82, 72];
+  const maxTrend = Math.max(...trendData);
 
   return (
-    <div className={styles.container}>
-      {/* 1. 问候语 */}
-      <div className={styles.greetingSection}>
-        <Greeting />
+    <div className={styles.familyPage}>
+      {/* 头部 */}
+      <div className={styles.familyHeader}>
+        <h1 className={styles.familyTitle}>家人看板</h1>
+        <div className={`glass-card ${styles.notifIcon} interactive`}>🔔</div>
       </div>
 
-      {/* 2. 健康看板摘要 */}
-      <div className={styles.dashboardSection}>
-        <h2 className={styles.dashboardTitle}>健康看板</h2>
-        {binds.length === 0 ? (
-          <div className={styles.emptyDashboard}>
-            <p className={styles.emptyText}>尚未绑定老人</p>
-            <p className={styles.emptyHint}>前往设置 → 绑定管理添加家人</p>
+      {/* 老人选择 tabs */}
+      <div className={styles.elderTabs}>
+        {binds.map((bind, i) => (
+          <button
+            key={bind.user.id}
+            className={`${styles.elderTab} ${i === selectedElder ? styles.elderTabActive : ''}`}
+            onClick={() => setSelectedElder(i)}
+          >
+            <span className={styles.elderTabAvatar}>👤</span>
+            {bind.user.name || bind.bind.relation || '家人'}
+          </button>
+        ))}
+        <button className={styles.elderTab} onClick={() => router.push('/settings/bind')}>
+          +
+        </button>
+      </div>
+
+      <DataStateWrapper loading={bindsLoading} empty={binds.length === 0 ? { icon: '👨‍👩‍👧', title: '还没有绑定家人', description: '去设置页面添加您的家人吧' } : false}>
+        {/* 摘要卡片 */}
+        <div className={styles.summaryGrid}>
+          <div className={`glass-card ${styles.summaryCard} interactive`} onClick={() => router.push('/medicine')}>
+            <span className={styles.summaryIcon}>💊</span>
+            <span className={styles.summaryLabel}>今日用药</span>
+            <span className={styles.summaryValue}>{medicineDone}<span style={{ fontSize: 'var(--font-body)', fontWeight: 400 }}> / {medicineTotal}</span></span>
+            <span className={styles.summaryMeta}>{medicineDone >= medicineTotal && medicineTotal > 0 ? '✅ 全部完成' : `还有 ${medicineTotal - medicineDone} 次`}</span>
+            <span className={styles.summaryBgIcon}>💊</span>
           </div>
-        ) : (
-          <div className={styles.healthCardList}>
-            {binds.map((b) => (
-              <ElderHealthCard
-                key={b.bind.id}
-                bind={b}
-                summary={healthSummaries[b.bind.elder_id]}
+          <div className={`glass-card ${styles.summaryCard} interactive`} onClick={() => router.push('/health')}>
+            <span className={styles.summaryIcon}>📍</span>
+            <span className={styles.summaryLabel}>当前状态</span>
+            <span className={styles.summaryValue} style={{ fontSize: 'var(--font-heading)' }}>在家休息</span>
+            <span className={styles.summaryMeta} style={{ color: 'var(--text-muted)' }}>更新于 10分钟前</span>
+            <span className={styles.summaryBgIcon}>🏠</span>
+          </div>
+        </div>
+
+        {/* 健康趋势 */}
+        <div className={`glass-card ${styles.trendSection}`}>
+          <div className={styles.trendHeader}>
+            <h2 className={styles.trendTitle}>
+              <span className={styles.trendTitleAccent} />
+              健康趋势 (心率)
+            </h2>
+            <button className={styles.trendLink} onClick={() => router.push('/health')}>详细 →</button>
+          </div>
+
+          <div className={styles.trendChart}>
+            {trendData.map((val, i) => (
+              <div
+                key={i}
+                className={`${styles.trendBar} ${i === trendData.length - 1 ? styles.trendBarActive : ''} ${val > 80 ? styles.trendBarDanger : ''}`}
+                style={{ height: `${(val / maxTrend) * 100}%` }}
               />
             ))}
           </div>
-        )}
-      </div>
+          <div className={styles.trendLabels}>
+            {['周一', '周二', '周三', '周四', '周五', '昨天', '今天'].map((d, i) => (
+              <span key={d} className={`${styles.trendDayLabel} ${i === 6 ? styles.trendDayActive : ''}`}>{d}</span>
+            ))}
+          </div>
 
-      {/* 3. 家属卡片轮播 */}
-      <div className={styles.carouselSection}>
-        <FamilyCarousel />
-      </div>
-
-      {/* 4. 功能卡片 */}
-      <div className={styles.functionSection}>
-        <FunctionCards />
-      </div>
+          {/* 警告 */}
+          {bp?.is_abnormal && (
+            <div className={styles.alertBanner}>
+              <span className={styles.alertIcon}>⚠️</span>
+              <div>
+                <div className={styles.alertTitle}>血压偏高</div>
+                <div className={styles.alertDesc}>
+                  最近测量值为 {bpDisplay} mmHg，建议今晚再次测量并保持关注。
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </DataStateWrapper>
     </div>
   );
 }
 
-// ---- 老年人端首页视图 ----
-
-function ElderHomeView() {
-  const [voicePanelOpen, setVoicePanelOpen] = useState(false);
-  const [voiceState, setVoiceState] = useState<VoiceBallState>('idle');
-  const [functionExpanded, setFunctionExpanded] = useState(false);
-  const functionRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleSwipeDown = useCallback(() => {
-    setVoicePanelOpen(true);
-  }, []);
-
-  const handleSwipeUp = useCallback(() => {
-    setFunctionExpanded(true);
-    functionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
-
-  useSwipeGesture(containerRef, {
-    onSwipeDown: handleSwipeDown,
-    onSwipeUp: handleSwipeUp,
-  });
-
-  const handleVoiceActivate = useCallback(() => {
-    if (voiceState === 'idle') {
-      setVoiceState('listening');
-    } else if (voiceState === 'listening') {
-      setVoiceState('processing');
-      setTimeout(() => setVoiceState('idle'), 2000);
-    }
-  }, [voiceState]);
-
-  const handleVoicePanelClose = useCallback(() => {
-    setVoicePanelOpen(false);
-  }, []);
-
-  return (
-    <div className={styles.container} ref={containerRef}>
-      <div className={styles.greetingSection}>
-        <Greeting />
-      </div>
-
-      <div className={styles.voiceBallSection}>
-        <VoiceBall state={voiceState} onActivate={handleVoiceActivate} />
-      </div>
-
-      <div className={styles.carouselSection}>
-        <FamilyCarousel />
-      </div>
-
-      <p className={styles.swipeHint}>↑ 上滑查看更多功能</p>
-
-      <div
-        ref={functionRef}
-        className={`${styles.functionSection} ${
-          functionExpanded
-            ? styles.functionSectionExpanded
-            : styles.functionSectionCollapsed
-        }`}
-      >
-        <FunctionCards />
-      </div>
-
-      <VoicePanel
-        isOpen={voicePanelOpen}
-        onClose={handleVoicePanelClose}
-        state={voiceState}
-      />
-    </div>
-  );
-}
-
-// ---- 主页入口：根据角色条件渲染 ----
-
+/* ==================================================================
+ * 主页面入口
+ * ================================================================== */
 export default function HomePage() {
-  const initialize = useUserStore((s) => s.initialize);
-  const fetchBinds = useFamilyStore((s) => s.fetchBinds);
-  const isElder = useUserStore((s) => s.isElder);
+  const user = useUserStore((s) => s.user);
+  const router = useRouter();
 
   useEffect(() => {
-    initialize();
-    fetchBinds();
-  }, [initialize, fetchBinds]);
+    if (!user) {
+      router.replace('/login');
+    }
+  }, [user, router]);
 
-  return isElder ? <ElderHomeView /> : <FamilyHomeView />;
+  if (!user) return null;
+
+  return user.role === 'family' ? <FamilyHomeView /> : <ElderHomeView />;
 }

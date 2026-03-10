@@ -1,11 +1,7 @@
-/* ============================================
-   语音助手页样式
-   适老化设计：大字体、大触控区域、高对比度
-   ============================================ */
-
-.container {
+.page {
   min-height: 100dvh;
-  background-color: var(--color-bg);
+  padding: var(--safe-top) var(--space-lg) var(--space-lg);
+  background: linear-gradient(180deg, #f0f4ff 0%, var(--bg-base) 100%);
   display: flex;
   flex-direction: column;
 }
@@ -13,222 +9,203 @@
 .header {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-sm);
-  flex-shrink: 0;
+  justify-content: space-between;
+  padding: var(--space-md) 0;
 }
 
-.backButton {
+.backBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
   background: none;
   border: none;
-  font-size: var(--font-size-xl);
-  color: var(--color-primary);
+  font-size: 20px;
   cursor: pointer;
-  padding: var(--spacing-xs);
-  min-width: var(--min-touch-target);
-  min-height: var(--min-touch-target);
-  display: flex;
-  align-items: center;
 }
 
 .title {
-  font-size: var(--font-size-title);
+  font-size: var(--font-heading);
   font-weight: 700;
-  color: var(--color-text);
 }
 
-/* --- Chat area --- */
-
-.chatArea {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--spacing-base) var(--spacing-lg);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-base);
-}
-
-.emptyState {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-base);
-  color: var(--color-text-secondary);
-}
-
-.emptyIcon {
-  font-size: 64px;
-}
-
-.emptyText {
-  font-size: var(--font-size-lg);
-  text-align: center;
-  line-height: 1.5;
-}
-
-.emptyHint {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-}
-
-/* --- Message bubbles --- */
-
-.messageBubble {
-  max-width: 85%;
-  padding: var(--spacing-sm) var(--spacing-base);
-  border-radius: var(--border-radius);
-  font-size: var(--font-size-base);
-  line-height: 1.6;
-  word-break: break-word;
-}
-
-.userBubble {
-  align-self: flex-end;
-  background-color: var(--color-primary);
-  color: #ffffff;
-  border-bottom-right-radius: 4px;
-}
-
-.assistantBubble {
-  align-self: flex-start;
-  background-color: var(--color-bg-card);
-  color: var(--color-text);
-  border-bottom-left-radius: 4px;
-  box-shadow: var(--shadow-sm);
-}
-
-.loadingBubble {
-  align-self: flex-start;
-  background-color: var(--color-bg-card);
-  color: var(--color-text-secondary);
-  border-bottom-left-radius: 4px;
-  box-shadow: var(--shadow-sm);
-  font-style: italic;
-}
-
-/* --- Input area --- */
-
-.inputArea {
-  flex-shrink: 0;
-  padding: var(--spacing-base) var(--spacing-lg);
-  background-color: var(--color-bg-card);
-  border-top: 1px solid var(--color-border);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.inputRow {
-  display: flex;
-  gap: var(--spacing-sm);
-  align-items: flex-end;
-}
-
-.textInput {
-  flex: 1;
-  min-height: var(--min-touch-target);
-  padding: var(--spacing-sm) var(--spacing-base);
-  font-size: var(--font-size-base);
-  color: var(--color-text);
-  background-color: var(--color-bg);
-  border: 2px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
-  outline: none;
-  resize: none;
-}
-
-.textInput:focus {
-  border-color: var(--color-primary);
-}
-
-.sendButton {
-  min-width: var(--min-touch-target);
-  min-height: var(--min-touch-target);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-lg);
-  background-color: var(--color-primary);
-  color: #ffffff;
+.settingsBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: none;
   border: none;
-  border-radius: var(--border-radius-sm);
+  font-size: 20px;
   cursor: pointer;
 }
 
-.sendButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+/* 状态文案 */
+.statusText {
+  text-align: center;
+  font-size: var(--font-body);
+  color: #3b82f6;
+  font-weight: 600;
+  margin-top: var(--space-xl);
 }
 
-.micButton {
-  min-width: var(--min-touch-target);
-  min-height: var(--min-touch-target);
+/* 识别文字 */
+.recognizedText {
+  text-align: center;
+  font-size: var(--font-title);
+  font-weight: 900;
+  color: var(--text-primary);
+  margin-top: var(--space-md);
+  padding: 0 var(--space-md);
+  min-height: 40px;
+}
+
+/* 麦克风球 */
+.micSection {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-xl);
-  background-color: var(--color-success);
-  color: #ffffff;
-  border: none;
-  border-radius: 50%;
+  position: relative;
+}
+
+.micWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.micRing {
+  position: absolute;
+  border-radius: var(--radius-full);
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.micRing1 {
+  width: 280px;
+  height: 280px;
+  animation: pulse-ring 3s ease-out infinite;
+}
+
+.micRing2 {
+  width: 220px;
+  height: 220px;
+  animation: pulse-ring 3s ease-out infinite 1s;
+}
+
+.micBall {
+  width: 140px;
+  height: 140px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #7db8f7, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 40px rgba(59, 130, 246, 0.2), 0 4px 16px rgba(0, 0, 0, 0.06);
   cursor: pointer;
-  transition: transform var(--transition-fast);
+  transition: transform var(--duration-normal) var(--ease-spring);
+  position: relative;
+  z-index: 1;
 }
 
-.micButton:active {
-  transform: scale(0.95);
+.micBall:active {
+  transform: scale(0.93);
 }
 
-.micButtonListening {
-  background-color: var(--color-danger);
-  animation: pulse 1.5s infinite;
+.micBallActive {
+  animation: pulse-glow 2s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+.micIcon {
+  font-size: 44px;
+  color: white;
 }
 
-/* --- Action result --- */
-
-.actionResult {
-  padding: var(--spacing-sm) var(--spacing-base);
-  border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-base);
-  text-align: center;
+/* 浮动小球 */
+.floatingDots {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  pointer-events: none;
 }
 
-.actionSuccess {
-  background-color: #e8f5e9;
-  color: #2e7d32;
+.dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: rgba(59, 130, 246, 0.25);
+  animation: float-subtle 4s ease-in-out infinite;
 }
 
-.actionError {
-  background-color: #fce4ec;
-  color: #c62828;
+.dot1 {
+  top: 20%;
+  left: 15%;
+  animation-delay: 0s;
 }
 
-/* --- Error banner --- */
-
-.errorBanner {
-  margin: 0 var(--spacing-lg);
-  padding: var(--spacing-sm) var(--spacing-base);
-  background-color: #fce4ec;
-  color: #c62828;
-  border-radius: var(--border-radius-sm);
-  font-size: var(--font-size-base);
-  text-align: center;
+.dot2 {
+  top: 35%;
+  right: 10%;
+  animation-delay: 1s;
 }
 
-/* --- Loading --- */
+.dot3 {
+  bottom: 30%;
+  left: 25%;
+  animation-delay: 2s;
+}
 
-.loading {
+.dot4 {
+  bottom: 20%;
+  right: 20%;
+  animation-delay: 0.5s;
+}
+
+/* AI 回复卡 */
+.responseCard {
+  padding: var(--space-lg);
+  margin-top: auto;
+}
+
+.responseLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-caption);
+  color: #3b82f6;
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+}
+
+.responseIcon {
+  font-size: 16px;
+}
+
+.responseText {
+  font-size: var(--font-body);
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+/* 结束按钮 */
+.endBtn {
+  width: 100%;
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-secondary);
+  font-size: var(--font-body);
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100dvh;
-  font-size: var(--font-size-lg);
-  color: var(--color-text-secondary);
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  transition: transform var(--duration-fast);
+}
+
+.endBtn:active {
+  transform: scale(0.97);
 }

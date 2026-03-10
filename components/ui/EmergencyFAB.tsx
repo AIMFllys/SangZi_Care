@@ -2,9 +2,6 @@
 
 // ============================================================
 // EmergencyFAB — 紧急呼叫浮动按钮（全局挂载）
-// 红色圆形按钮固定在右下角，点击触发紧急呼叫流程
-// 仅老年人端显示
-// 需求: 10.1, 10.2, 3.7
 // ============================================================
 
 import { useEffect } from 'react';
@@ -146,13 +143,20 @@ export default function EmergencyFAB() {
     <>
       {/* FAB 按钮 — 始终显示（overlay 打开时隐藏在下层） */}
       {!showOverlay && (
-        <button
-          className={styles.fab}
-          aria-label="紧急呼叫"
-          onClick={trigger}
-        >
-          🆘
-        </button>
+        <div className={styles.fabContainer}>
+          <button
+            className={styles.fab}
+            aria-label="紧急呼叫"
+            onClick={trigger}
+          >
+            <div className={styles.fabIconWrap}>
+              <span className={styles.fabIcon} style={{ fontVariationSettings: "'FILL' 1" }}>
+                🆘
+              </span>
+            </div>
+            <span className={styles.fabText}>紧急呼叫 (SOS)</span>
+          </button>
+        </div>
       )}
 
       {/* 全屏状态弹窗 */}

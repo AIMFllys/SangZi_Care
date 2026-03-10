@@ -1,53 +1,103 @@
 /* ============================================
-   Greeting — 问候语与天气信息样式
+   Greeting — 问候语、时间与天气信息样式
    ============================================ */
 
-/* 容器 */
-.container {
+.headerContainer {
   width: 100%;
-  text-align: center;
-  padding: var(--spacing-base) var(--spacing-base) 0;
+  padding-top: env(safe-area-inset-top, 24px);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 问候语 — 大字体、暖色 */
-.greeting {
-  font-size: var(--font-size-title);
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.3;
-  margin: 0 0 var(--spacing-xs);
+.titleWrapper {
+  margin-bottom: 16px;
+  text-align: left;
 }
 
-/* 天气行 */
-.weather {
-  display: inline-flex;
+.greetingTitle {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--color-text, #1A1A1A);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+/* 天气时间卡片 */
+.dashboardCard {
+  width: 100%;
+  background-color: var(--color-bg-card, #FFFFFF);
+  border-radius: 32px;
+  padding: 32px;
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(45, 27, 14, 0.08));
+  border: 1px solid rgba(255, 143, 68, 0.2); /* var(--primary-orange) 的衍生色 */
+  display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  min-height: var(--min-touch-target);
+  justify-content: space-between;
 }
 
-/* 天气图标 */
-.weatherIcon {
-  font-size: var(--font-size-lg);
+/* 时间与日期区域 */
+.timeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timeLabel {
+  font-size: 56px;
+  font-weight: 900;
+  color: var(--color-text, #1A1A1A);
   line-height: 1;
+  letter-spacing: -0.02em;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* 天气文字 */
+.dateLabel {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-secondary, #4A4A4A);
+  margin-top: 4px;
+}
+
+/* 分隔线 */
+.divider {
+  height: 80px;
+  width: 2px;
+  background-color: rgba(255, 143, 68, 0.2);
+  margin: 0 16px;
+}
+
+/* 天气区域 */
+.weatherSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100px;
+}
+
+.weatherFallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.weatherIcon {
+  color: var(--color-primary, #FF8F44);
+  font-size: 64px;
+  line-height: 1;
+  /* 如果使用 Material Symbols 会生效，否则对Emoji来说也没有副作用 */
+}
+
 .weatherText {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--color-text, #1A1A1A);
+  margin-top: -4px;
 }
 
-/* 天气占位 */
-.weatherPlaceholder {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  opacity: 0.7;
-}
-
-/* 减少动画偏好 */
 @media (prefers-reduced-motion: reduce) {
-  .container * {
+  .headerContainer * {
     transition: none !important;
   }
 }

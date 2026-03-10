@@ -1,99 +1,112 @@
+/* ============================================
+   Button — 严格参考成品图设计
+   大圆角 · 暖橙渐变 · 大触控区域
+   ============================================ */
+
 .button {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
   min-height: var(--min-touch-target);
   min-width: var(--min-touch-target);
   padding: var(--spacing-sm) var(--spacing-lg);
   font-size: var(--font-size-base);
-  font-weight: 600;
-  border: 2px solid transparent;
-  border-radius: var(--border-radius);
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius-xl);
   cursor: pointer;
   user-select: none;
-  transition: transform var(--transition-fast), opacity var(--transition-fast),
-    background-color var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--transition-fast),
+              box-shadow var(--transition-fast),
+              opacity var(--transition-fast);
+  overflow: hidden;
 }
 
 .button:active:not(.disabled):not(.loading) {
-  transform: scale(0.95);
+  transform: scale(0.97);
 }
 
-/* Variants */
+.button:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* 主要按钮 — 暖橙渐变 */
 .primary {
-  background-color: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: #ffffff;
+  box-shadow: 0 8px 20px rgba(255, 143, 68, 0.3);
 }
 
 .primary:active:not(.disabled):not(.loading) {
-  background-color: var(--color-primary-dark);
+  box-shadow: 0 4px 12px rgba(255, 143, 68, 0.2);
 }
 
+/* 次要按钮 */
 .secondary {
   background-color: transparent;
   color: var(--color-primary);
-  border-color: var(--color-primary);
+  border: 2px solid var(--color-primary);
 }
 
 .secondary:active:not(.disabled):not(.loading) {
-  background-color: var(--color-primary);
-  color: #ffffff;
+  background-color: var(--color-primary-light);
 }
 
+/* 危险按钮 */
 .danger {
-  background-color: var(--color-danger);
+  background: linear-gradient(135deg, #D32F2F 0%, #B71C1C 100%);
   color: #ffffff;
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.25);
 }
 
 .danger:active:not(.disabled):not(.loading) {
-  opacity: 0.85;
+  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.2);
 }
 
+/* 成功按钮 — 参考成品图绿色 */
 .success {
-  background-color: var(--color-success);
+  background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
   color: #ffffff;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
 }
 
 .success:active:not(.disabled):not(.loading) {
-  opacity: 0.85;
+  box-shadow: 0 2px 8px rgba(46, 125, 50, 0.2);
 }
 
+/* 幽灵按钮 */
 .ghost {
   background-color: transparent;
   color: var(--color-text);
 }
 
 .ghost:active:not(.disabled):not(.loading) {
-  background-color: var(--color-border);
+  background-color: rgba(0, 0, 0, 0.06);
 }
 
-/* Sizes */
+/* 尺寸 */
 .sm {
-  min-height: calc(var(--min-touch-target) - 4px);
+  min-height: calc(var(--min-touch-target) - 8px);
   padding: var(--spacing-xs) var(--spacing-base);
-  font-size: calc(var(--font-size-base) - 2px);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-lg);
 }
 
 .lg {
-  padding: var(--spacing-base) var(--spacing-xl);
-  font-size: var(--font-size-lg);
+  min-height: calc(var(--min-touch-target) + 16px);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  font-size: var(--font-size-xl);
+  border-radius: var(--radius-xl);
 }
 
-/* States */
-.fullWidth {
-  width: 100%;
-}
-
-.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.loading {
-  cursor: wait;
-}
+/* 状态 */
+.fullWidth { width: 100%; }
+.disabled { opacity: 0.5; cursor: not-allowed; }
+.loading { cursor: wait; }
 
 .content {
   display: inline-flex;
@@ -101,9 +114,7 @@
   gap: var(--spacing-xs);
 }
 
-.contentHidden {
-  visibility: hidden;
-}
+.contentHidden { visibility: hidden; }
 
 .spinnerOverlay {
   position: absolute;
@@ -111,4 +122,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button { transition: none; }
 }

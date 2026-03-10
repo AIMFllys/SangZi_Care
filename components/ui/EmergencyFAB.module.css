@@ -1,35 +1,70 @@
 /* ============================================================
    EmergencyFAB — 紧急呼叫浮动按钮 + 全屏状态弹窗
-   需求: 10.1, 10.2, 3.7
    ============================================================ */
 
-/* ---- FAB 按钮 ---- */
+/* ---- 大底边 SOS 按钮 ---- */
+
+.fabContainer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 0 24px env(safe-area-inset-bottom, 24px);
+  display: flex;
+  justify-content: center;
+  z-index: 900;
+  pointer-events: none;
+  /* Let clicks pass through the container */
+}
 
 .fab {
-  position: fixed;
-  bottom: 24px;
-  right: 20px;
-  z-index: 900;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: var(--color-danger, #D32F2F);
-  color: #fff;
+  pointer-events: auto;
+  /* Re-enable clicks for the button */
+  width: 100%;
+  max-width: 420px;
+  height: 96px;
+  background-color: var(--color-danger, #D32F2F);
+  border-radius: 28px;
   border: none;
-  font-size: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(211, 47, 47, 0.4);
+  gap: 20px;
+  box-shadow: 0 8px 20px rgba(211, 47, 47, 0.25);
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, background-color 0.15s ease;
   -webkit-user-select: none;
   user-select: none;
 }
 
 .fab:active {
-  transform: scale(0.92);
-  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.5);
+  transform: scale(0.98);
+  background-color: var(--color-danger-dark, #B71C1C);
+}
+
+.fabIconWrap {
+  background: rgba(255, 255, 255, 0.2);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fabIcon {
+  color: #ffffff;
+  font-size: 36px;
+  line-height: 1;
+}
+
+.fabText {
+  color: #ffffff;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1;
 }
 
 /* ---- 全屏遮罩 ---- */
@@ -48,8 +83,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* ---- 倒计时数字 ---- */
@@ -64,8 +104,15 @@
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.08); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
 }
 
 /* ---- 状态文字 ---- */
@@ -164,9 +211,23 @@
 }
 
 @keyframes dots {
-  0%   { content: ''; }
-  25%  { content: '.'; }
-  50%  { content: '..'; }
-  75%  { content: '...'; }
-  100% { content: ''; }
+  0% {
+    content: '';
+  }
+
+  25% {
+    content: '.';
+  }
+
+  50% {
+    content: '..';
+  }
+
+  75% {
+    content: '...';
+  }
+
+  100% {
+    content: '';
+  }
 }

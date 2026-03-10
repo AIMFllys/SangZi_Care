@@ -1,6 +1,6 @@
 /* ============================================
-   聊天气泡组件样式
-   适老化：大字体、高对比度、清晰布局
+   聊天气泡 — 严格参考亲友对话页面成品图
+   橙色自己气泡 + 白色对方气泡 + 大语音条
    ============================================ */
 
 .wrapper {
@@ -20,44 +20,54 @@
   align-items: flex-start;
 }
 
-/* 气泡 */
+/* 气泡 — 参考成品图大圆角 */
 .bubble {
   position: relative;
-  padding: var(--spacing-sm) var(--spacing-base);
-  border-radius: var(--border-radius);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-lg);
   word-break: break-word;
   min-width: 60px;
 }
 
+/* 自己的气泡 — 暖橙色 (参考成品图 --bubble-self: #FF8F5E) */
 .bubbleMine {
-  background-color: var(--color-primary);
+  background-color: var(--color-primary, #FF8F44);
   color: #ffffff;
+  border-top-right-radius: var(--radius-lg);
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
   border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 12px rgba(255, 143, 68, 0.2);
 }
 
+/* 对方的气泡 — 白色 (参考成品图 --bubble-other: #FFFFFF) */
 .bubbleOther {
-  background-color: var(--color-bg-card);
+  background-color: #ffffff;
   color: var(--color-text);
+  border-top-right-radius: var(--radius-lg);
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
   border-bottom-left-radius: 4px;
   box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-/* 文字内容 */
+/* 文字内容 — 大字体 */
 .textContent {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-lg);
   line-height: 1.6;
 }
 
 /* AI 标记 */
 .aiBadge {
   display: inline-block;
-  padding: 1px 6px;
-  font-size: 12px;
+  padding: 2px 8px;
+  font-size: 13px;
   font-weight: 700;
   color: #ffffff;
   background-color: #7c4dff;
-  border-radius: 4px;
-  margin-bottom: 4px;
+  border-radius: 6px;
+  margin-bottom: 6px;
   line-height: 1.4;
 }
 
@@ -66,13 +76,13 @@
   background-color: #7c4dff;
 }
 
-/* 语音消息条 */
+/* 语音消息条 — 参考成品图大语音条 */
 .voiceBar {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-base);
   padding: var(--spacing-xs) var(--spacing-sm);
-  min-width: 120px;
+  min-width: 200px;
   min-height: var(--min-touch-target);
   background: none;
   border: none;
@@ -82,57 +92,82 @@
 }
 
 .playIcon {
-  font-size: var(--font-size-lg);
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-2xl);
   flex-shrink: 0;
+}
+
+/* 自己气泡中的播放按钮 */
+.bubbleMine .playIcon {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* 对方气泡中的播放按钮 — 参考成品图粉色 */
+.bubbleOther .playIcon {
+  background: #ec4899;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
 }
 
 .voiceWave {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   flex: 1;
   height: 24px;
 }
 
 .waveLine {
   display: block;
-  width: 3px;
+  width: 4px;
   border-radius: 2px;
   background-color: currentColor;
-  opacity: 0.6;
+  opacity: 0.7;
+  animation: wave 1.2s ease-in-out infinite;
 }
 
-.waveLine:nth-child(1) { height: 8px; }
-.waveLine:nth-child(2) { height: 14px; }
-.waveLine:nth-child(3) { height: 20px; }
-.waveLine:nth-child(4) { height: 14px; }
-.waveLine:nth-child(5) { height: 8px; }
+.waveLine:nth-child(1) { height: 12px; animation-delay: 0.1s; }
+.waveLine:nth-child(2) { height: 20px; animation-delay: 0.2s; }
+.waveLine:nth-child(3) { height: 16px; animation-delay: 0.3s; }
+.waveLine:nth-child(4) { height: 22px; animation-delay: 0.1s; }
+.waveLine:nth-child(5) { height: 14px; animation-delay: 0.4s; }
+
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.8); }
+  50% { transform: scaleY(1.2); }
+}
 
 .duration {
-  font-size: var(--font-size-base);
-  font-weight: 600;
+  font-size: var(--font-size-xl);
+  font-weight: 700;
   flex-shrink: 0;
 }
 
-/* 语音转写文字 */
+/* 语音转写文字 — 参考成品图分隔线下方 */
 .voiceTranscript {
-  font-size: calc(var(--font-size-base) - 2px);
-  opacity: 0.8;
-  margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  line-height: 1.4;
+  font-size: var(--font-size-lg);
+  opacity: 0.9;
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  line-height: 1.5;
 }
 
 .bubbleOther .voiceTranscript {
-  border-top-color: var(--color-border);
+  border-top-color: rgba(0, 0, 0, 0.06);
 }
 
 /* 时间戳 */
 .timestamp {
   font-size: 13px;
-  color: var(--color-text-secondary);
-  margin-top: 2px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
   padding: 0 4px;
 }
 

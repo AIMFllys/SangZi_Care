@@ -1,163 +1,129 @@
 'use client';
 
-import { useEffect, useCallback, useState } from 'react';
-import Link from 'next/link';
-import { useMedicineStore } from '@/stores/medicineStore';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
-import { useFamilyStore } from '@/stores/familyStore';
-import { MedicineTimeline } from '@/components/medicine/MedicineTimeline';
-import { PlanForm } from '@/components/medicine/PlanForm';
-import { ROUTES } from '@/lib/constants';
+import { useMedicineStore } from '@/stores/medicineStore';
+import DataStateWrapper from '@/components/ui/DataStateWrapper';
 import styles from './page.module.css';
 
+const PILL_COLORS = [styles.medicineIconBlue, styles.medicineIconPink, styles.medicineIconGreen, styles.medicineIconOrange];
+const PILL_EMOJIS = ['💊', '🩹', '💉', '🧴'];
+
 export default function MedicinePage() {
-  const {
-    todayTimeline,
-    todayProgress,
-    isLoading,
-    error,
-    fetchTodayTimeline,
-    confirmMedication,
-  } = useMedicineStore();
-
+  const router = useRouter();
   const user = useUserStore((s) => s.user);
-  const isElder = useUserStore((s) => s.isElder);
-  const binds = useFamilyStore((s) => s.binds);
-  const fetchBinds = useFamilyStore((s) => s.fetchBinds);
 
-  const [showPlanForm, setShowPlanForm] = useState(false);
-  const [editingPlan, setEditingPlan] = useState<
-    import('@/stores/medicineStore').MedicationPlanResponse | undefined
-  >(undefined);
+  const todayTimeline = useMedicineStore((s) => s.todayTimeline);
+  const isLoading = useMedicineStore((s) => s.isLoading);
+  const error = useMedicineStore((s) => s.error);
+  const fetchTodayTimeline = useMedicineStore((s) => s.fetchTodayTimeline);
+  const confirmMedication = useMedicineStore((s) => s.confirmMedication);
+
+  const [showReminder, setShowReminder] = useState(true);
 
   useEffect(() => {
-    fetchTodayTimeline();
-  }, [fetchTodayTimeline]);
-
-  // 家属端需要拉取绑定关系以检查权限
-  useEffect(() => {
-    if (!isElder && binds.length === 0) {
-      fetchBinds();
+    if (user?.id) {
+      fetchTodayTimeline();
     }
-  }, [isElder, binds.length, fetchBinds]);
+  }, [user?.id, fetchTodayTimeline]);
 
-  const handleRetry = useCallback(() => {
-    fetchTodayTimeline();
-  }, [fetchTodayTimeline]);
+  const pendingMeds = todayTimeline.filter((t) => t.status !== 'taken');
+  const currentMeds = pendingMeds.slice(0, 3);
 
-  // 检查家属是否有编辑用药计划权限
-  const canEditMedicationBind = !isElder
-    ? binds.find(
-        (b) =>
-          b.bind.status === 'active' && b.bind.can_edit_medication === true,
-      )
-    : undefined;
+  const handleConfirm = async () => {
+    for (const med of currentMeds) {
+      await confirmMedication(med.plan.id, med.scheduled_time);
+    }
+    setShowReminder(false);
+  };
 
-  const canEditMedication = !!canEditMedicationBind;
-  const boundElderId = canEditMedicationBind?.bind.elder_id;
+  // 提醒视图：单屏 ≤ 2 核心操作
+  if (showReminder && currentMeds.length > 0) {
+    return (
+      <div className={styles.page}>
+        {/* 顶部状态栏 */}
+        <div className={styles.topBar}>
+          <div className={`glass-card ${styles.voiceIndicator}`}>
+            <div className={styles.voiceBars}>
+              <div className={styles.bar} />
+              <div className={styles.bar} />
+              <div className={styles.bar} />
+              <div className={styles.bar} />
+            </div>
+            语音提醒中...
+          </div>
+          <button className={styles.sosBtn} aria-label="SOS 紧急呼叫">SOS</button>
+        </div>
 
-  const handleAddPlan = useCallback(() => {
-    setEditingPlan(undefined);
-    setShowPlanForm(true);
-  }, []);
+        {/* 药瓶图标 */}
+        <div className={styles.heroSection}>
+          <div className={styles.pillIconWrapper}>
+            <div className={styles.pillIconInner}>🏥</div>
+          </div>
+          <h1 className={styles.heroTitle}>该吃药啦！</h1>
+          <p className={styles.heroSubtitle}>请服用您的晨间药物</p>
+        </div>
 
-  const handlePlanFormSuccess = useCallback(() => {
-    setShowPlanForm(false);
-    setEditingPlan(undefined);
-    fetchTodayTimeline();
-  }, [fetchTodayTimeline]);
+        {/* 药品列表 */}
+        <div className={`glass-card ${styles.medicineCard}`}>
+          {currentMeds.map((med, i) => (
+            <div key={`${med.plan.id}-${med.scheduled_time}`} className={styles.medicineItem}>
+              <div className={`${styles.medicineIcon} ${PILL_COLORS[i % PILL_COLORS.length]}`}>
+                {PILL_EMOJIS[i % PILL_EMOJIS.length]}
+              </div>
+              <div>
+                <div className={styles.medicineName}>{med.plan.medicine_name}</div>
+                <div className={styles.medicineDose}>{med.plan.dosage}</div>
+              </div>
+            </div>
+          ))}
+        </div>
 
-  const handlePlanFormCancel = useCallback(() => {
-    setShowPlanForm(false);
-    setEditingPlan(undefined);
-  }, []);
+        {/* 操作按钮 */}
+        <div className={styles.actions}>
+          <button className={styles.confirmBtn} onClick={handleConfirm}>
+            ✅ 我已吃药
+          </button>
+          <button className={styles.snoozeBtn} onClick={() => setShowReminder(false)}>
+            ⏰ 15分钟后再提醒
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  const totalCount = todayTimeline.length;
-  const completedCount = todayTimeline.filter(
-    (i) => i.status === 'taken',
-  ).length;
-
+  // 时间线列表视图
   return (
     <div className={styles.page}>
-      {/* 顶部栏 */}
-      <header className={styles.header}>
-        <h1 className={styles.title}>💊 用药管家</h1>
-        <div className={styles.headerActions}>
-          {canEditMedication && (
-            <button
-              className={styles.addPlanBtn}
-              onClick={handleAddPlan}
-              aria-label="添加用药计划"
-            >
-              ＋ 添加计划
-            </button>
-          )}
-          <Link
-            href={ROUTES.MEDICINE_HISTORY}
-            className={styles.historyLink}
-          >
-            用药历史 →
-          </Link>
-        </div>
-      </header>
-
-      {/* 今日进度 */}
-      <div className={styles.progressSection}>
-        <div className={styles.progressCard}>
-          <div className={styles.progressHeader}>
-            <span className={styles.progressLabel}>今日用药进度</span>
-            <span className={styles.progressValue}>{todayProgress}%</span>
-          </div>
-          <div
-            className={styles.progressBarTrack}
-            role="progressbar"
-            aria-valuenow={todayProgress}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`今日用药进度 ${todayProgress}%`}
-          >
-            <div
-              className={styles.progressBarFill}
-              style={{ width: `${todayProgress}%` }}
-            />
-          </div>
-          <div className={styles.progressStats}>
-            <span>已完成 {completedCount} 项</span>
-            <span>共 {totalCount} 项</span>
-          </div>
-        </div>
+      <div className={styles.topBar}>
+        <button className={styles.dateNavBtn} onClick={() => router.back()}>←</button>
+        <h1 style={{ fontSize: 'var(--font-heading)', fontWeight: 700 }}>用药管家</h1>
+        <div style={{ width: 36 }} />
       </div>
 
-      {/* 时间线 */}
-      <div className={styles.timelineSection}>
-        {isLoading ? (
-          <div className={styles.loading}>
-            <span className={styles.loadingText}>加载中...</span>
-          </div>
-        ) : error ? (
-          <div className={styles.errorBox}>
-            <span className={styles.errorText}>{error}</span>
-            <button className={styles.retryBtn} onClick={handleRetry}>
-              重试
-            </button>
-          </div>
-        ) : (
-          <MedicineTimeline
-            items={todayTimeline}
-            onConfirm={confirmMedication}
-          />
-        )}
+      <div className={styles.dateNav}>
+        <button className={styles.dateNavBtn}>‹</button>
+        <span className={styles.dateNavLabel}>今天</span>
+        <button className={styles.dateNavBtn}>›</button>
       </div>
 
-      {/* 家属端用药计划表单 */}
-      {showPlanForm && boundElderId && (
-        <PlanForm
-          elderId={boundElderId}
-          plan={editingPlan}
-          onSuccess={handlePlanFormSuccess}
-          onCancel={handlePlanFormCancel}
-        />
-      )}
+      <DataStateWrapper
+        loading={isLoading}
+        error={error}
+        empty={todayTimeline.length === 0 ? { icon: '💊', title: '今天没有用药计划', description: '享受轻松的一天吧~' } : false}
+        onRetry={() => fetchTodayTimeline()}
+      >
+        <div className={styles.timeline}>
+          {todayTimeline.map((item) => (
+            <div key={`${item.plan.id}-${item.scheduled_time}`} className={`glass-card ${styles.timeSlot} interactive`}>
+              <span className={styles.timeSlotTime}>{item.scheduled_time}</span>
+              <span className={styles.timeSlotMed}>{item.plan.medicine_name} · {item.plan.dosage}</span>
+              <span className={styles.timeSlotStatus}>{item.status === 'taken' ? '✅' : '⏳'}</span>
+            </div>
+          ))}
+        </div>
+      </DataStateWrapper>
     </div>
   );
 }
