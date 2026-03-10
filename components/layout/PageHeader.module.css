@@ -1,0 +1,80 @@
+/* PageHeader — 新设计系统 */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    width: 100%;
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--divider);
+    transition: background var(--duration-fast);
+}
+
+.transparent {
+    background: transparent;
+    backdrop-filter: none;
+    border-bottom: none;
+}
+
+.inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-md);
+    height: 64px;
+}
+
+.backBtn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: var(--space-sm);
+    border-radius: var(--radius-full);
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: -8px;
+}
+
+.backBtn:focus-visible {
+    outline: 3px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+.backCircle {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background: rgba(0, 0, 0, 0.04);
+    transition: background var(--duration-fast);
+}
+
+.backBtn:active .backCircle {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.title {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: var(--font-title);
+    font-weight: 700;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.right {
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.spacer {
+    width: 44px;
+}

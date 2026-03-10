@@ -114,10 +114,11 @@ describe('FamilyDetailClient — 老年人端', () => {
     expect(mockPush).toHaveBeenCalledWith('/messages/family-1');
   });
 
-  it('点击返回调用 router.back', () => {
+  it('点击返回导航回首页', () => {
     render(<FamilyDetailClient userId="family-1" />);
     fireEvent.click(screen.getByRole('button', { name: /返回/ }));
-    expect(mockBack).toHaveBeenCalled();
+    // PageHeader uses fallbackUrl='/' when history is short (test env)
+    expect(mockPush).toHaveBeenCalledWith('/');
   });
 
   it('老年人端显示家属信息区块', () => {

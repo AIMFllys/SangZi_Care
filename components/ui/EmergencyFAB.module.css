@@ -1,52 +1,45 @@
-/* ============================================================
-   EmergencyFAB — 紧急呼叫浮动按钮 + 全屏状态弹窗
-   ============================================================ */
+/* EmergencyFAB — 紧急呼叫 (新设计系统) */
 
-/* ---- 大底边 SOS 按钮 ---- */
-
+/* FAB 容器 */
 .fabContainer {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
-  padding: 0 24px env(safe-area-inset-bottom, 24px);
+  padding: 0 var(--space-lg) env(safe-area-inset-bottom, 24px);
   display: flex;
   justify-content: center;
   z-index: 900;
   pointer-events: none;
-  /* Let clicks pass through the container */
 }
 
 .fab {
   pointer-events: auto;
-  /* Re-enable clicks for the button */
   width: 100%;
   max-width: 420px;
-  height: 96px;
-  background-color: var(--color-danger, #D32F2F);
-  border-radius: 28px;
+  height: 88px;
+  background: var(--color-danger);
+  border-radius: var(--radius-xl);
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
-  box-shadow: 0 8px 20px rgba(211, 47, 47, 0.25);
+  gap: var(--space-md);
+  box-shadow: 0 8px 24px rgba(211, 47, 47, 0.3);
   cursor: pointer;
-  transition: transform 0.15s ease, background-color 0.15s ease;
-  -webkit-user-select: none;
+  transition: transform var(--duration-fast);
   user-select: none;
 }
 
 .fab:active {
-  transform: scale(0.98);
-  background-color: var(--color-danger-dark, #B71C1C);
+  transform: scale(0.97);
 }
 
 .fabIconWrap {
   background: rgba(255, 255, 255, 0.2);
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -54,35 +47,32 @@
 }
 
 .fabIcon {
-  color: #ffffff;
-  font-size: 36px;
+  font-size: 32px;
   line-height: 1;
 }
 
 .fabText {
-  color: #ffffff;
-  font-size: 30px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  line-height: 1;
+  color: #fff;
+  font-size: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
-/* ---- 全屏遮罩 ---- */
-
+/* 全屏遮罩 */
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.88);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  animation: fadeIn 0.2s ease;
+  padding: var(--space-xl);
+  animation: emergFadeIn 0.2s ease;
 }
 
-@keyframes fadeIn {
+@keyframes emergFadeIn {
   from {
     opacity: 0;
   }
@@ -92,18 +82,17 @@
   }
 }
 
-/* ---- 倒计时数字 ---- */
-
+/* 倒计时 */
 .countdown {
   font-size: 120px;
-  font-weight: 800;
+  font-weight: 900;
   color: #fff;
   line-height: 1;
-  margin-bottom: 16px;
-  animation: pulse 1s ease infinite;
+  margin-bottom: var(--space-lg);
+  animation: emergPulse 1s ease infinite;
 }
 
-@keyframes pulse {
+@keyframes emergPulse {
 
   0%,
   100% {
@@ -115,102 +104,89 @@
   }
 }
 
-/* ---- 状态文字 ---- */
-
 .statusText {
-  font-size: var(--font-size-xl, 28px);
+  font-size: var(--font-heading);
   color: #fff;
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: var(--space-2xl);
   line-height: 1.5;
 }
 
-/* ---- 按钮容器 ---- */
-
+/* 按钮 */
 .actions {
   display: flex;
-  gap: 20px;
+  gap: var(--space-md);
   width: 100%;
   max-width: 400px;
 }
 
-/* ---- 取消按钮 ---- */
-
 .cancelBtn {
   flex: 1;
-  min-height: 60px;
-  border-radius: var(--border-radius, 16px);
-  background: rgba(255, 255, 255, 0.15);
+  min-height: 56px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.12);
   color: #fff;
-  font-size: var(--font-size-lg, 24px);
+  font-size: var(--font-body);
   font-weight: 600;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background var(--duration-fast);
 }
 
 .cancelBtn:active {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.22);
 }
-
-/* ---- 立即拨打按钮 ---- */
 
 .confirmBtn {
   flex: 1;
-  min-height: 60px;
-  border-radius: var(--border-radius, 16px);
-  background: var(--color-danger, #D32F2F);
+  min-height: 56px;
+  border-radius: var(--radius-lg);
+  background: var(--color-danger);
   color: #fff;
-  font-size: var(--font-size-lg, 24px);
+  font-size: var(--font-body);
   font-weight: 700;
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
-  transition: background 0.15s ease;
+  box-shadow: 0 4px 16px rgba(211, 47, 47, 0.4);
+  transition: background var(--duration-fast);
 }
 
 .confirmBtn:active {
   background: #b71c1c;
 }
 
-/* ---- 重置按钮 ---- */
-
 .resetBtn {
-  min-height: 60px;
+  min-height: 56px;
   min-width: 200px;
-  border-radius: var(--border-radius, 16px);
-  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.12);
   color: #fff;
-  font-size: var(--font-size-lg, 24px);
+  font-size: var(--font-body);
   font-weight: 600;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background var(--duration-fast);
 }
 
 .resetBtn:active {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.22);
 }
 
-/* ---- 大字提示（无权限等） ---- */
-
 .largeHint {
-  font-size: var(--font-size-title, 32px);
+  font-size: var(--font-title);
   color: #fff;
   text-align: center;
   line-height: 1.6;
-  margin-bottom: 40px;
+  margin-bottom: var(--space-2xl);
   font-weight: 700;
 }
 
-/* ---- 加载动画点 ---- */
-
 .dots::after {
   content: '';
-  animation: dots 1.5s steps(4, end) infinite;
+  animation: emergDots 1.5s steps(4, end) infinite;
 }
 
-@keyframes dots {
+@keyframes emergDots {
   0% {
     content: '';
   }
