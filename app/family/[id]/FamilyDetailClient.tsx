@@ -15,6 +15,7 @@ import { useMedicineStore } from '@/stores/medicineStore';
 import { fetchApi } from '@/lib/api';
 import PageHeader from '@/components/layout/PageHeader';
 import { ROUTES } from '@/lib/constants';
+import { Phone, MessageSquare, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import styles from './page.module.css';
 
 // ---------- 类型 ----------
@@ -148,15 +149,17 @@ export default function FamilyDetailClient({ userId }: Props) {
           className={styles.actionButton}
           onClick={handleCall}
           aria-label={`拨打${targetUser.name}的电话`}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
         >
-          📞 打电话
+          <Phone size={20} /> 打电话
         </button>
         <button
           className={styles.actionButton}
           onClick={handleMessage}
           aria-label={`给${targetUser.name}发消息`}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
         >
-          💬 发消息
+          <MessageSquare size={20} /> 发消息
         </button>
       </div>
 
@@ -203,8 +206,8 @@ export default function FamilyDetailClient({ userId }: Props) {
                   <li key={`${item.plan.id}-${item.scheduled_time}`} className={styles.medicineItem}>
                     <span className={styles.medicineName}>{item.plan.medicine_name}</span>
                     <span className={styles.medicineTime}>{item.scheduled_time}</span>
-                    <span className={`${styles.medicineStatus} ${styles[`status_${item.status}`]}`}>
-                      {item.status === 'taken' ? '✅ 已服' : item.status === 'pending' ? '⏳ 待服' : '⚠️ 未服'}
+                    <span className={`${styles.medicineStatus} ${styles[`status_${item.status}`]}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {item.status === 'taken' ? <><CheckCircle size={14} /> 已服</> : item.status === 'pending' ? <><Clock size={14} /> 待服</> : <><AlertTriangle size={14} /> 未服</>}
                     </span>
                   </li>
                 ))}

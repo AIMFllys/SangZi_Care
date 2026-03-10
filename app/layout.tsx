@@ -5,7 +5,6 @@ import '@/styles/globals.css';
 import '@/styles/elder-theme.css';
 import '@/styles/family-theme.css';
 import TabBar from '@/components/layout/TabBar';
-import EmergencyFAB from '@/components/ui/EmergencyFAB';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 
 export type UserRole = 'elder' | 'family';
@@ -51,7 +50,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <main className="page-content">
               {children}
             </main>
-            <EmergencyFAB />
             <TabBar />
           </AuthProvider>
         </div>

@@ -1,8 +1,12 @@
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.v1 import router as api_v1_router
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="桑梓智护 API", version="0.1.0")
 
@@ -17,10 +21,22 @@ app.add_middleware(
 
 
 @app.exception_handler(Exception)
-async def global_exception_handler(_request: Request, exc: Exception) -> JSONResponse:
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """全局异常处理 — 显式添加 CORS 头，防止浏览器拦截错误响应。"""
+    logger.error("Unhandled exception on %s %s: %s", request.method, request.url, exc)
+
+    # 从请求中读取 Origin
+    origin = request.headers.get("origin", "*")
+
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error", "message": str(exc)},
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        },
     )
 
 

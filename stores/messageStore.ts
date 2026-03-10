@@ -73,8 +73,8 @@ interface MessageState {
   /** 构建联系人列表（从家属绑定 + 获取每个联系人最新消息） */
   fetchContacts: (
     binds: Array<{
-      bind: { elder_id: string; family_id: string; relation: string; status: string | null };
-      user: { id: string; name: string; avatar_url: string | null };
+      bind: { elder_id: string; family_id: string; relation: string; status?: string | null };
+      user: { id: string; name: string; avatar_url?: string | null };
     }>,
     currentUserId: string,
   ) => Promise<void>;

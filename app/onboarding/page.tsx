@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/lib/constants';
+import { User, Users } from 'lucide-react';
 import styles from './page.module.css';
 
 type Role = 'elder' | 'family';
@@ -45,7 +46,7 @@ export default function OnboardingPage() {
           disabled={selecting !== null}
           aria-label="选择身份：我是长辈"
         >
-          <span className={styles.roleEmoji} aria-hidden="true">🧓</span>
+          <span className={styles.roleEmoji} aria-hidden="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={48} color="currentColor" /></span>
           <span className={styles.roleLabel}>我是长辈</span>
           <span className={styles.roleDesc}>大字体、语音优先、简单易用</span>
         </button>
@@ -56,7 +57,7 @@ export default function OnboardingPage() {
           disabled={selecting !== null}
           aria-label="选择身份：我是家属"
         >
-          <span className={styles.roleEmoji} aria-hidden="true">👨‍👩‍👧</span>
+          <span className={styles.roleEmoji} aria-hidden="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Users size={48} color="currentColor" /></span>
           <span className={styles.roleLabel}>我是家属</span>
           <span className={styles.roleDesc}>关注长辈健康、管理用药计划</span>
         </button>

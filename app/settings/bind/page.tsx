@@ -7,6 +7,7 @@ import { useFamilyStore } from '@/stores/familyStore';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchApi } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
+import { ChevronLeft } from 'lucide-react';
 import styles from './page.module.css';
 
 /** 关系类型选项 */
@@ -194,8 +195,9 @@ export default function BindManagementPage() {
           className={styles.backButton}
           onClick={() => router.push(ROUTES.SETTINGS)}
           aria-label="返回设置"
+          style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
         >
-          ‹ 返回
+          <ChevronLeft size={20} /> 返回
         </button>
         <h1 className={styles.title}>绑定管理</h1>
       </div>
@@ -221,9 +223,8 @@ export default function BindManagementPage() {
                 <div className={styles.bindCardHeader}>
                   <span className={styles.relation}>{bind.relation || '未知关系'}</span>
                   <span
-                    className={`${styles.statusBadge} ${
-                      bind.status === 'active' ? styles.statusActive : styles.statusInactive
-                    }`}
+                    className={`${styles.statusBadge} ${bind.status === 'active' ? styles.statusActive : styles.statusInactive
+                      }`}
                   >
                     {bind.status === 'active' ? '已绑定' : bind.status}
                   </span>
@@ -340,9 +341,8 @@ export default function BindManagementPage() {
                 <button
                   key={rel}
                   type="button"
-                  className={`${styles.relationChip} ${
-                    selectedRelation === rel ? styles.relationChipActive : ''
-                  }`}
+                  className={`${styles.relationChip} ${selectedRelation === rel ? styles.relationChipActive : ''
+                    }`}
                   onClick={() => setSelectedRelation(rel)}
                   aria-pressed={selectedRelation === rel}
                 >

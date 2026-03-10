@@ -8,6 +8,7 @@ import { useHealthStore, formatHealthValue } from '@/stores/healthStore';
 import { useMedicineStore, calcProgress } from '@/stores/medicineStore';
 import { useFamilyBinds } from '@/hooks/useFamilyBinds';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
+import { Sun, Mic, ChevronUp, Phone, Bell, User, Users, Pill, MapPin, Home, CheckCircle, AlertCircle, Plus } from 'lucide-react';
 import styles from './page.module.css';
 
 /** 日期格式化 */
@@ -64,7 +65,7 @@ function ElderHomeView() {
           <div className={styles.dateText}>{date}</div>
         </div>
         <div className={styles.weather}>
-          <span className={styles.weatherIcon}>☀️</span>
+          <span className={styles.weatherIcon}><Sun size={28} /></span>
           <span className={styles.weatherTemp}>24° 晴</span>
         </div>
       </div>
@@ -80,7 +81,7 @@ function ElderHomeView() {
           <div className={styles.voiceBallRing} />
           <div className={styles.voiceBallRing} />
           <div className={`${styles.voiceBall} interactive`}>
-            <span className={styles.voiceIcon}>🎙️</span>
+            <span className={styles.voiceIcon}><Mic size={56} color="currentColor" /></span>
           </div>
         </div>
         <p className={styles.voiceLabel}>点我说话</p>
@@ -88,7 +89,7 @@ function ElderHomeView() {
 
       {/* 上滑提示 */}
       <div className={styles.swipeHint}>
-        <span className={styles.swipeArrow}>⌃</span>
+        <span className={styles.swipeArrow}><ChevronUp size={24} /></span>
         <span>上滑更多功能</span>
       </div>
 
@@ -98,7 +99,7 @@ function ElderHomeView() {
         onClick={() => router.push('/settings')}
         aria-label="紧急呼叫 SOS"
       >
-        <span className={styles.sosIcon}>🆘</span>
+        <Phone size={24} className={styles.sosIcon} />
         紧急呼叫 (SOS)
       </button>
     </div>
@@ -141,7 +142,7 @@ function FamilyHomeView() {
       {/* 头部 */}
       <div className={styles.familyHeader}>
         <h1 className={styles.familyTitle}>家人看板</h1>
-        <div className={`glass-card ${styles.notifIcon} interactive`}>🔔</div>
+        <div className={`glass-card ${styles.notifIcon} interactive`}><Bell size={20} /></div>
       </div>
 
       {/* 老人选择 tabs */}
@@ -152,31 +153,33 @@ function FamilyHomeView() {
             className={`${styles.elderTab} ${i === selectedElder ? styles.elderTabActive : ''}`}
             onClick={() => setSelectedElder(i)}
           >
-            <span className={styles.elderTabAvatar}>👤</span>
+            <span className={styles.elderTabAvatar}><User size={16} /></span>
             {bind.user.name || bind.bind.relation || '家人'}
           </button>
         ))}
         <button className={styles.elderTab} onClick={() => router.push('/settings/bind')}>
-          +
+          <Plus size={16} />
         </button>
       </div>
 
-      <DataStateWrapper loading={bindsLoading} empty={binds.length === 0 ? { icon: '👨‍👩‍👧', title: '还没有绑定家人', description: '去设置页面添加您的家人吧' } : false}>
+      <DataStateWrapper loading={bindsLoading} empty={binds.length === 0 ? { icon: <Users size={48} />, title: '还没有绑定家人', description: '去设置页面添加您的家人吧' } : false}>
         {/* 摘要卡片 */}
         <div className={styles.summaryGrid}>
           <div className={`glass-card ${styles.summaryCard} interactive`} onClick={() => router.push('/medicine')}>
-            <span className={styles.summaryIcon}>💊</span>
+            <span className={styles.summaryIcon}><Pill size={24} /></span>
             <span className={styles.summaryLabel}>今日用药</span>
             <span className={styles.summaryValue}>{medicineDone}<span style={{ fontSize: 'var(--font-body)', fontWeight: 400 }}> / {medicineTotal}</span></span>
-            <span className={styles.summaryMeta}>{medicineDone >= medicineTotal && medicineTotal > 0 ? '✅ 全部完成' : `还有 ${medicineTotal - medicineDone} 次`}</span>
-            <span className={styles.summaryBgIcon}>💊</span>
+            <span className={styles.summaryMeta} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              {medicineDone >= medicineTotal && medicineTotal > 0 ? <><CheckCircle size={14} /> 全部完成</> : `还有 ${medicineTotal - medicineDone} 次`}
+            </span>
+            <span className={styles.summaryBgIcon}><Pill size={56} /></span>
           </div>
           <div className={`glass-card ${styles.summaryCard} interactive`} onClick={() => router.push('/health')}>
-            <span className={styles.summaryIcon}>📍</span>
+            <span className={styles.summaryIcon}><MapPin size={24} /></span>
             <span className={styles.summaryLabel}>当前状态</span>
             <span className={styles.summaryValue} style={{ fontSize: 'var(--font-heading)' }}>在家休息</span>
             <span className={styles.summaryMeta} style={{ color: 'var(--text-muted)' }}>更新于 10分钟前</span>
-            <span className={styles.summaryBgIcon}>🏠</span>
+            <span className={styles.summaryBgIcon}><Home size={56} /></span>
           </div>
         </div>
 
@@ -208,7 +211,7 @@ function FamilyHomeView() {
           {/* 警告 */}
           {bp?.is_abnormal && (
             <div className={styles.alertBanner}>
-              <span className={styles.alertIcon}>⚠️</span>
+              <span className={styles.alertIcon}><AlertCircle size={24} /></span>
               <div>
                 <div className={styles.alertTitle}>血压偏高</div>
                 <div className={styles.alertDesc}>

@@ -7,6 +7,7 @@
 import logging
 import random
 import time
+import uuid
 from datetime import datetime, timezone
 
 import jwt
@@ -27,8 +28,15 @@ router = APIRouter(prefix="/auth", tags=["认证"])
 # ---------------------------------------------------------------------------
 
 
+class CaptchaResponse(BaseModel):
+    captcha_id: str
+    question: str
+
+
 class SendCodeRequest(BaseModel):
     email: EmailStr
+    captcha_id: str
+    captcha_answer: int
 
 
 class SendCodeResponse(BaseModel):
@@ -67,16 +75,67 @@ _verification_codes: dict[str, tuple[str, float, float]] = {}
 CODE_EXPIRE_SECONDS = 300  # 5 minutes
 RATE_LIMIT_SECONDS = 60    # 1 code per email per 60s
 
+# ---------------------------------------------------------------------------
+# In-memory CAPTCHA store
+# captcha_id -> (answer, expiry_timestamp)
+# ---------------------------------------------------------------------------
+
+_captcha_store: dict[str, tuple[int, float]] = {}
+CAPTCHA_EXPIRE_SECONDS = 120  # 2 minutes
+
+
+def _cleanup_expired_captchas():
+    """Remove expired CAPTCHA entries."""
+    now = time.time()
+    expired = [k for k, (_, exp) in _captcha_store.items() if now > exp]
+    for k in expired:
+        _captcha_store.pop(k, None)
+
 
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
 
 
+@router.get("/captcha", response_model=CaptchaResponse)
+async def get_captcha():
+    """生成一个简单的数学人机验证题。"""
+    _cleanup_expired_captchas()
+
+    a = random.randint(1, 20)
+    b = random.randint(1, 20)
+    op = random.choice(["+", "-"])
+
+    if op == "+":
+        answer = a + b
+        question = f"{a} + {b} = ?"
+    else:
+        # Ensure result is non-negative
+        if a < b:
+            a, b = b, a
+        answer = a - b
+        question = f"{a} - {b} = ?"
+
+    captcha_id = str(uuid.uuid4())
+    _captcha_store[captcha_id] = (answer, time.time() + CAPTCHA_EXPIRE_SECONDS)
+
+    return CaptchaResponse(captcha_id=captcha_id, question=question)
+
+
 @router.post("/send-code", response_model=SendCodeResponse)
 async def send_code(req: SendCodeRequest):
-    """发送邮箱验证码。"""
+    """发送邮箱验证码（需先通过人机验证）。"""
     email = req.email.lower().strip()
+
+    # Validate CAPTCHA
+    captcha = _captcha_store.pop(req.captcha_id, None)
+    if captcha is None:
+        raise HTTPException(status_code=400, detail="验证码已过期，请重新获取")
+    answer, expiry = captcha
+    if time.time() > expiry:
+        raise HTTPException(status_code=400, detail="人机验证已过期，请重新获取")
+    if req.captcha_answer != answer:
+        raise HTTPException(status_code=400, detail="人机验证答案错误")
 
     # Rate limit check
     if email in _verification_codes:

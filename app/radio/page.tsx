@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { useRadioStore } from '@/stores/radioStore';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
+import { ArrowLeft, Mic, Search, Drama, TrendingUp, Newspaper, BookOpen, Radio as RadioIcon, Music, Play, Pause } from 'lucide-react';
 import styles from './page.module.css';
 
 const CATEGORIES = [
-  { name: '京剧名段', icon: '🎭', color: styles.catOrange },
-  { name: '养生常识', icon: '📈', color: styles.catGreen },
-  { name: '每日新闻', icon: '📰', color: styles.catBlue },
-  { name: '评书大全', icon: '📖', color: styles.catPurple },
+  { name: '京剧名段', icon: <Drama size={24} />, color: styles.catOrange },
+  { name: '养生常识', icon: <TrendingUp size={24} />, color: styles.catGreen },
+  { name: '每日新闻', icon: <Newspaper size={24} />, color: styles.catBlue },
+  { name: '评书大全', icon: <BookOpen size={24} />, color: styles.catPurple },
 ];
 
 export default function RadioPage() {
@@ -36,20 +37,20 @@ export default function RadioPage() {
     <div className={styles.page}>
       {/* 头部 */}
       <div className={styles.header}>
-        <button className={styles.backBtn} onClick={() => router.back()}>←</button>
+        <button className={styles.backBtn} onClick={() => router.back()}><ArrowLeft size={24} /></button>
         <h1 className={styles.title}>健康广播</h1>
         <div style={{ width: 40 }} />
       </div>
 
       {/* 搜索栏 */}
       <div className={`glass-card ${styles.searchBar}`}>
-        <span className={styles.searchIcon}>🎙️</span>
+        <span className={styles.searchIcon}><Mic size={20} /></span>
         <input
           className={styles.searchInput}
           placeholder="按住 说话 搜索内容..."
           readOnly
         />
-        <button className={styles.searchBtn}>🔍</button>
+        <button className={styles.searchBtn}><Search size={20} /></button>
       </div>
       <p className={styles.searchHint}>点击麦克风图标开始说话</p>
 
@@ -78,20 +79,20 @@ export default function RadioPage() {
       <DataStateWrapper
         loading={loading}
         error={error}
-        empty={broadcasts.length === 0 ? { icon: '📻', title: '暂无推荐', description: '稍后再来看看吧' } : false}
+        empty={broadcasts.length === 0 ? { icon: <RadioIcon size={48} />, title: '暂无推荐', description: '稍后再来看看吧' } : false}
         onRetry={() => fetchRecommendations()}
       >
         <div className={styles.recommendList}>
           {broadcasts.map((item, i) => (
             <div key={item.id} className={`glass-card ${styles.recommendItem} interactive`}>
-              <div className={styles.recommendIcon}>🎵</div>
+              <div className={styles.recommendIcon}><Music size={24} color="var(--primary)" /></div>
               <div className={styles.recommendInfo}>
                 <div className={styles.recommendTitle}>{item.title}</div>
                 <div className={styles.recommendMeta}>
                   {item.category} · {item.audio_duration ? `${Math.round(item.audio_duration / 60)}分钟` : '15分钟'}
                 </div>
               </div>
-              <button className={styles.playBtn}>▶</button>
+              <button className={styles.playBtn}><Play size={20} fill="currentColor" /></button>
             </div>
           ))}
         </div>
@@ -100,9 +101,9 @@ export default function RadioPage() {
       {/* 底部播放器 */}
       {currentBroadcast && isPlaying && (
         <div className={`glass-card ${styles.player}`}>
-          <span>🎵</span>
+          <span><Music size={20} color="var(--primary)" /></span>
           <span className={styles.playerTitle}>{currentBroadcast.title}</span>
-          <button className={styles.playerBtn}>{isPlaying ? '⏸' : '▶'}</button>
+          <button className={styles.playerBtn}>{isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}</button>
         </div>
       )}
     </div>

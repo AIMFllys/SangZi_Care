@@ -13,6 +13,7 @@ import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { ROUTES } from '@/lib/constants';
 import MessageList from '@/components/messages/MessageList';
 import VoiceRecorder from '@/components/messages/VoiceRecorder';
+import { ChevronLeft, Mic, Keyboard } from 'lucide-react';
 import type { MessageResponse } from '@/stores/messageStore';
 import styles from './page.module.css';
 
@@ -131,7 +132,7 @@ export default function ChatDetailPage() {
           aria-label="返回消息列表"
           type="button"
         >
-          ←
+          <ChevronLeft size={24} />
         </button>
         <h1 className={styles.title}>
           {contactId ? `对话` : '聊天'}
@@ -160,8 +161,9 @@ export default function ChatDetailPage() {
           type="button"
           aria-label={inputMode === 'text' ? '切换到语音模式' : '切换到文字模式'}
           data-testid="mode-toggle"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          {inputMode === 'text' ? '🎤' : '⌨️'}
+          {inputMode === 'text' ? <Mic size={24} /> : <Keyboard size={24} />}
         </button>
 
         {/* 文字输入模式 */}

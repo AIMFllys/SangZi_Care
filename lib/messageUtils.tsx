@@ -1,21 +1,24 @@
+import React, { ReactNode } from 'react';
+import { User, Users, Heart, Baby, UsersRound, Handshake, Stethoscope, Home, Mic, Image as ImageIcon } from 'lucide-react';
+
 /**
  * 消息相关工具函数
  * 从 messages/page.tsx 提取的纯逻辑函数
  */
 
-/** 关系类型对应 emoji */
-export function getRelationEmoji(relation: string): string {
-    const map: Record<string, string> = {
-        '子女': '👧',
-        '配偶': '💑',
-        '父母': '👨‍👩‍👧',
-        '兄弟姐妹': '👫',
-        '孙辈': '👶',
-        '朋友': '🤝',
-        '护工': '👩‍⚕️',
-        '邻居': '🏘️',
+/** 关系类型对应 icon */
+export function getRelationEmoji(relation: string): ReactNode {
+    const map: Record<string, ReactNode> = {
+        '子女': <User size={24} />,
+        '配偶': <Heart size={24} />,
+        '父母': <Users size={24} />,
+        '兄弟姐妹': <UsersRound size={24} />,
+        '孙辈': <Baby size={24} />,
+        '朋友': <Handshake size={24} />,
+        '护工': <Stethoscope size={24} />,
+        '邻居': <Home size={24} />,
     };
-    return map[relation] || '👤';
+    return map[relation] || <User size={24} />;
 }
 
 /** 格式化消息时间为友好文案 */
@@ -42,8 +45,8 @@ export function formatMessageTime(dateStr: string): string {
 export function getMessagePreview(
     type: 'text' | 'voice' | 'image',
     content: string
-): string {
-    if (type === 'voice') return '🎤 语音消息';
-    if (type === 'image') return '🖼️ 图片';
+): ReactNode {
+    if (type === 'voice') return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Mic size={14} /> 语音消息</div>;
+    if (type === 'image') return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><ImageIcon size={14} /> 图片</div>;
     return content.length > 20 ? content.slice(0, 20) + '...' : content;
 }

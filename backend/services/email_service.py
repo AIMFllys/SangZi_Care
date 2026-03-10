@@ -6,8 +6,10 @@
 import logging
 import smtplib
 import ssl
+from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import formataddr
 
 from core.config import settings
 
@@ -66,9 +68,14 @@ def send_verification_email(to_email: str, code: str, expires_minutes: int = 5) 
     """
 
     msg = MIMEMultipart("alternative")
-    msg["From"] = f"{settings.SMTP_FROM_NAME} <{settings.SMTP_USER}>"
+    
+    # 国际化/防乱码核心：使用 MIME Base64 编码方式对发件人名称进行编码
+    encoded_name = str(Header(settings.SMTP_FROM_NAME, "utf-8"))
+    msg["From"] = formataddr((encoded_name, settings.SMTP_USER))
     msg["To"] = to_email
-    msg["Subject"] = subject
+    
+    # Subject 也进行标准 Header 编码
+    msg["Subject"] = Header(subject, "utf-8").encode()
     msg.attach(MIMEText(html_body, "html", "utf-8"))
 
     ssl_ctx = _create_ssl_context()

@@ -12,7 +12,16 @@ import type { HealthRecordCreate } from '@/stores/healthStore';
 import { useUserStore } from '@/stores/userStore';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { ROUTES } from '@/lib/constants';
+import { ArrowLeft, Mic, Square, Edit3, FileEdit, CheckCircle, Activity, Droplet, Heart, Scale, Thermometer } from 'lucide-react';
 import styles from './page.module.css';
+
+const ICON_MAP: Record<string, React.ReactNode> = {
+  blood_pressure: <Droplet size={24} />,
+  blood_sugar: <Activity size={24} />,
+  heart_rate: <Heart size={24} />,
+  weight: <Scale size={24} />,
+  temperature: <Thermometer size={24} />,
+};
 
 // ---------- 类型 ----------
 
@@ -515,9 +524,9 @@ export default function HealthInputPage() {
           aria-label="返回健康记录"
           type="button"
         >
-          ←
+          <ArrowLeft size={24} />
         </button>
-        <h1 className={styles.title}>📝 录入健康数据</h1>
+        <h1 className={styles.title} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FileEdit size={24} /> 录入健康数据</h1>
       </header>
 
       {/* 记录类型选择 */}
@@ -534,7 +543,7 @@ export default function HealthInputPage() {
                 aria-pressed={selectedType === type}
                 aria-label={config.label}
               >
-                <span className={styles.typeIcon}>{config.icon}</span>
+                <div className={styles.typeIcon} style={{ marginBottom: 8 }}>{ICON_MAP[type]}</div>
                 <span className={styles.typeLabel}>{config.label}</span>
               </button>
             );
@@ -550,8 +559,9 @@ export default function HealthInputPage() {
           className={`${styles.methodTab} ${inputMethod === 'manual' ? styles.methodTabActive : ''}`}
           onClick={() => handleMethodChange('manual')}
           aria-selected={inputMethod === 'manual'}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
         >
-          ✏️ 手动录入
+          <Edit3 size={18} /> 手动录入
         </button>
         <button
           type="button"
@@ -559,8 +569,9 @@ export default function HealthInputPage() {
           className={`${styles.methodTab} ${inputMethod === 'voice' ? styles.methodTabActive : ''}`}
           onClick={() => handleMethodChange('voice')}
           aria-selected={inputMethod === 'voice'}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
         >
-          🎤 语音录入
+          <Mic size={18} /> 语音录入
         </button>
       </div>
 
@@ -575,7 +586,7 @@ export default function HealthInputPage() {
               onClick={handleMicToggle}
               aria-label={isListening ? '停止录音' : '开始录音'}
             >
-              {isListening ? '⏹️' : '🎤'}
+              {isListening ? <Square size={32} /> : <Mic size={32} />}
             </button>
             <span className={styles.voiceHint}>
               {isListening ? '正在聆听，请说出数值...' : '点击麦克风开始语音录入'}
@@ -621,8 +632,9 @@ export default function HealthInputPage() {
           className={styles.submitBtn}
           onClick={handleSubmit}
           disabled={isSubmitting}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
         >
-          {isSubmitting ? '保存中...' : '✅ 保存记录'}
+          {isSubmitting ? '保存中...' : <><CheckCircle size={20} /> 保存记录</>}
         </button>
       </div>
 
@@ -630,7 +642,7 @@ export default function HealthInputPage() {
       {showSuccess && (
         <div className={styles.successOverlay} role="alert">
           <div className={styles.successCard}>
-            <span className={styles.successIcon}>✅</span>
+            <span className={styles.successIcon}><CheckCircle size={48} color="var(--color-success)" /></span>
             <span className={styles.successText}>记录保存成功！</span>
           </div>
         </div>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useMedicineStore } from '@/stores/medicineStore';
 import type { MedicationPlanResponse } from '@/stores/medicineStore';
 import { ROUTES } from '@/lib/constants';
+import { ArrowLeft, ClipboardList, Clock, Calendar, CheckCircle, Archive } from 'lucide-react';
 import styles from './page.module.css';
 
 /** 格式化日期范围显示 */
@@ -34,14 +35,14 @@ function PlanCard({
         {plan.schedule_times && plan.schedule_times.length > 0 && (
           <div className={styles.scheduleTimes}>
             {plan.schedule_times.map((time) => (
-              <span key={time} className={styles.timeTag}>
-                🕐 {time}
+              <span key={time} className={styles.timeTag} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Clock size={14} /> {time}
               </span>
             ))}
           </div>
         )}
-        <span className={styles.dateRange}>
-          📅 {formatDateRange(plan.start_date, plan.end_date)}
+        <span className={styles.dateRange} style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+          <Calendar size={14} /> {formatDateRange(plan.start_date, plan.end_date)}
         </span>
       </div>
     </div>
@@ -67,10 +68,12 @@ export default function MedicineHistoryPage() {
     <div className={styles.page}>
       {/* 顶部栏 */}
       <header className={styles.header}>
-        <Link href={ROUTES.MEDICINE} className={styles.backLink}>
-          ← 返回
+        <Link href={ROUTES.MEDICINE} className={styles.backLink} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <ArrowLeft size={20} /> 返回
         </Link>
-        <h1 className={styles.title}>📋 用药历史</h1>
+        <h1 className={styles.title} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <ClipboardList size={24} /> 用药历史
+        </h1>
       </header>
 
       {/* 内容区域 */}
@@ -89,8 +92,8 @@ export default function MedicineHistoryPage() {
         <>
           {/* 当前用药 */}
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>
-              <span>🟢</span> 当前用药
+            <h2 className={styles.sectionTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle size={20} color="var(--color-success)" /> 当前用药
             </h2>
             {activePlans.length === 0 ? (
               <p className={styles.emptySection}>暂无当前用药计划</p>
@@ -103,8 +106,8 @@ export default function MedicineHistoryPage() {
 
           {/* 历史用药 */}
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>
-              <span>⚪</span> 历史用药
+            <h2 className={styles.sectionTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Archive size={20} color="var(--text-muted)" /> 历史用药
             </h2>
             {inactivePlans.length === 0 ? (
               <p className={styles.emptySection}>暂无历史用药记录</p>

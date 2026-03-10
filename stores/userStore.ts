@@ -39,8 +39,8 @@ const safeStorage = createJSONStorage<PersistedUserState>(() => {
     // SSR 环境返回空操作
     return {
       getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
+      setItem: () => { },
+      removeItem: () => { },
     };
   }
   return localStorage;
@@ -112,7 +112,8 @@ export const useUserStore = create<UserState>()(
         if (typeof window === 'undefined') return false;
 
         const token = localStorage.getItem('token');
-        if (!token) {
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (!token && !refreshToken) {
           set({ user: null, token: null });
           return false;
         }
@@ -120,11 +121,14 @@ export const useUserStore = create<UserState>()(
         set({ token });
 
         try {
+          // fetchApi 内部会在 401 时自动用 refresh_token 续期
           const user = await fetchApi<User>('/api/v1/users/me');
+          // 重新读取 token（可能已被 fetchApi 刷新）
+          const latestToken = localStorage.getItem('token');
           set({
             user,
             isElder: user.role === 'elder',
-            token,
+            token: latestToken,
           });
           // 同步角色到 layout
           localStorage.setItem('user_role', user.role);
@@ -134,6 +138,8 @@ export const useUserStore = create<UserState>()(
           set({ user: null, isElder: true, token: null });
           localStorage.removeItem('token');
           localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user_role');
+          localStorage.removeItem('user-store');
           return false;
         }
       },

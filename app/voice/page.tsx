@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAIChat } from '@/hooks/useAIChat';
+import { ArrowLeft, Settings, Mic, Bot, Square } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function VoicePage() {
@@ -46,9 +47,9 @@ export default function VoicePage() {
     <div className={styles.page}>
       {/* 头部 */}
       <div className={styles.header}>
-        <button className={styles.backBtn} onClick={() => router.back()}>←</button>
+        <button className={styles.backBtn} onClick={() => router.back()}><ArrowLeft size={24} /></button>
         <h1 className={styles.title}>智能语音助手</h1>
-        <button className={styles.settingsBtn}>⚙️</button>
+        <button className={styles.settingsBtn}><Settings size={24} /></button>
       </div>
 
       {/* 状态 */}
@@ -74,7 +75,7 @@ export default function VoicePage() {
             role="button"
             aria-label={isListening ? '停止听取' : '开始说话'}
           >
-            <span className={styles.micIcon}>🎙️</span>
+            <span className={styles.micIcon}><Mic size={56} color="currentColor" /></span>
           </div>
         </div>
       </div>
@@ -83,7 +84,7 @@ export default function VoicePage() {
       {lastAiMessage && (
         <div className={`glass-card ${styles.responseCard}`}>
           <div className={styles.responseLabel}>
-            <span className={styles.responseIcon}>🤖</span>
+            <span className={styles.responseIcon}><Bot size={20} /></span>
             AI 回复
           </div>
           <p className={styles.responseText}>{lastAiMessage.content}</p>
@@ -91,8 +92,8 @@ export default function VoicePage() {
       )}
 
       {/* 结束对话 */}
-      <button className={styles.endBtn} onClick={handleEnd}>
-        ⏹ 结束对话
+      <button className={styles.endBtn} onClick={handleEnd} style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+        <Square size={20} /> 结束对话
       </button>
     </div>
   );

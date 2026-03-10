@@ -8,6 +8,7 @@ import { useFamilyStore } from '@/stores/familyStore';
 import { useFamilyBinds } from '@/hooks/useFamilyBinds';
 import { getRelationEmoji, formatMessageTime, getMessagePreview } from '@/lib/messageUtils';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
+import { ArrowRight, Users, Plus } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function MessagesPage() {
@@ -33,13 +34,13 @@ export default function MessagesPage() {
           <h1 className={styles.title}>亲友联系人</h1>
           <p className={styles.subtitle}>随时与您的至亲保持联系</p>
         </div>
-        <div className={`glass-card ${styles.headerAction} interactive`}>→</div>
+        <div className={`glass-card ${styles.headerAction} interactive`}><ArrowRight size={24} /></div>
       </div>
 
       <DataStateWrapper
         loading={loading}
         error={error}
-        empty={contacts.length === 0 ? { icon: '👨‍👩‍👧', title: '还没有联系人', description: '绑定家人后就能聊天啦' } : false}
+        empty={contacts.length === 0 ? { icon: <Users size={48} />, title: '还没有联系人', description: '绑定家人后就能聊天啦' } : false}
         onRetry={() => user?.id && binds.length > 0 && fetchContacts(binds, user.id)}
       >
         <div className={styles.contactList}>
@@ -79,8 +80,8 @@ export default function MessagesPage() {
           })}
         </div>
 
-        <div className={`${styles.addCard} interactive`} onClick={() => router.push('/settings/bind')}>
-          + 添加亲友
+        <div className={`${styles.addCard} interactive`} onClick={() => router.push('/settings/bind')} style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+          <Plus size={20} /> 添加亲友
         </div>
       </DataStateWrapper>
     </div>

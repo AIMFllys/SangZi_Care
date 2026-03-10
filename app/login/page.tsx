@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { fetchApi } from '@/lib/api';
+import { HeartPulse, Mail, Calculator, RefreshCw, KeyRound, Send } from 'lucide-react';
 import styles from './login.module.css';
+
+interface CaptchaResponse {
+  captcha_id: string;
+  question: string;
+}
 
 interface SendCodeResponse {
   success: boolean;
@@ -30,6 +36,12 @@ export default function LoginPage() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
 
+  // CAPTCHA state
+  const [captchaId, setCaptchaId] = useState('');
+  const [captchaQuestion, setCaptchaQuestion] = useState('');
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaLoading, setCaptchaLoading] = useState(false);
+
   const [sendingCode, setSendingCode] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
 
@@ -42,6 +54,28 @@ export default function LoginPage() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
+
+  // --- Load CAPTCHA ---
+  const loadCaptcha = useCallback(async () => {
+    setCaptchaLoading(true);
+    setCaptchaAnswer('');
+    try {
+      const res = await fetchApi<CaptchaResponse>('/api/v1/auth/captcha', {
+        skipAuth: true,
+      });
+      setCaptchaId(res.captcha_id);
+      setCaptchaQuestion(res.question);
+    } catch {
+      setError('获取验证问题失败，请刷新页面');
+    } finally {
+      setCaptchaLoading(false);
+    }
+  }, []);
+
+  // Load CAPTCHA on mount
+  useEffect(() => {
+    loadCaptcha();
+  }, [loadCaptcha]);
 
   // --- Countdown logic ---
   const startCountdown = useCallback(() => {
@@ -61,20 +95,30 @@ export default function LoginPage() {
   // --- Validation ---
   const isEmailValid = EMAIL_REGEX.test(email);
   const isCodeValid = code.length === CODE_LENGTH && /^\d+$/.test(code);
+  const isCaptchaFilled = captchaAnswer.trim().length > 0;
 
   // --- Send verification code ---
   const handleSendCode = async () => {
-    if (!isEmailValid || countdown > 0 || sendingCode) return;
+    if (!isEmailValid || countdown > 0 || sendingCode || !isCaptchaFilled) return;
     setError('');
     setSendingCode(true);
     try {
       await fetchApi<SendCodeResponse>('/api/v1/auth/send-code', {
         method: 'POST',
-        body: { email },
+        body: {
+          email,
+          captcha_id: captchaId,
+          captcha_answer: parseInt(captchaAnswer, 10),
+        },
+        skipAuth: true,
       });
       startCountdown();
+      // Load a fresh CAPTCHA for next time
+      loadCaptcha();
     } catch (err) {
       setError(err instanceof Error ? err.message : '验证码发送失败，请稍后重试');
+      // Reload CAPTCHA on failure
+      loadCaptcha();
     } finally {
       setSendingCode(false);
     }
@@ -89,6 +133,7 @@ export default function LoginPage() {
       const res = await fetchApi<VerifyResponse>('/api/v1/auth/verify', {
         method: 'POST',
         body: { email, code },
+        skipAuth: true,
       });
 
       localStorage.setItem('token', res.access_token);
@@ -119,10 +164,8 @@ export default function LoginPage() {
     <div className={styles.container}>
       {/* Logo */}
       <div className={styles.logoSection}>
-        <div className={styles.logoIcon}>
-          <span className={styles.logoEmoji} role="img" aria-label="桑梓智护">
-            🏡
-          </span>
+        <div className={styles.logoIcon} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <HeartPulse size={48} color="var(--primary)" />
         </div>
         <h1 className={styles.appTitle}>桑梓智护</h1>
         <p className={styles.appSubtitle}>AI智慧医养助手</p>
@@ -132,7 +175,7 @@ export default function LoginPage() {
       <div className={styles.form}>
         {/* Email input */}
         <div className={styles.emailRow}>
-          <span className={styles.emailIcon}>📧</span>
+          <span className={styles.emailIcon} style={{ display: 'flex', alignItems: 'center' }}><Mail size={20} color="var(--text-muted)" /></span>
           <div className={styles.emailInput}>
             <Input
               type="email"
@@ -144,9 +187,44 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {/* CAPTCHA row */}
+        <div className={styles.captchaRow}>
+          <div className={styles.captchaQuestion}>
+            {captchaLoading ? (
+              <span className={styles.captchaLoading}>加载中...</span>
+            ) : (
+              <>
+                <span className={styles.captchaLabel} style={{ display: 'flex', alignItems: 'center' }}><Calculator size={20} color="var(--text-muted)" /></span>
+                <span className={styles.captchaText}>{captchaQuestion}</span>
+              </>
+            )}
+          </div>
+          <div className={styles.captchaInput}>
+            <Input
+              type="text"
+              inputMode="numeric"
+              value={captchaAnswer}
+              onChange={(v) => setCaptchaAnswer(v.replace(/[^\d-]/g, ''))}
+              placeholder="答案"
+              aria-label="人机验证答案"
+            />
+          </div>
+          <button
+            className={styles.captchaRefresh}
+            onClick={loadCaptcha}
+            disabled={captchaLoading}
+            aria-label="刷新验证题"
+            type="button"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <RefreshCw size={20} color="var(--primary)" />
+          </button>
+        </div>
+
         {/* Code input + send button */}
         <div className={styles.codeRow}>
           <div className={styles.codeInput}>
+            <div className={styles.inputPrefix}><KeyRound size={20} color="var(--text-muted)" /></div>
             <Input
               type="text"
               inputMode="numeric"
@@ -157,18 +235,15 @@ export default function LoginPage() {
               aria-label="验证码"
             />
           </div>
-          <div className={styles.sendCodeBtn}>
-            <Button
-              variant="secondary"
-              size="md"
-              fullWidth
-              disabled={!isEmailValid || countdown > 0}
-              loading={sendingCode}
-              onClick={handleSendCode}
-            >
-              {sendCodeLabel}
-            </Button>
-          </div>
+          <button
+            className={styles.sendButton}
+            disabled={!isEmailValid || countdown > 0 || !isCaptchaFilled || sendingCode}
+            onClick={handleSendCode}
+            type="button"
+          >
+            {sendingCode ? <RefreshCw size={18} className={styles.spin} /> : <Send size={18} />}
+            {sendCodeLabel}
+          </button>
         </div>
 
         {/* Error message */}

@@ -6,6 +6,7 @@ import { useUserStore } from '@/stores/userStore';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchApi } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
+import { ChevronLeft, X, Plus } from 'lucide-react';
 import styles from './page.module.css';
 
 const GENDER_OPTIONS = ['男', '女'] as const;
@@ -104,8 +105,9 @@ export default function ProfilePage() {
           className={styles.backButton}
           onClick={() => router.push(ROUTES.SETTINGS)}
           aria-label="返回设置"
+          style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
         >
-          ‹ 返回
+          <ChevronLeft size={20} /> 返回
         </button>
         <h1 className={styles.title}>个人信息</h1>
       </div>
@@ -181,8 +183,9 @@ export default function ProfilePage() {
                     className={styles.diseaseRemove}
                     onClick={() => handleRemoveDisease(d)}
                     aria-label={`移除${d}`}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
-                    ×
+                    <X size={14} />
                   </button>
                 </span>
               ))}
@@ -209,8 +212,9 @@ export default function ProfilePage() {
               onClick={handleAddDisease}
               disabled={!newDisease.trim()}
               aria-label="添加"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              +
+              <Plus size={20} />
             </button>
           </div>
         </div>

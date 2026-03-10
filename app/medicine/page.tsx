@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { useMedicineStore } from '@/stores/medicineStore';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
+import { Pill, Syringe, TestTube, Ambulance, CheckCircle, Clock, ArrowLeft, ChevronLeft, ChevronRight, Timer } from 'lucide-react';
 import styles from './page.module.css';
 
 const PILL_COLORS = [styles.medicineIconBlue, styles.medicineIconPink, styles.medicineIconGreen, styles.medicineIconOrange];
-const PILL_EMOJIS = ['💊', '🩹', '💉', '🧴'];
+const PILL_ICONS = [<Pill size={24} key="pill" />, <TestTube size={24} key="tube" />, <Syringe size={24} key="syringe" />, <Pill size={24} key="pill2" />];
 
 export default function MedicinePage() {
   const router = useRouter();
@@ -56,10 +57,9 @@ export default function MedicinePage() {
           <button className={styles.sosBtn} aria-label="SOS 紧急呼叫">SOS</button>
         </div>
 
-        {/* 药瓶图标 */}
         <div className={styles.heroSection}>
           <div className={styles.pillIconWrapper}>
-            <div className={styles.pillIconInner}>🏥</div>
+            <div className={styles.pillIconInner}><Ambulance size={48} /></div>
           </div>
           <h1 className={styles.heroTitle}>该吃药啦！</h1>
           <p className={styles.heroSubtitle}>请服用您的晨间药物</p>
@@ -70,7 +70,7 @@ export default function MedicinePage() {
           {currentMeds.map((med, i) => (
             <div key={`${med.plan.id}-${med.scheduled_time}`} className={styles.medicineItem}>
               <div className={`${styles.medicineIcon} ${PILL_COLORS[i % PILL_COLORS.length]}`}>
-                {PILL_EMOJIS[i % PILL_EMOJIS.length]}
+                {PILL_ICONS[i % PILL_ICONS.length]}
               </div>
               <div>
                 <div className={styles.medicineName}>{med.plan.medicine_name}</div>
@@ -82,11 +82,11 @@ export default function MedicinePage() {
 
         {/* 操作按钮 */}
         <div className={styles.actions}>
-          <button className={styles.confirmBtn} onClick={handleConfirm}>
-            ✅ 我已吃药
+          <button className={styles.confirmBtn} onClick={handleConfirm} style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+            <CheckCircle size={20} /> 我已吃药
           </button>
-          <button className={styles.snoozeBtn} onClick={() => setShowReminder(false)}>
-            ⏰ 15分钟后再提醒
+          <button className={styles.snoozeBtn} onClick={() => setShowReminder(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+            <Clock size={20} /> 15分钟后再提醒
           </button>
         </div>
       </div>
@@ -97,21 +97,21 @@ export default function MedicinePage() {
   return (
     <div className={styles.page}>
       <div className={styles.topBar}>
-        <button className={styles.dateNavBtn} onClick={() => router.back()}>←</button>
+        <button className={styles.dateNavBtn} onClick={() => router.back()}><ArrowLeft size={24} /></button>
         <h1 style={{ fontSize: 'var(--font-heading)', fontWeight: 700 }}>用药管家</h1>
         <div style={{ width: 36 }} />
       </div>
 
       <div className={styles.dateNav}>
-        <button className={styles.dateNavBtn}>‹</button>
+        <button className={styles.dateNavBtn}><ChevronLeft size={24} /></button>
         <span className={styles.dateNavLabel}>今天</span>
-        <button className={styles.dateNavBtn}>›</button>
+        <button className={styles.dateNavBtn}><ChevronRight size={24} /></button>
       </div>
 
       <DataStateWrapper
         loading={isLoading}
         error={error}
-        empty={todayTimeline.length === 0 ? { icon: '💊', title: '今天没有用药计划', description: '享受轻松的一天吧~' } : false}
+        empty={todayTimeline.length === 0 ? { icon: <Pill size={48} />, title: '今天没有用药计划', description: '享受轻松的一天吧~' } : false}
         onRetry={() => fetchTodayTimeline()}
       >
         <div className={styles.timeline}>
@@ -119,7 +119,7 @@ export default function MedicinePage() {
             <div key={`${item.plan.id}-${item.scheduled_time}`} className={`glass-card ${styles.timeSlot} interactive`}>
               <span className={styles.timeSlotTime}>{item.scheduled_time}</span>
               <span className={styles.timeSlotMed}>{item.plan.medicine_name} · {item.plan.dosage}</span>
-              <span className={styles.timeSlotStatus}>{item.status === 'taken' ? '✅' : '⏳'}</span>
+              <span className={styles.timeSlotStatus}>{item.status === 'taken' ? <CheckCircle size={20} color="var(--color-success)" /> : <Timer size={20} color="var(--text-muted)" />}</span>
             </div>
           ))}
         </div>

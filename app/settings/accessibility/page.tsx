@@ -6,6 +6,7 @@ import { useUserStore } from '@/stores/userStore';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchApi } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
+import { ChevronLeft } from 'lucide-react';
 import styles from './page.module.css';
 
 /** 字体大小选项 */
@@ -115,8 +116,9 @@ export default function AccessibilityPage() {
           className={styles.backButton}
           onClick={() => router.push(ROUTES.SETTINGS)}
           aria-label="返回设置"
+          style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
         >
-          ‹ 返回
+          <ChevronLeft size={20} /> 返回
         </button>
         <h1 className={styles.title}>无障碍设置</h1>
       </div>

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { useHealthStore, formatHealthValue, RECORD_TYPE_CONFIG } from '@/stores/healthStore';
+import { User, Heart, Stethoscope, Thermometer, Plus } from 'lucide-react';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
 import styles from './page.module.css';
 
@@ -31,7 +32,7 @@ export default function HealthPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>健康看板</h1>
-        <div className={`${styles.avatar} interactive`} onClick={() => router.push('/settings')}>👤</div>
+        <div className={`${styles.avatar} interactive`} onClick={() => router.push('/settings')}><User size={24} /></div>
       </div>
 
       {/* 今日状态 */}
@@ -52,14 +53,14 @@ export default function HealthPage() {
         loading={loading}
         error={error}
         onRetry={() => fetchLatest()}
-        empty={Object.values(latestRecords).every((v) => v === null) ? { icon: '❤️', title: '暂无健康数据', description: '点击下方按钮添加您的第一条记录' } : false}
+        empty={Object.values(latestRecords).every((v) => v === null) ? { icon: <Heart size={48} />, title: '暂无健康数据', description: '点击下方按钮添加您的第一条记录' } : false}
       >
         <div className={styles.cards}>
           {/* 心率 */}
           <div className={`glass-card ${styles.healthCard} interactive`}>
             <div className={styles.healthCardHeader}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <div className={`${styles.healthCardIcon} ${styles.iconHeart}`}>❤️</div>
+                <div className={`${styles.healthCardIcon} ${styles.iconHeart}`}><Heart size={20} color="currentColor" /></div>
                 <span className={styles.healthCardLabel}>心率</span>
               </div>
               <span className={`${styles.statusBadge} ${hr?.is_abnormal ? styles.badgeWarning : styles.badgeNormal}`}>
@@ -73,14 +74,14 @@ export default function HealthPage() {
             <div className={styles.progressBar}>
               <div className={`${styles.progressFill} ${styles.progressFillRed}`} style={{ width: `${Math.min((parseInt(heartVal) / 120) * 100, 100)}%` }} />
             </div>
-            <span className={styles.healthCardBg}>❤️</span>
+            <span className={styles.healthCardBg}><Heart size={64} opacity={0.05} /></span>
           </div>
 
           {/* 血压 */}
           <div className={`glass-card ${styles.healthCard} interactive`}>
             <div className={styles.healthCardHeader}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <div className={`${styles.healthCardIcon} ${styles.iconBp}`}>🩺</div>
+                <div className={`${styles.healthCardIcon} ${styles.iconBp}`}><Stethoscope size={20} color="currentColor" /></div>
                 <span className={styles.healthCardLabel}>血压</span>
               </div>
               <span className={`${styles.statusBadge} ${bp?.is_abnormal ? styles.badgeWarning : styles.badgeNormal}`}>
@@ -91,7 +92,7 @@ export default function HealthPage() {
               <span className={styles.healthValue}>{bpVal}</span>
               <span className={styles.healthUnit}>mmHg</span>
             </div>
-            <span className={styles.healthCardBg}>🩺</span>
+            <span className={styles.healthCardBg}><Stethoscope size={64} opacity={0.05} /></span>
           </div>
 
           {/* 体温 */}
@@ -99,7 +100,7 @@ export default function HealthPage() {
             <div className={`glass-card ${styles.healthCard} interactive`}>
               <div className={styles.healthCardHeader}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <div className={`${styles.healthCardIcon} ${styles.iconWeight}`}>🌡️</div>
+                  <div className={`${styles.healthCardIcon} ${styles.iconWeight}`}><Thermometer size={20} color="currentColor" /></div>
                   <span className={styles.healthCardLabel}>体温</span>
                 </div>
                 <span className={`${styles.statusBadge} ${styles.badgeNormal}`}>正常</span>
@@ -108,14 +109,14 @@ export default function HealthPage() {
                 <span className={styles.healthValue}>{formatHealthValue('temperature', latestRecords.temperature.values)}</span>
                 <span className={styles.healthUnit}>°C</span>
               </div>
-              <span className={styles.healthCardBg}>🌡️</span>
+              <span className={styles.healthCardBg}><Thermometer size={64} opacity={0.05} /></span>
             </div>
           )}
         </div>
       </DataStateWrapper>
 
       <button className={`${styles.addBtn} interactive`} onClick={() => router.push('/health/input')}>
-        ➕ 添加新记录
+        <Plus size={20} style={{ marginRight: 8 }} /> 添加新记录
       </button>
     </div>
   );

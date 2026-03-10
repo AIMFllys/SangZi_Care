@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 465
     SMTP_USER: str = ""
     SMTP_PASS: str = ""
-    SMTP_FROM_NAME: str = "桑梓智护"
+    SMTP_FROM_NAME: str = "SangZiCare"
 
     # Volcano Engine – Ark (LLM)
     VOLCANO_ARK_API_KEY: str = ""

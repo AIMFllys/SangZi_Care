@@ -2,14 +2,15 @@
 
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
+import { User, Link as LinkIcon, Accessibility, Bell, Info, ChevronRight } from 'lucide-react';
 import styles from './page.module.css';
 
 const SETTING_ITEMS = [
-  { label: '个人信息', icon: '👤', color: styles.iconBlue, href: '/settings/profile' },
-  { label: '绑定管理', icon: '🔗', color: styles.iconOrange, href: '/settings/bind' },
-  { label: '无障碍设置', icon: '♿', color: styles.iconGreen, href: '/settings/accessibility' },
-  { label: '消息通知', icon: '🔔', color: styles.iconPurple, href: '' },
-  { label: '关于我们', icon: 'ℹ️', color: styles.iconBlue, href: '' },
+  { label: '个人信息', icon: <User size={20} />, color: styles.iconBlue, href: '/settings/profile' },
+  { label: '绑定管理', icon: <LinkIcon size={20} />, color: styles.iconOrange, href: '/settings/bind' },
+  { label: '无障碍设置', icon: <Accessibility size={20} />, color: styles.iconGreen, href: '/settings/accessibility' },
+  { label: '消息通知', icon: <Bell size={20} />, color: styles.iconPurple, href: '' },
+  { label: '关于我们', icon: <Info size={20} />, color: styles.iconBlue, href: '' },
 ];
 
 export default function SettingsPage() {
@@ -33,7 +34,7 @@ export default function SettingsPage() {
         className={`glass-card ${styles.userCard} interactive`}
         onClick={() => router.push('/settings/profile')}
       >
-        <div className={styles.userAvatar}>👤</div>
+        <div className={styles.userAvatar}><User size={32} /></div>
         <div>
           <div className={styles.userName}>{user?.name || '用户'}</div>
           <div className={styles.userRole}>{user?.role === 'elder' ? '老年人端' : '家属端'}</div>
@@ -52,7 +53,7 @@ export default function SettingsPage() {
             >
               <div className={`${styles.settingIcon} ${item.color}`}>{item.icon}</div>
               <span className={styles.settingLabel}>{item.label}</span>
-              <span className={styles.settingArrow}>›</span>
+              <span className={styles.settingArrow}><ChevronRight size={20} /></span>
             </div>
           ))}
         </div>

@@ -1,10 +1,11 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { FileX, AlertCircle } from 'lucide-react';
 import styles from './DataStateWrapper.module.css';
 
 interface EmptyConfig {
-    icon?: string;
+    icon?: ReactNode;
     title?: string;
     description?: string;
 }
@@ -44,7 +45,7 @@ export default function DataStateWrapper({
     if (error) {
         return (
             <div className={styles.container}>
-                <span className={styles.icon}>😥</span>
+                <span className={styles.icon}><AlertCircle size={48} color="var(--color-danger)" /></span>
                 <p className={styles.errorText}>{error}</p>
                 {onRetry && (
                     <button className={styles.retryButton} onClick={onRetry}>
@@ -58,7 +59,7 @@ export default function DataStateWrapper({
     if (empty) {
         return (
             <div className={styles.container}>
-                <span className={styles.icon}>{empty.icon || '📭'}</span>
+                <span className={styles.icon}>{empty.icon || <FileX size={48} color="var(--text-muted)" />}</span>
                 <p className={styles.text}>{empty.title || '暂无数据'}</p>
                 {empty.description && (
                     <p className={styles.description}>{empty.description}</p>
