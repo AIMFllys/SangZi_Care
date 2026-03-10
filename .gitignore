@@ -95,3 +95,8 @@ backend/.venv/
 coverage/
 .nyc_output/
 *.log
+
+# docs
+docs/*
+!docs/UI设计参考成品图/
+!docs/详解/
