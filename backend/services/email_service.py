@@ -1,4 +1,7 @@
-"""阿里云邮件推送服务 — 通过 SMTP (SSL) 发送验证码邮件。"""
+"""阿里云邮件推送服务 — 通过 SMTP 发送验证码邮件。
+
+支持多种连接方式，自动适配不同网络环境（含 VPN/代理场景）。
+"""
 
 import logging
 import smtplib
@@ -12,14 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 def _create_ssl_context() -> ssl.SSLContext:
-    """创建兼容阿里云 SMTP 的 SSL 上下文。
-
-    Python 3.12+ 对 SSL 默认要求更加严格，部分 SMTP 服务器
-    （如阿里云邮件推送）可能不符合新的默认安全策略，
-    因此需要手动创建一个兼容性更好的 SSL context。
-    """
+    """创建兼容阿里云 SMTP 的 SSL 上下文。"""
     ctx = ssl.create_default_context()
-    # 允许与旧版 TLS 服务器兼容
     ctx.set_ciphers("DEFAULT:@SECLEVEL=1")
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
@@ -76,7 +73,8 @@ def send_verification_email(to_email: str, code: str, expires_minutes: int = 5) 
 
     ssl_ctx = _create_ssl_context()
 
-    # ── 方式 1：SMTP_SSL（端口 465），使用自定义 SSL context ──
+    # ── 方式 1：SMTP_SSL（端口 465） ──
+    # 生产环境（直连阿里云网络）首选此方式
     try:
         with smtplib.SMTP_SSL(
             settings.SMTP_HOST, settings.SMTP_PORT,
@@ -102,16 +100,27 @@ def send_verification_email(to_email: str, code: str, expires_minutes: int = 5) 
     except Exception as e:
         logger.warning("STARTTLS 连接 (端口 587) 失败: %s", e)
 
-    # ── 方式 3：STARTTLS（端口 25，最后手段） ──
+    # ── 方式 3：非加密 SMTP（端口 80，阿里云邮件推送专用端口） ──
+    # 在 VPN/代理环境下 SSL 端口不可用时，此方式可作为可靠回退
     try:
-        with smtplib.SMTP(settings.SMTP_HOST, 25, timeout=10) as server:
-            server.ehlo()
-            server.starttls(context=ssl_ctx)
+        with smtplib.SMTP(settings.SMTP_HOST, 80, timeout=10) as server:
             server.ehlo()
             server.login(settings.SMTP_USER, settings.SMTP_PASS)
             server.sendmail(settings.SMTP_USER, [to_email], msg.as_string())
-        logger.info("验证码邮件已通过 STARTTLS (端口 25) 发送至 %s", to_email)
+        logger.info("验证码邮件已通过非加密 SMTP (端口 80) 发送至 %s", to_email)
+        return True
+    except Exception as e:
+        logger.warning("非加密 SMTP 连接 (端口 80) 失败: %s", e)
+
+    # ── 方式 4：非加密 SMTP（端口 25，最后手段） ──
+    try:
+        with smtplib.SMTP(settings.SMTP_HOST, 25, timeout=10) as server:
+            server.ehlo()
+            server.login(settings.SMTP_USER, settings.SMTP_PASS)
+            server.sendmail(settings.SMTP_USER, [to_email], msg.as_string())
+        logger.info("验证码邮件已通过非加密 SMTP (端口 25) 发送至 %s", to_email)
         return True
     except Exception:
         logger.exception("发送验证码邮件失败 (所有方式均不可用): %s", to_email)
         return False
+
