@@ -50,8 +50,8 @@ interface FamilyState {
   /** 错误信息 */
   error: string | null;
 
-  /** 拉取绑定列表 */
-  fetchBinds: () => Promise<void>;
+  /** 拉取绑定列表（需传当前用户 ID 以正确识别对方） */
+  fetchBinds: (currentUserId: string) => Promise<void>;
   /** 拉取老人健康摘要（家属端用） */
   fetchElderHealthSummary: (elderId: string) => Promise<void>;
   /** 清空状态 */
@@ -65,20 +65,29 @@ export const useFamilyStore = create<FamilyState>()((set) => ({
   isLoading: false,
   error: null,
 
-  fetchBinds: async () => {
+  fetchBinds: async (currentUserId: string) => {
     set({ isLoading: true, error: null });
     try {
       const data = await fetchApi<FamilyBind[]>('/api/v1/family/binds');
 
       // 将后端的平面数据转换为 FamilyBindWithUser
-      // 由于后端目前不返回 user 详情, 用绑定信息构造占位
-      const bindsWithUser: FamilyBindWithUser[] = data.map((bind) => ({
-        bind,
-        user: {
-          id: bind.elder_id || bind.family_id || bind.id,
-          name: bind.relation || '家人',
-        },
-      }));
+      // 关键：根据当前用户 ID 判断"对方"是谁
+      // 当前用户是老人 → 对方是 family_id
+      // 当前用户是家属 → 对方是 elder_id
+      const bindsWithUser: FamilyBindWithUser[] = data.map((bind) => {
+        const isCurrentUserElder = bind.elder_id === currentUserId;
+        const otherUserId = isCurrentUserElder
+          ? (bind.family_id || bind.id)
+          : (bind.elder_id || bind.id);
+
+        return {
+          bind,
+          user: {
+            id: otherUserId,
+            name: bind.relation || '家人',
+          },
+        };
+      });
 
       set({ binds: bindsWithUser, rawBinds: data, isLoading: false });
     } catch (err) {

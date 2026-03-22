@@ -16,7 +16,7 @@ export function useFamilyBinds() {
 
     useEffect(() => {
         if (user?.id && binds.length === 0) {
-            fetchBinds();
+            fetchBinds(user.id);
         }
     }, [user?.id, binds.length, fetchBinds]);
 

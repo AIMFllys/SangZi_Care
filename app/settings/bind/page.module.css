@@ -1,8 +1,26 @@
-/* settings/bind — 绑定管理 */
+/* ============================================================
+ * 绑定管理页 — Premium Glass Design
+ * ============================================================ */
+
+/* --- Page Container --- */
 .container {
   min-height: 100dvh;
-  background: var(--bg-base);
-  padding: var(--safe-top) var(--space-lg) var(--space-lg);
+  background:
+    linear-gradient(180deg, var(--bg-base) 0%, var(--bg-elevated) 50%, var(--bg-base) 100%);
+  padding: var(--safe-top) var(--space-lg) calc(var(--tabbar-height) + var(--safe-bottom) + var(--space-xl));
+  animation: pageIn 0.4s var(--ease-out-smooth) both;
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .loading {
@@ -11,161 +29,132 @@
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
+  font-size: var(--font-body);
 }
 
+/* --- Header --- */
 .header {
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  padding: var(--space-md) 0 var(--space-lg);
+  padding: var(--space-lg) 0;
+  margin-bottom: var(--space-sm);
 }
 
 .backButton {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   background: none;
   border: none;
-  font-size: var(--font-body);
-  color: var(--accent-primary);
+  font-size: var(--font-caption);
+  color: var(--accent);
   font-weight: 600;
   cursor: pointer;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  transition: background var(--duration-fast), transform var(--duration-fast);
+}
+
+.backButton:active {
+  transform: scale(0.95);
+  background: var(--accent-soft);
 }
 
 .title {
-  font-size: var(--font-heading);
-  font-weight: 700;
+  font-size: var(--font-title);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
-.subtitle {
-  font-size: var(--font-caption);
-  color: var(--text-secondary);
-  margin-bottom: var(--space-lg);
-}
-
+/* --- Banners --- */
 .successBanner,
 .errorBanner {
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-md);
   font-size: var(--font-caption);
+  font-weight: 500;
   margin-bottom: var(--space-md);
   text-align: center;
+  animation: bannerIn 0.3s var(--ease-out-smooth) both;
+}
+
+@keyframes bannerIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .successBanner {
-  background: rgba(34, 197, 94, 0.1);
+  background: var(--color-success-soft);
   color: var(--color-success);
+  border: 1px solid rgba(46, 125, 50, 0.15);
 }
 
 .errorBanner {
-  background: rgba(239, 68, 68, 0.1);
+  background: var(--color-danger-soft);
   color: var(--color-danger);
+  border: 1px solid rgba(229, 57, 53, 0.12);
 }
 
-/* 绑定码区域 */
-.codeSection {
-  padding: var(--space-lg);
+/* --- Section --- */
+.section {
+  background: var(--bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-card);
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  margin-bottom: var(--space-xl);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  animation: sectionIn 0.5s var(--ease-out-smooth) both;
+}
+
+.section:nth-child(3) {
+  animation-delay: 0.08s;
+}
+
+.section:nth-child(4) {
+  animation-delay: 0.16s;
+}
+
+@keyframes sectionIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .sectionTitle {
-  font-size: var(--font-title);
+  font-size: var(--font-heading);
   font-weight: 700;
+  color: var(--text-primary);
   margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
 }
 
-.codeDisplay {
-  text-align: center;
-  font-size: var(--font-hero);
-  font-weight: 900;
-  letter-spacing: 0.2em;
-  color: var(--accent-primary);
-  padding: var(--space-md);
-}
-
-.codeHint {
+.hint {
   font-size: var(--font-caption);
   color: var(--text-secondary);
-  text-align: center;
+  line-height: 1.6;
+  margin-bottom: var(--space-sm);
 }
 
-.generateBtn,
-.bindBtn {
-  width: 100%;
-  padding: var(--space-md);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-body);
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  margin-top: var(--space-md);
-  transition: transform var(--duration-fast);
-}
-
-.generateBtn {
-  background: var(--accent-primary);
-  color: white;
-}
-
-.bindBtn {
-  background: var(--accent-primary);
-  color: white;
-}
-
-.generateBtn:active,
-.bindBtn:active {
-  transform: scale(0.98);
-}
-
-.generateBtn:disabled,
-.bindBtn:disabled {
-  opacity: 0.5;
-}
-
-/* 绑定码输入 */
-.codeInput {
-  width: 100%;
-  padding: var(--space-md);
-  border-radius: var(--radius-lg);
-  border: 2px solid var(--divider);
-  font-size: var(--font-heading);
-  text-align: center;
-  letter-spacing: 0.15em;
-  outline: none;
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.codeInput:focus {
-  border-color: var(--accent-primary);
-}
-
-/* 关系选择 */
-.relationGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-  margin: var(--space-md) 0;
-}
-
-.relationChip {
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-full);
-  border: 1.5px solid var(--divider);
-  background: rgba(255, 255, 255, 0.5);
-  font-size: var(--font-caption);
-  cursor: pointer;
-  transition: all var(--duration-fast);
-}
-
-.relationChipActive {
-  background: var(--accent-soft);
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-  font-weight: 600;
-}
-
-/* 绑定列表 */
+/* --- Bind List (Existing Binds) --- */
 .bindList {
   display: flex;
   flex-direction: column;
@@ -173,126 +162,433 @@
 }
 
 .bindCard {
+  background: var(--bg-card-solid);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  transition: box-shadow var(--duration-normal) var(--ease-out-smooth),
+    transform var(--duration-fast) var(--ease-out-smooth);
+}
+
+.bindCard:active {
+  transform: scale(0.99);
+}
+
+.bindCardHeader {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-card);
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--divider);
 }
 
-.bindAvatar {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-full);
-  background: var(--accent-soft);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-}
-
-.bindInfo {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.bindName {
+.relation {
   font-size: var(--font-body);
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
-.bindRelation {
-  font-size: var(--font-caption);
-  color: var(--text-secondary);
-}
-
-.bindStatus {
+.statusBadge {
   font-size: var(--font-small);
-  padding: 2px 8px;
+  font-weight: 600;
+  padding: 3px 12px;
   border-radius: var(--radius-full);
+  letter-spacing: 0.02em;
 }
 
 .statusActive {
-  background: rgba(34, 197, 94, 0.1);
+  background: var(--color-success-soft);
   color: var(--color-success);
 }
 
-.statusPending {
-  background: rgba(251, 191, 36, 0.1);
-  color: #f59e0b;
+.statusInactive {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
 }
 
-.unbindBtn {
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-full);
-  border: 1px solid var(--color-danger);
-  background: none;
-  color: var(--color-danger);
-  font-size: var(--font-small);
-  cursor: pointer;
+/* --- Permission Toggles --- */
+.permissions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: var(--space-md);
 }
 
-/* 权限开关 */
 .permissionRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: var(--space-sm) 0;
+  cursor: pointer;
 }
 
-.permLabel {
+.permissionLabel {
   font-size: var(--font-caption);
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
+/* Toggle Switch */
 .toggle {
   position: relative;
-  width: 44px;
-  height: 24px;
+  width: 48px;
+  height: 28px;
   border-radius: var(--radius-full);
-  background: var(--divider);
-  cursor: pointer;
   border: none;
-  transition: background var(--duration-fast);
+  cursor: pointer;
+  transition: background var(--duration-normal) var(--ease-out-smooth);
+  flex-shrink: 0;
 }
 
-.toggleActive {
-  background: var(--accent-primary);
+.toggleOn {
+  background: var(--accent);
 }
 
-.toggle::after {
-  content: '';
+.toggleOff {
+  background: var(--divider);
+}
+
+.toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toggleThumb {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
   border-radius: var(--radius-full);
   background: white;
-  transition: transform var(--duration-fast);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  transition: transform var(--duration-normal) var(--ease-spring);
 }
 
-.toggleActive::after {
+.toggleOn .toggleThumb {
   transform: translateX(20px);
 }
 
+/* --- Unbind Button --- */
+.unbindButton {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-danger);
+  background: transparent;
+  color: var(--color-danger);
+  font-size: var(--font-caption);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--duration-fast), color var(--duration-fast), transform var(--duration-fast);
+}
+
+.unbindButton:active {
+  transform: scale(0.97);
+  background: var(--color-danger-soft);
+}
+
+/* --- Generate Code Button (Elder) --- */
+.generateButton {
+  width: 100%;
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  border: none;
+  font-size: var(--font-body);
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: var(--accent-text);
+  box-shadow: 0 4px 16px rgba(245, 146, 62, 0.3);
+  transition: transform var(--duration-fast) var(--ease-out-smooth),
+    box-shadow var(--duration-fast);
+}
+
+.generateButton:active {
+  transform: scale(0.97);
+}
+
+.generateButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* --- Code Display --- */
+.codeDisplay {
+  text-align: center;
+  margin-top: var(--space-lg);
+  padding: var(--space-lg);
+  background: var(--accent-glow);
+  border-radius: var(--radius-md);
+  border: 1.5px dashed var(--accent-light);
+  animation: codeReveal 0.5s var(--ease-spring) both;
+}
+
+@keyframes codeReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.codeLabel {
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+  font-weight: 500;
+}
+
+.codeValue {
+  font-size: var(--font-hero);
+  font-weight: 900;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.codeHint {
+  font-size: var(--font-small);
+  color: var(--text-muted);
+  margin-top: var(--space-sm);
+}
+
+/* --- Form Group (Family: Enter Code) --- */
+.formGroup {
+  margin-bottom: var(--space-md);
+}
+
+.formLabel {
+  display: block;
+  font-size: var(--font-caption);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.formInput {
+  width: 100%;
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--divider);
+  font-size: var(--font-heading);
+  text-align: center;
+  letter-spacing: 0.25em;
+  outline: none;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+  font-variant-numeric: tabular-nums;
+}
+
+.formInput::placeholder {
+  font-size: var(--font-caption);
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.formInput:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.formInputError {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 4px var(--color-danger-soft);
+}
+
+.formError {
+  font-size: var(--font-small);
+  color: var(--color-danger);
+  margin-top: var(--space-xs);
+  font-weight: 500;
+}
+
+/* --- Relation Grid (Family Type Chip Select) --- */
+.relationGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.relationChip {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--divider);
+  background: var(--bg-input);
+  font-size: var(--font-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out-smooth);
+}
+
+.relationChip:active {
+  transform: scale(0.95);
+}
+
+.relationChipActive {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+/* --- Bind Button (Family) --- */
+.bindButton {
+  width: 100%;
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  border: none;
+  font-size: var(--font-body);
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: var(--accent-text);
+  box-shadow: 0 4px 16px rgba(245, 146, 62, 0.3);
+  margin-top: var(--space-sm);
+  transition: transform var(--duration-fast) var(--ease-out-smooth),
+    box-shadow var(--duration-fast),
+    opacity var(--duration-fast);
+}
+
+.bindButton:active {
+  transform: scale(0.97);
+}
+
+.bindButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* --- Modal Overlay --- */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: overlayIn 0.2s ease-out both;
+  padding: var(--space-lg);
+}
+
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.modalContent {
+  background: var(--bg-card-solid);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl) var(--space-lg);
+  max-width: 360px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  animation: modalIn 0.3s var(--ease-spring) both;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modalTitle {
+  font-size: var(--font-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+.modalMessage {
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.modalActions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.modalBtnCancel,
+.modalBtnDanger {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-caption);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--duration-fast), opacity var(--duration-fast);
+}
+
+.modalBtnCancel {
+  background: var(--bg-input);
+  border: 1.5px solid var(--divider);
+  color: var(--text-secondary);
+}
+
+.modalBtnDanger {
+  background: var(--color-danger);
+  border: none;
+  color: white;
+  box-shadow: 0 2px 12px rgba(229, 57, 53, 0.25);
+}
+
+.modalBtnCancel:active,
+.modalBtnDanger:active {
+  transform: scale(0.96);
+}
+
+.modalBtnCancel:disabled,
+.modalBtnDanger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* --- Empty State --- */
 .emptyState {
   text-align: center;
-  padding: var(--space-2xl);
-  color: var(--text-muted);
+  padding: var(--space-2xl) var(--space-lg);
 }
 
 .emptyIcon {
   font-size: 48px;
+  margin-bottom: var(--space-sm);
+  opacity: 0.5;
 }
 
 .emptyText {
-  font-size: var(--font-body);
-  margin-top: var(--space-md);
+  font-size: var(--font-caption);
+  color: var(--text-muted);
 }

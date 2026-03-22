@@ -82,7 +82,7 @@ timeout /t 3 /nobreak >nul
 
 echo.
 echo ========================================
-echo Starting frontend service (port 3000)...
+echo Starting frontend service (port 7742)...
 echo ========================================
 start "Sangzi Smart Care - Frontend" cmd /k "npm run dev"
 
@@ -91,14 +91,14 @@ echo ========================================
 echo Services started successfully!
 echo ========================================
 echo.
-echo Frontend: http://localhost:3000
+echo Frontend: http://localhost:7742
 echo Backend: http://localhost:8000
 echo API Docs: http://localhost:8000/docs
 echo.
 echo Press any key to open browser...
 pause >nul
 
-start http://localhost:3000
+start http://localhost:7742
 
 echo.
 echo Note: Closing this window will not stop the services

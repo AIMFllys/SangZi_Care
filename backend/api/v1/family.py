@@ -42,23 +42,18 @@ def _generate_bind_code() -> str:
 
 
 def _db_row_to_response(row: dict) -> FamilyBindResponse:
-    """Map a Supabase elder_family_binds row to FamilyBindResponse.
-
-    The DB uses `relationship` and `permissions` (jsonb), while the Pydantic
-    model uses `relation` and individual boolean fields.
-    """
-    permissions = row.get("permissions") or {}
+    """Map a Supabase elder_family_binds row to FamilyBindResponse."""
     return FamilyBindResponse(
         id=row["id"],
         elder_id=row.get("elder_id", ""),
-        family_id=row.get("family_id", ""),
-        relation=row.get("relationship", ""),
+        family_id=row.get("family_id") or "",
+        relation=row.get("relation", ""),
         status=row.get("status"),
         bind_code=row.get("bind_code"),
-        can_view_health=permissions.get("view_health_data", False),
-        can_edit_medication=permissions.get("edit_medication_plans", False),
-        can_receive_emergency=permissions.get("receive_emergency_notifications", False),
-        bound_at=row.get("updated_at"),
+        can_view_health=row.get("can_view_health", False),
+        can_edit_medication=row.get("can_edit_medication", False),
+        can_receive_emergency=row.get("can_receive_emergency", False),
+        bound_at=row.get("bound_at"),
         created_at=row.get("created_at"),
     )
 
@@ -83,10 +78,18 @@ async def generate_code(current_user: dict = Depends(require_auth)):
         "elder_id": user_id,
         "bind_code": bind_code,
         "status": "pending",
+        "relation": "pending",
+        "can_view_health": True,
+        "can_edit_medication": False,
+        "can_receive_emergency": True,
         "created_at": now,
+        "bound_at": now,
     }
 
-    result = postgrest.from_("elder_family_binds").insert(record).execute()
+    try:
+        result = postgrest.from_("elder_family_binds").insert(record).execute()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"生成绑定码失败: {exc}")
     rows = result.data or []
     if not rows:
         raise HTTPException(status_code=500, detail="生成绑定码失败")
@@ -130,18 +133,15 @@ async def bind_family(
         raise HTTPException(status_code=400, detail="不能绑定自己")
 
     now = datetime.now(timezone.utc).isoformat()
-    default_permissions = {
-        "view_health_data": True,
-        "edit_medication_plans": False,
-        "receive_emergency_notifications": True,
-    }
 
     update_data = {
         "family_id": family_id,
-        "relationship": body.relation,
+        "relation": body.relation,
         "status": "active",
-        "permissions": default_permissions,
-        "updated_at": now,
+        "can_view_health": True,
+        "can_edit_medication": False,
+        "can_receive_emergency": True,
+        "bound_at": now,
     }
 
     update_result = (
@@ -216,33 +216,16 @@ async def update_bind(
     """更新绑定权限。"""
     now = datetime.now(timezone.utc).isoformat()
 
-    # First fetch the current record to merge permissions
-    fetch_result = (
-        postgrest.from_("elder_family_binds")
-        .select("*")
-        .eq("id", bind_id)
-        .execute()
-    )
-    fetch_rows = fetch_result.data or []
-    if not fetch_rows:
-        raise HTTPException(status_code=404, detail="绑定记录不存在")
-
-    current_row = fetch_rows[0]
-    current_permissions = current_row.get("permissions") or {}
-
-    # Build updated permissions from body
-    if body.can_view_health is not None:
-        current_permissions["view_health_data"] = body.can_view_health
-    if body.can_edit_medication is not None:
-        current_permissions["edit_medication_plans"] = body.can_edit_medication
-    if body.can_receive_emergency is not None:
-        current_permissions["receive_emergency_notifications"] = body.can_receive_emergency
-
     update_data: dict = {
-        "permissions": current_permissions,
-        "updated_at": now,
+        "bound_at": now,
     }
 
+    if body.can_view_health is not None:
+        update_data["can_view_health"] = body.can_view_health
+    if body.can_edit_medication is not None:
+        update_data["can_edit_medication"] = body.can_edit_medication
+    if body.can_receive_emergency is not None:
+        update_data["can_receive_emergency"] = body.can_receive_emergency
     if body.status is not None:
         update_data["status"] = body.status
 
@@ -274,7 +257,7 @@ async def delete_bind(
 
     update_result = (
         postgrest.from_("elder_family_binds")
-        .update({"status": "inactive", "updated_at": now})
+        .update({"status": "inactive", "bound_at": now})
         .eq("id", bind_id)
         .execute()
     )

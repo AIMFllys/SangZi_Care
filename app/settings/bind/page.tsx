@@ -44,6 +44,7 @@ interface GenerateCodeResponse {
 export default function BindManagementPage() {
   const router = useRouter();
   const { isReady } = useAuth();
+  const user = useUserStore((s) => s.user);
   const isElder = useUserStore((s) => s.isElder);
   const { binds, fetchBinds, isLoading: storeLoading } = useFamilyStore();
 
@@ -130,7 +131,7 @@ export default function BindManagementPage() {
       // Refresh bind list
       await loadBinds();
       // Also refresh store for other components
-      fetchBinds();
+      if (user?.id) fetchBinds(user.id);
     } catch (err) {
       setBindError(err instanceof Error ? err.message : '绑定失败');
     } finally {
@@ -175,7 +176,7 @@ export default function BindManagementPage() {
       setBindList((prev) => prev.filter((b) => b.id !== unbindTarget.id));
       setUnbindTarget(null);
       // Refresh store
-      fetchBinds();
+      if (user?.id) fetchBinds(user.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : '解除绑定失败');
     } finally {

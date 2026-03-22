@@ -4,7 +4,7 @@
   "private": true,
   "description": "桑梓智护 - 智护银龄 APP (面向老年人的智能养老移动应用)",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 7742",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

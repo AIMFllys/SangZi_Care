@@ -99,7 +99,7 @@ echo    等待后端服务启动...
 timeout /t 5 /nobreak >nul
 
 REM 启动前端服务
-echo 🚀 启动前端服务 (端口 3000)...
+echo 🚀 启动前端服务 (端口 7742)...
 start "桑梓智护 - 前端服务" cmd /k "cd /d %~dp0.. && echo 前端服务启动中... && npm run dev"
 
 REM 等待前端启动
@@ -111,7 +111,7 @@ echo ═════════════════════════
 echo ✅ 服务启动完成！
 echo ════════════════════════════════════════
 echo.
-echo 📱 前端地址: http://localhost:3000
+echo 📱 前端地址: http://localhost:7742
 echo 🔧 后端地址: http://localhost:8000
 echo 📚 API 文档: http://localhost:8000/docs
 echo.
@@ -125,7 +125,7 @@ REM 询问是否打开浏览器
 choice /C YN /M "是否打开浏览器访问应用"
 if %ERRORLEVEL% EQU 1 (
     echo 正在打开浏览器...
-    start http://localhost:3000
+    start http://localhost:7742
     timeout /t 2 /nobreak >nul
     start http://localhost:8000/docs
 )
