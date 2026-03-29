@@ -1,0 +1,58 @@
+代码统计报告
+
+项目目录：
+D:\project\old_and_new\app
+
+统计时间：
+2026-03-29
+
+统计脚本：
+scripts\count_handwritten_code.py
+
+运行命令：
+python .\scripts\count_handwritten_code.py
+
+统计说明：
+1. 使用 Python 脚本只读扫描项目文件，不修改任何源码文件。
+2. 为避免中文或 UTF-8 编码内容被误处理，统计时按字节读取文件，只按换行符 LF（\n）计算物理行数，不对源码文本内容做转码写回。
+3. 业务代码统计源码扩展名：.py、.ts、.tsx、.js、.jsx、.vue、.java、.kt、.kts、.go、.rs、.php、.cs、.c、.cpp、.cc、.h、.hpp、.swift。
+4. 总代码统计扩展名：在业务代码扩展名基础上，额外包含 .md。
+4. 统计时包含测试文件和类型声明文件，例如 *.test.*、*.spec.*、*.d.ts。
+5. 不统计以下文件：*.min.js、*.min.css、*.bundle.js。
+
+业务代码口径说明：
+1. 排除目录：.git、.next、.nuxt、.svelte-kit、node_modules、dist、build、out、coverage、docs、doc、venv、.venv、__pycache__、generated、vendor、third_party。
+2. 排除目录片段：test、tests、spec、__tests__、__mocks__、fixtures、examples、example、demo、demos。
+3. 文件级别包含测试文件和类型声明文件，但位于上述被排除目录中的内容仍不纳入统计。
+4. 该口径用于估算项目自身业务源码规模。
+
+业务代码统计结果：
+总文件数：121
+总代码行数：20792
+
+业务代码按扩展名统计：
+.py：56 个文件，10893 行
+.tsx：36 个文件，5287 行
+.ts：28 个文件，4401 行
+.kt：1 个文件，211 行
+
+总代码口径说明：
+1. 保留业务代码中的源码扩展名，并额外统计 .md 文件。
+2. 仅排除 .git、__pycache__ 和 .agent。
+3. 额外排除项目根目录 .gitignore 命中的内容。
+4. 包含依赖路径中的源码或文档文件，也包含测试文件和类型声明文件，但如果该路径被 .gitignore 忽略，则不纳入统计。
+
+总代码统计结果：
+总文件数：148
+总代码行数：27241
+
+总代码按扩展名统计：
+.py：49 个文件，9366 行
+.tsx：52 个文件，8484 行
+.ts：40 个文件，7808 行
+.md：6 个文件，1372 行
+.kt：1 个文件，211 行
+
+结论：
+1. 按业务代码口径，本项目当前共 121 个文件，20792 行。
+2. 按总代码口径（包含依赖路径、包含 .md、包含测试文件和类型声明、排除 .gitignore 和 .agent 内容），本项目当前共 148 个文件，27241 行。
