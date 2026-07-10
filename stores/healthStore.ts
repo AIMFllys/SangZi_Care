@@ -4,14 +4,16 @@
 
 import { create } from 'zustand';
 import { fetchApi } from '@/lib/api';
+import type { HealthValues, HealthRecordType } from '@/types/health';
+import { isBloodPressureValues, isSingleValueRecord } from '@/types/health';
 
 // ---------- 类型定义（对齐后端响应） ----------
 
 export interface HealthRecordResponse {
   id: string;
   user_id: string;
-  record_type: 'blood_pressure' | 'blood_sugar' | 'heart_rate' | 'weight' | 'temperature';
-  values: Record<string, any>;
+  record_type: HealthRecordType;
+  values: HealthValues;
   measured_at: string;
   input_method?: string;
   recorded_by?: string;
@@ -63,22 +65,26 @@ export const RECORD_TYPES = Object.keys(RECORD_TYPE_CONFIG);
 /** 格式化健康数据值为展示字符串 */
 export function formatHealthValue(
   type: string,
-  values: Record<string, any>,
+  values: HealthValues,
 ): string {
   if (!values) return '--';
   const config = RECORD_TYPE_CONFIG[type];
   if (!config) return '--';
 
-  if (type === 'blood_pressure') {
+  if (type === 'blood_pressure' && isBloodPressureValues(values)) {
     const s = values.systolic;
     const d = values.diastolic;
     if (s == null && d == null) return '--';
     return `${s ?? '--'}/${d ?? '--'}`;
   }
 
-  const val = values.value;
-  if (val == null) return '--';
-  return String(val);
+  if (isSingleValueRecord(values)) {
+    const val = values.value;
+    if (val == null) return '--';
+    return String(val);
+  }
+
+  return '--';
 }
 
 /** 格式化测量时间为简短展示 */

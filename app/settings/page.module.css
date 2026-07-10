@@ -124,6 +124,24 @@
   color: var(--text-muted);
 }
 
+.settingDisabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.settingDisabled:active {
+  background: none;
+}
+
+.comingSoon {
+  font-size: var(--font-small);
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
 /* 退出 */
 .logoutBtn {
   width: 100%;

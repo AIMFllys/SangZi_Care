@@ -24,8 +24,8 @@ export default function HealthPage() {
 
   const hr = latestRecords.heart_rate;
   const bp = latestRecords.blood_pressure;
-  const heartVal = hr ? formatHealthValue('heart_rate', hr.values) : '72';
-  const bpVal = bp ? formatHealthValue('blood_pressure', bp.values) : '128/82';
+  const heartVal = hr ? formatHealthValue('heart_rate', hr.values) : '--';
+  const bpVal = bp ? formatHealthValue('blood_pressure', bp.values) : '--';
   const stepsGoal = 5000;
 
   return (

@@ -9,8 +9,8 @@ const SETTING_ITEMS = [
   { label: '个人信息', icon: <User size={20} />, color: styles.iconBlue, href: '/settings/profile' },
   { label: '绑定管理', icon: <LinkIcon size={20} />, color: styles.iconOrange, href: '/settings/bind' },
   { label: '无障碍设置', icon: <Accessibility size={20} />, color: styles.iconGreen, href: '/settings/accessibility' },
-  { label: '消息通知', icon: <Bell size={20} />, color: styles.iconPurple, href: '' },
-  { label: '关于我们', icon: <Info size={20} />, color: styles.iconBlue, href: '' },
+  { label: '消息通知', icon: <Bell size={20} />, color: styles.iconPurple, href: '', comingSoon: true },
+  { label: '关于我们', icon: <Info size={20} />, color: styles.iconBlue, href: '', comingSoon: true },
 ];
 
 export default function SettingsPage() {
@@ -48,12 +48,15 @@ export default function SettingsPage() {
           {SETTING_ITEMS.map((item) => (
             <div
               key={item.label}
-              className={styles.settingItem}
+              className={`${styles.settingItem} ${item.comingSoon ? styles.settingDisabled : ''}`}
               onClick={() => item.href && router.push(item.href)}
             >
               <div className={`${styles.settingIcon} ${item.color}`}>{item.icon}</div>
               <span className={styles.settingLabel}>{item.label}</span>
-              <span className={styles.settingArrow}><ChevronRight size={20} /></span>
+              {item.comingSoon
+                ? <span className={styles.comingSoon}>即将推出</span>
+                : <span className={styles.settingArrow}><ChevronRight size={20} /></span>
+              }
             </div>
           ))}
         </div>

@@ -1,32 +1,40 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useUserStore } from '@/stores/userStore';
+import {
+    Mic, Users, LayoutGrid, Heart, User,
+    LayoutDashboard, MessageCircle, Activity, Settings,
+} from 'lucide-react';
 import styles from './TabBar.module.css';
 
 interface TabItem {
     key: string;
     label: string;
-    icon: string;
+    icon: ReactNode;
     href: string;
     center?: boolean;
 }
 
+const ICON_SIZE = 22;
+const CENTER_ICON_SIZE = 26;
+
 const ELDER_TABS: TabItem[] = [
-    { key: 'home', label: '语音', icon: '🎙️', href: '/' },
-    { key: 'family', label: '亲属', icon: '👨‍👩‍👧', href: '/messages' },
-    { key: 'menu', label: '功能', icon: '⊞', href: '/medicine', center: true },
-    { key: 'health', label: '看板', icon: '❤️', href: '/health' },
-    { key: 'profile', label: '我的', icon: '👤', href: '/settings' },
+    { key: 'home', label: '语音', icon: <Mic size={ICON_SIZE} />, href: '/' },
+    { key: 'family', label: '亲属', icon: <Users size={ICON_SIZE} />, href: '/messages' },
+    { key: 'menu', label: '功能', icon: <LayoutGrid size={CENTER_ICON_SIZE} />, href: '/medicine', center: true },
+    { key: 'health', label: '看板', icon: <Heart size={ICON_SIZE} />, href: '/health' },
+    { key: 'profile', label: '我的', icon: <User size={ICON_SIZE} />, href: '/settings' },
 ];
 
 const FAMILY_TABS: TabItem[] = [
-    { key: 'dashboard', label: '看板', icon: '📊', href: '/' },
-    { key: 'message', label: '消息', icon: '💬', href: '/messages' },
-    { key: 'voice', label: '语音', icon: '🎙️', href: '/voice', center: true },
-    { key: 'health', label: '健康', icon: '📈', href: '/health' },
-    { key: 'settings', label: '设置', icon: '⚙️', href: '/settings' },
+    { key: 'dashboard', label: '看板', icon: <LayoutDashboard size={ICON_SIZE} />, href: '/' },
+    { key: 'message', label: '消息', icon: <MessageCircle size={ICON_SIZE} />, href: '/messages' },
+    { key: 'voice', label: '语音', icon: <Mic size={CENTER_ICON_SIZE} />, href: '/voice', center: true },
+    { key: 'health', label: '健康', icon: <Activity size={ICON_SIZE} />, href: '/health' },
+    { key: 'settings', label: '设置', icon: <Settings size={ICON_SIZE} />, href: '/settings' },
 ];
 
 /** 需要隐藏 TabBar 的页面 */

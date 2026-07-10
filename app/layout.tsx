@@ -1,59 +1,34 @@
-'use client';
-
-import { ReactNode, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import type { Metadata, Viewport } from 'next';
 import '@/styles/globals.css';
 import '@/styles/elder-theme.css';
 import '@/styles/family-theme.css';
-import TabBar from '@/components/layout/TabBar';
-import { AuthProvider } from '@/components/providers/AuthProvider';
+import ClientShell from '@/components/providers/ClientShell';
 
-export type UserRole = 'elder' | 'family';
+export const metadata: Metadata = {
+  title: '桑梓智护 — AI智慧医养助手',
+  description: '面向老年人的智慧医养助手，语音优先的双端联动关怀平台。AI对话、健康记录、用药管家、紧急呼叫，让子女安心。',
+  icons: { icon: '/favicon.svg' },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
 /**
- * 根布局 — data-theme 主题切换 + 全局底部导航
+ * 根布局 — Server Component
+ * 客户端逻辑（主题切换、认证、路由守卫）迁移至 ClientShell
  */
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<UserRole>('elder');
-
-  useEffect(() => {
-    try {
-      const savedRole = localStorage.getItem('user_role') as UserRole | null;
-      if (savedRole === 'elder' || savedRole === 'family') {
-        setTheme(savedRole);
-      }
-    } catch {
-      // localStorage 不可用时使用默认值
-    }
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    try {
-      localStorage.setItem('user_role', theme);
-    } catch {
-      // 静默失败
-    }
-  }, [theme]);
-
   return (
-    <html lang="zh-CN" data-theme={theme} suppressHydrationWarning>
-      <head>
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-        />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <title>桑梓智护</title>
-      </head>
+    <html lang="zh-CN" suppressHydrationWarning>
       <body>
-        <div className="device-wrapper">
-          <AuthProvider>
-            <main className="page-content">
-              {children}
-            </main>
-            <TabBar />
-          </AuthProvider>
-        </div>
+        <ClientShell>
+          {children}
+        </ClientShell>
       </body>
     </html>
   );
