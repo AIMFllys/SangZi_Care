@@ -86,15 +86,22 @@ android/.gradle/
 android/local.properties
 android/app/src/main/assets/web/
 
-# Python virtual environments
-backend/venv/
-backend/env/
-backend/.venv/
+# Python virtual environments (历史 backend/ 已删除，规则保留以防误建)
+venv/
+env/
+.venv/
 
 # Test outputs
 coverage/
 .nyc_output/
 *.log
+vitest-report.json
+
+# Temp audit / scratch files
+.tmp_*
+
+# Trae IDE workspace
+.trae/
 
 # Audio files — 录音/采访等大文件，不应纳入版本库
 *.mp3
