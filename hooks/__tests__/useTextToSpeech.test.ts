@@ -31,7 +31,7 @@ vi.mock('@/lib/voiceCapabilities', () => ({
 
 vi.mock('@/lib/api', () => ({
   fetchApi: vi.fn(),
-  API_BASE_URL: 'http://localhost:8000',
+  API_BASE_URL: '',
 }));
 
 import { useTextToSpeech } from '../useTextToSpeech';
@@ -255,7 +255,7 @@ describe('useTextToSpeech', () => {
 
       // Verify fetch was called with correct params
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8000/api/v1/voice/tts',
+        '/api/v1/voice/tts',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ text: '豆包测试', speed: 0.8 }),

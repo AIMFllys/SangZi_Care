@@ -49,6 +49,9 @@ body {
   --bg-card-solid: #ffffff;
   --bg-input: rgba(255, 255, 255, 0.6);
   --bg-overlay: rgba(0, 0, 0, 0.3);
+  --bg-overlay-medium: rgba(0, 0, 0, 0.4);
+  --bg-overlay-strong: rgba(0, 0, 0, 0.5);
+  --bg-gradient-end: #fbe8d5;
 
   /* --- 主色调 (暖橙) --- */
   --accent: #f5923e;
@@ -61,17 +64,23 @@ body {
   /* --- 语义色 --- */
   --color-success: #2e7d32;
   --color-success-soft: rgba(46, 125, 50, 0.1);
+  --color-success-dark: #1b5e20;
   --color-warning: #f59e0b;
   --color-warning-soft: rgba(245, 158, 11, 0.1);
   --color-danger: #e53935;
   --color-danger-soft: rgba(229, 57, 53, 0.08);
+  --color-danger-dark: #b71c1c;
   --color-info: #3b82f6;
   --color-info-soft: rgba(59, 130, 246, 0.08);
+  --color-info-dark: #2563eb;
+  --color-ai: #a855f7;
+  --color-ai-soft: rgba(168, 85, 247, 0.12);
+  --color-success-glow: rgba(46, 125, 50, 0.25);
 
   /* --- 文字 --- */
   --text-primary: #2d2016;
-  --text-secondary: #8b7355;
-  --text-muted: #b8a48e;
+  --text-secondary: #6b553f;
+  --text-muted: #7d6147;
   --text-inverse: #ffffff;
   --text-accent: var(--accent);
 
@@ -79,20 +88,27 @@ body {
   --border-light: rgba(0, 0, 0, 0.05);
   --border-card: rgba(255, 255, 255, 0.3);
   --divider: rgba(0, 0, 0, 0.06);
+  --bg-hover: rgba(0, 0, 0, 0.04);
+  --bg-hover-strong: rgba(0, 0, 0, 0.08);
 
   /* --- 圆角 --- */
   --radius-sm: 12px;
   --radius-md: 20px;
   --radius-lg: 28px;
   --radius-xl: 36px;
+  --radius-2xl: 44px;
   --radius-full: 9999px;
 
   /* --- 阴影 (软阴影系统) --- */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.03);
+  --shadow-xs: 0 1px 4px rgba(0, 0, 0, 0.02);
   --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.03);
+  --shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
   --shadow-glow: 0 0 40px var(--accent-soft);
   --shadow-up: 0 -4px 24px rgba(0, 0, 0, 0.04);
+  --shadow-focus: 0 0 0 3px var(--accent-soft), 0 0 0 6px var(--accent-glow);
+  --shadow-card: var(--shadow-md);
 
   /* --- 毛玻璃 --- */
   --glass-blur: blur(20px) saturate(1.4);
@@ -109,8 +125,8 @@ body {
   /* 18px — 正文 */
   --font-caption: 0.9375rem;
   /* 15px — 辅助说明 */
-  --font-small: 0.8125rem;
-  /* 13px — 极小辅助 */
+  --font-small: 0.875rem;
+  /* 14px — 极小辅助 */
 
   /* --- 间距 --- */
   --space-xs: 4px;
@@ -131,6 +147,52 @@ body {
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --tabbar-height: 72px;
+  --header-height: 64px;
+  --min-touch-target: 48px;
+
+  /* --- 毛玻璃背景别名 --- */
+  --bg-glass: var(--bg-card);
+
+  /* --- 主色别名（兼容期，逐步替换为 --accent） --- */
+  --accent-primary: var(--accent);
+  --accent-dark: var(--accent-hover);
+
+  /* --- 旧设计系统兼容别名（components/voice、medicine、messages、health/input 仍使用） --- */
+  --color-primary: var(--accent);
+  --color-primary-light: var(--accent-light);
+  --color-primary-dark: var(--accent-hover);
+  --color-text: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-bg: var(--bg-base);
+  --color-bg-card: var(--bg-card-solid);
+  --color-surface: var(--bg-elevated);
+  --color-border: var(--border-light);
+  --color-border-strong: var(--divider);
+
+  /* --- 旧字号/间距/圆角/过渡兼容别名 --- */
+  --font-size-sm: var(--font-small);
+  --font-size-base: var(--font-body);
+  --font-size-lg: var(--font-heading);
+  --font-size-xl: var(--font-title);
+  --font-size-2xl: var(--font-hero);
+  --font-size-hero: var(--font-hero);
+  --font-size-title: var(--font-title);
+
+  --spacing-xs: var(--space-xs);
+  --spacing-sm: var(--space-sm);
+  --spacing-base: var(--space-md);
+  --spacing-lg: var(--space-lg);
+  --spacing-xl: var(--space-xl);
+  --spacing-2xl: var(--space-2xl);
+
+  --border-radius: var(--radius-md);
+  --border-radius-sm: var(--radius-sm);
+  --border-radius-lg: var(--radius-lg);
+  --border-radius-full: var(--radius-full);
+
+  --transition-fast: var(--duration-fast);
+  --transition-normal: var(--duration-normal);
 }
 
 /* ============================================================
@@ -186,14 +248,16 @@ body {
   cursor: pointer;
   transition: transform var(--duration-fast) var(--ease-out-smooth),
     box-shadow var(--duration-fast) var(--ease-out-smooth),
-    opacity var(--duration-fast);
+    opacity var(--duration-fast),
+    filter var(--duration-fast);
   user-select: none;
   -webkit-user-select: none;
 }
 
 .interactive:active {
   transform: scale(0.97);
-  opacity: 0.85;
+  box-shadow: var(--shadow-sm);
+  filter: brightness(0.96);
 }
 
 @media (hover: hover) {
@@ -255,17 +319,17 @@ body {
 
 @keyframes pulse-ring {
   0% {
-    transform: scale(0.9);
-    opacity: 0.6;
+    transform: scale(0.95);
+    opacity: 0.4;
   }
 
   70% {
-    transform: scale(1.15);
+    transform: scale(1.12);
     opacity: 0;
   }
 
   100% {
-    transform: scale(1.15);
+    transform: scale(1.12);
     opacity: 0;
   }
 }
@@ -398,4 +462,20 @@ body {
   background: linear-gradient(180deg,
       var(--accent-glow) 0%,
       var(--bg-base) 60%);
+}
+
+/* ============================================================
+ * 10. Reduced motion
+ * ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

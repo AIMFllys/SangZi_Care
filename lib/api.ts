@@ -2,8 +2,7 @@
 // 桑梓智护 — API 基础配置（含 Token 自动续期）
 // ============================================================
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 

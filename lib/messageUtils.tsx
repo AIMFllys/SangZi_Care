@@ -7,22 +7,23 @@ import { User, Users, Heart, Baby, UsersRound, Handshake, Stethoscope, Home, Mic
  */
 
 /** 关系类型对应 icon */
-export function getRelationEmoji(relation: string): ReactNode {
+export function getRelationIcon(relation: string): ReactNode {
     const map: Record<string, ReactNode> = {
-        '子女': <User size={24} />,
-        '配偶': <Heart size={24} />,
-        '父母': <Users size={24} />,
-        '兄弟姐妹': <UsersRound size={24} />,
-        '孙辈': <Baby size={24} />,
-        '朋友': <Handshake size={24} />,
-        '护工': <Stethoscope size={24} />,
-        '邻居': <Home size={24} />,
+        '子女': <User size={28} />,
+        '配偶': <Heart size={28} />,
+        '父母': <Users size={28} />,
+        '兄弟姐妹': <UsersRound size={28} />,
+        '孙辈': <Baby size={28} />,
+        '朋友': <Handshake size={28} />,
+        '护工': <Stethoscope size={28} />,
+        '邻居': <Home size={28} />,
     };
-    return map[relation] || <User size={24} />;
+    return map[relation] || <User size={28} />;
 }
 
 /** 格式化消息时间为友好文案 */
 export function formatMessageTime(dateStr: string): string {
+    if (!dateStr) return '';
     const now = new Date();
     const date = new Date(dateStr);
     const diffMs = now.getTime() - date.getTime();
@@ -46,7 +47,7 @@ export function getMessagePreview(
     type: 'text' | 'voice' | 'image',
     content: string
 ): ReactNode {
-    if (type === 'voice') return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Mic size={14} /> 语音消息</div>;
-    if (type === 'image') return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><ImageIcon size={14} /> 图片</div>;
+    if (type === 'voice') return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Mic size={16} /> 语音消息</div>;
+    if (type === 'image') return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><ImageIcon size={16} /> 图片</div>;
     return content.length > 20 ? content.slice(0, 20) + '...' : content;
 }

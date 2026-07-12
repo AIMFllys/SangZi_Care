@@ -9,6 +9,7 @@
   --bg-card: rgba(255, 255, 255, 0.78);
   --bg-card-solid: #ffffff;
   --bg-input: rgba(255, 255, 255, 0.65);
+  --bg-gradient-end: #e8ecf8;
 
   --accent: #3b6af5;
   --accent-light: #7da2f7;
@@ -18,10 +19,35 @@
   --accent-text: #ffffff;
 
   --text-primary: #1a1f36;
-  --text-secondary: #6b7894;
-  --text-muted: #9ca7be;
+  --text-secondary: #556380;
+  --text-muted: #5d6b8c;
+  --text-inverse: #ffffff;
+  --text-accent: var(--accent);
 
   --border-light: rgba(107, 120, 148, 0.08);
   --border-card: rgba(255, 255, 255, 0.4);
   --divider: rgba(107, 120, 148, 0.08);
+
+  /* --- 遮罩 & 悬停 --- */
+  --bg-overlay: rgba(0, 0, 0, 0.3);
+  --bg-overlay-medium: rgba(0, 0, 0, 0.4);
+  --bg-overlay-strong: rgba(0, 0, 0, 0.5);
+  --bg-hover: rgba(0, 0, 0, 0.04);
+  --bg-hover-strong: rgba(0, 0, 0, 0.08);
+
+  /* --- 语义色 --- */
+  --color-success: #2e7d32;
+  --color-success-soft: rgba(46, 125, 50, 0.1);
+  --color-success-dark: #1b5e20;
+  --color-warning: #f59e0b;
+  --color-warning-soft: rgba(245, 158, 11, 0.1);
+  --color-danger: #e53935;
+  --color-danger-soft: rgba(229, 57, 53, 0.08);
+  --color-danger-dark: #b71c1c;
+  --color-info: #3b82f6;
+  --color-info-soft: rgba(59, 130, 246, 0.08);
+  --color-info-dark: #2563eb;
+  --color-ai: #a855f7;
+  --color-ai-soft: rgba(168, 85, 247, 0.12);
+  --color-success-glow: rgba(46, 125, 50, 0.25);
 }

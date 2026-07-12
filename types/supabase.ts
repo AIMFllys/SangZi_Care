@@ -184,7 +184,7 @@ export type Database = {
           can_view_health: boolean | null
           created_at: string | null
           elder_id: string
-          family_id: string
+          family_id: string | null
           id: string
           relation: string
           status: string | null
@@ -197,7 +197,7 @@ export type Database = {
           can_view_health?: boolean | null
           created_at?: string | null
           elder_id: string
-          family_id: string
+          family_id?: string | null
           id?: string
           relation: string
           status?: string | null
@@ -210,7 +210,7 @@ export type Database = {
           can_view_health?: boolean | null
           created_at?: string | null
           elder_id?: string
-          family_id?: string
+          family_id?: string | null
           id?: string
           relation?: string
           status?: string | null
