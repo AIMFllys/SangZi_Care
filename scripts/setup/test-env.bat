@@ -42,26 +42,8 @@ if exist "node_modules\" (
 )
 echo.
 
-REM 测试后端虚拟环境
-echo 4. 后端虚拟环境:
-if exist "backend\venv\" (
-    echo    ✓ Python 虚拟环境已创建
-    
-    REM 测试 FastAPI
-    backend\venv\Scripts\python.exe -c "import fastapi; print('   FastAPI version:', fastapi.__version__)" 2>nul
-    if %ERRORLEVEL% EQU 0 (
-        echo    ✓ FastAPI 已安装
-    ) else (
-        echo    ✗ FastAPI 未安装
-    )
-) else (
-    echo    ✗ Python 虚拟环境未创建
-    echo    运行: python -m venv backend\venv
-)
-echo.
-
 REM 测试配置文件
-echo 5. 配置文件:
+echo 4. 配置文件:
 if exist ".env" (
     echo    ✓ .env 文件存在
 ) else (
@@ -70,19 +52,12 @@ if exist ".env" (
 echo.
 
 REM 测试端口占用
-echo 6. 端口状态:
-netstat -ano | findstr ":3000" >nul 2>nul
+echo 5. 端口状态:
+netstat -ano | findstr ":7742" >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
-    echo    ⚠ 端口 3000 已被占用
+    echo    ⚠ 端口 7742 已被占用
 ) else (
-    echo    ✓ 端口 3000 可用
-)
-
-netstat -ano | findstr ":8000" >nul 2>nul
-if %ERRORLEVEL% EQU 0 (
-    echo    ⚠ 端口 8000 已被占用
-) else (
-    echo    ✓ 端口 8000 可用
+    echo    ✓ 端口 7742 可用
 )
 echo.
 
