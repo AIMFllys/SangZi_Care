@@ -1,337 +1,146 @@
-<p align="center">
-  <h1 align="center">桑梓智护 · SangZi Smart Care</h1>
-  <p align="center">
-    面向老年人及其家属的智能养老移动应用 — <strong>智护银龄</strong> APP
-    <br />
-    <a href="docs/README.md"><strong>探索文档 »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/AIMFllys/SangZi_Care/issues">报告 Bug</a>
-    ·
-    <a href="https://github.com/AIMFllys/SangZi_Care/issues">请求功能</a>
-  </p>
-</p>
+# 桑梓智护 · SangZi Smart Care
 
-<p align="center">
-  <a href="LICENSE">
-    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" />
-  </a>
-  <img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg" alt="Node.js >= 18" />
-  <img src="https://img.shields.io/badge/python-%3E%3D3.9-blue.svg" alt="Python >= 3.9" />
-  <img src="https://img.shields.io/badge/Next.js-16-black.svg" alt="Next.js 16" />
-  <img src="https://img.shields.io/badge/FastAPI-latest-009688.svg" alt="FastAPI" />
-</p>
+> 面向老年人及其家属的智能养老应用 — **智护银龄**  
+> 全栈 **Next.js** · 部署 **腾讯云 EdgeOne Pages** · 手机端为**在线 WebView/浏览器壳**
 
----
-
-## 📖 目录
-
-- [简介](#简介)
-- [核心功能](#核心功能)
-- [技术栈](#技术栈)
-- [项目结构](#项目结构)
-- [快速开始](#快速开始)
-- [环境变量配置](#环境变量配置)
-- [运行测试](#运行测试)
-- [构建与部署](#构建与部署)
-- [适老化设计规范](#适老化设计规范)
-- [API 文档](#api-文档)
-- [贡献指南](#贡献指南)
-- [许可证](#许可证)
+[探索文档](docs/README.md) · [目标架构](docs/designs/target-architecture.md) · [AGENTS.md](AGENTS.md)
 
 ---
 
 ## 简介
 
-**桑梓智护**（SangZi Smart Care）是一款专为老年人设计的智能养老移动应用，产品名称为 **"智护银龄"**。应用提供健康管理、用药提醒、语音交互、紧急呼叫、家庭互联等功能，采用适老化设计，支持大字体、高对比度、语音交互等特性，让老年人轻松使用智能手机。
+**桑梓智护**提供健康管理、用药提醒、家庭消息（捂话）、绑定关怀、AI 语音助手等能力，采用适老化双主题（Elder 暖色 / Family 冷色）。
 
-- **项目名称**：桑梓智护（SangZi Smart Care）
-- **APP 名称**：智护银龄
-- **目标用户**：老年人及其家属
+| | |
+|--|--|
+| 项目名 | 桑梓智护（SangZi Smart Care） |
+| APP 名 | 智护银龄 |
+| 包名 | `sangzi-smart-care` |
 
 ---
 
 ## 核心功能
 
-| 功能 | 描述 |
-| --- | --- |
-| 🎤 **AI 语音助手** | 基于火山引擎豆包大模型的智能对话，支持语音识别与语音合成 |
-| 💊 **用药管家** | 用药计划、服药提醒、用药记录管理 |
-| ❤️ **健康记录** | 血压、血糖、心率等健康数据记录与趋势分析 |
-| 💬 **捂话（家庭消息）** | 家属与老人之间的文字 / 语音消息沟通 |
-| 🚨 **紧急呼叫** | 一键紧急呼叫家属，支持位置共享 |
-| 📻 **健康广播** | 健康资讯、养生知识推送 |
-| 👨‍👩‍👧‍👦 **家庭绑定** | 家属与老人账号绑定，远程关怀 |
-| ⚙️ **适老化设计** | 大字体、高对比度、简化操作流程 |
+| 功能 | 说明 |
+|------|------|
+| AI 语音助手 | 豆包大模型对话（能力迁移中） |
+| 用药管家 | 计划、今日提醒、确认服药 |
+| 健康记录 | 血压/血糖/心率等录入与看板 |
+| 捂话 | 家属与老人文字/语音消息 |
+| 家庭绑定 | 绑码关联与权限 |
+| 健康广播 | 资讯推荐（部分实现） |
+| 紧急呼叫 | 后端就绪、前端待补齐 |
+| 适老化 | 大字体、高对比、简化操作 |
+
+成熟度详见 [docs/详解/功能详解.md](docs/详解/功能详解.md)。
 
 ---
 
 ## 技术栈
 
-### 前端
-
-| 技术 | 版本 / 说明 |
-| --- | --- |
-| Next.js | 16 (App Router) |
-| React | 19 |
-| TypeScript | 5.8+ |
-| Zustand | 5 (状态管理) |
-| CSS Modules | CSS 变量 + 适老化主题 |
-| Vitest | 单元测试 + React Testing Library |
-
-### 后端
-
-| 技术 | 版本 / 说明 |
-| --- | --- |
-| Python FastAPI | API 服务 |
-| Supabase | PostgreSQL 数据库 |
-| JWT + Supabase Auth | 认证鉴权 |
-| 火山引擎豆包 (Doubao) | AI 大模型 |
-| 火山引擎 TTS / ASR | 语音合成 / 语音识别 |
-
-### 移动端
-
-| 技术 | 版本 / 说明 |
-| --- | --- |
-| Android WebView | Kotlin + JSBridge |
-| 最低版本 | Android 8.0 (API 26) |
-
----
-
-## 项目结构
-
-```
-.
-├── app/                      # Next.js App Router 页面
-│   ├── login/               # 登录页
-│   ├── onboarding/          # 角色选择页
-│   ├── voice/               # AI 语音助手页
-│   ├── medicine/            # 用药管家
-│   ├── health/              # 健康记录
-│   ├── messages/            # 捂话（消息）
-│   ├── radio/               # 健康广播
-│   ├── family/              # 家庭成员
-│   └── settings/            # 设置
-├── components/              # React 组件
-│   ├── ui/                  # 基础 UI 组件
-│   ├── home/                # 首页组件
-│   ├── voice/               # 语音组件
-│   ├── medicine/            # 用药组件
-│   ├── health/              # 健康组件
-│   └── messages/            # 消息组件
-├── stores/                  # Zustand 状态管理
-├── hooks/                   # React Hooks
-├── lib/                     # 工具库
-├── styles/                  # 全局样式
-├── types/                   # TypeScript 类型定义
-├── backend/                 # FastAPI 后端
-│   ├── api/v1/             # API 路由
-│   ├── services/           # 业务服务
-│   ├── models/             # 数据模型
-│   ├── core/               # 核心模块
-│   └── tests/              # 后端测试
-├── android/                 # Android WebView 项目
-└── docs/                    # 项目文档
-```
+| 类别 | 技术 |
+|------|------|
+| 框架 | Next.js ≥16.2（App Router，**全栈**，非静态导出） |
+| UI | React 19 · CSS Modules 双主题 · Tailwind v4 工具层 |
+| 状态 | Zustand 5 |
+| 数据 | Supabase（publishable / secret 新密钥体系） |
+| 部署 | 腾讯云 EdgeOne Pages / Makers（产物 `.next`） |
+| 移动端 | Android WebView 打开线上 https |
+| 遗留对照 | `backend/` Python FastAPI（**待迁入** `app/api`，勿扩展） |
 
 ---
 
 ## 快速开始
 
-### 环境要求
+### 环境
 
-- **Node.js** >= 18
-- **Python** >= 3.9
-- **Android SDK 34**（仅构建 APK 时需要）
+- Node.js 22.x 推荐（EdgeOne 预装 22.11.0）
+- npm（本仓库包管理）
 
-### 1. 克隆项目
-
-```bash
-git clone https://github.com/AIMFllys/SangZi_Care.git
-cd SangZi_Care
-```
-
-### 2. 安装依赖
+### 安装与运行
 
 ```bash
-# 前端
+cp .env.example .env.local
+# 编辑 .env.local：填入 Supabase URL / publishable key 等
+
 npm install
-
-# 后端
-cd backend
-python -m venv venv
-# Windows
-venv\Scripts\activate
-# macOS / Linux
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### 3. 启动开发服务器
-
-```bash
-# 前端（默认端口 7742）
 npm run dev
-
-# 后端（另开终端）
-cd backend
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-> 🚀 **一键启动**：Windows 用户可双击 `scripts\dev.bat` 自动完成环境检查、依赖安装和服务启动。
+打开 [http://localhost:7742](http://localhost:7742)。  
+探针：`GET http://localhost:7742/api/ping`。
 
----
+### 过渡期 API
 
-## 环境变量配置
+业务 API 仍可能由本地 Python 提供（`NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`）。  
+迁入 Next 后改为同源，无需独立后端进程。详见 [docs/ops/local-setup.md](docs/ops/local-setup.md)。
 
-复制 `.env` 文件并根据需要修改：
-
-```bash
-cp .env .env.local
-```
-
-| 变量 | 说明 |
-| --- | --- |
-| `VOLCANO_ARK_API_KEY` | 火山引擎 API 密钥（AI 对话） |
-| `VOLCANO_APP_ID` | 火山引擎 App ID |
-| `VOLCANO_ACCESS_TOKEN` | 火山引擎 Access Token |
-| `VOLCANO_SECRET_KEY` | 火山引擎 Secret Key |
-| `VOLCANO_TTS_RESOURCE_ID` | TTS 资源 ID |
-| `VOLCANO_ASR_STREAM_RESOURCE_ID` | ASR 资源 ID |
-| `SUPABASE_URL` | Supabase 项目 URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Service Role Key |
-| `JWT_SECRET` | JWT 签名密钥 |
-
----
-
-## 运行测试
-
-```bash
-# 前端测试
-npm test
-# 或
-npx vitest run
-
-# 后端测试
-cd backend
-python -m pytest
-```
-
-- **前端**：506 个测试用例，30 个测试文件
-- **后端**：270 个测试用例
-
----
-
-## 构建与部署
-
-### 前端静态导出
+### 构建
 
 ```bash
 npm run build
-# 输出目录: out/
+npm start
 ```
-
-推荐部署平台：Vercel · Netlify · 阿里云 OSS · 腾讯云 COS
-
-### 后端部署
-
-```bash
-cd backend
-uvicorn main:app --host 0.0.0.0 --port 8000
-```
-
-推荐部署方式：Docker · 云服务器 · Serverless
-
-### 构建 Android APK
-
-```bash
-cd android
-bash build_apk.sh
-```
-
-APK 输出路径：`android/app/build/outputs/apk/release/app-release.apk`
-
-> 详细说明参考 [android/README.md](android/README.md)
 
 ---
 
-## 适老化设计规范
+## 项目结构（摘要）
 
-| 规范项 | 要求 |
-| --- | --- |
-| 字体大小 | 老年人端最小 20px，标题 ≥ 28px |
-| 触控区域 | 最小 48 × 48px |
-| 颜色对比度 | ≥ 4.5:1 |
-| 主题 | 老年人端 / 家属端双主题切换 |
-| 交互 | 减少操作步骤，避免复杂手势 |
-| 语音交互 | 全功能支持语音输入和语音反馈 |
-| 容错设计 | 提供撤销、确认等容错机制 |
+```
+app/           # 页面与 app/api
+components/    # UI / 业务组件
+hooks/ lib/ stores/ styles/ types/
+backend/       # Python 只读对照
+android/       # 在线壳
+docs/          # 详解 · designs · ops · archive
+scripts/       # setup · build · deploy · dev
+AGENTS.md      # AI / 协作规范
+edgeone.json   # EdgeOne 部署配置
+```
 
----
-
-## API 文档
-
-后端 API 遵循 RESTful 规范，所有接口需要 JWT 认证（除登录 / 注册接口）。
-
-启动后端服务后访问 `http://localhost:8000/docs` 查看完整的 Swagger UI 文档。
-
-<details>
-<summary><strong>主要 API 端点</strong></summary>
-
-| 端点 | 方法 | 说明 |
-| --- | --- | --- |
-| `/api/v1/auth/login` | POST | 用户登录 |
-| `/api/v1/auth/register` | POST | 用户注册 |
-| `/api/v1/users/me` | GET | 获取当前用户信息 |
-| `/api/v1/medicine/plans` | GET | 获取用药计划 |
-| `/api/v1/health/records` | POST | 创建健康记录 |
-| `/api/v1/messages` | GET | 获取消息列表 |
-| `/api/v1/emergency/call` | POST | 发起紧急呼叫 |
-| `/api/v1/ai/chat` | POST | AI 对话 |
-| `/api/v1/ai/voice/tts` | POST | 文字转语音 |
-| `/api/v1/ai/voice/asr` | POST | 语音识别 |
-
-</details>
+完整说明：[docs/详解/项目结构详解.md](docs/详解/项目结构详解.md)
 
 ---
 
-## 贡献指南
+## 环境变量
 
-欢迎贡献！请遵循以下步骤：
+见 [.env.example](.env.example) 与 [docs/ops/env-config.md](docs/ops/env-config.md)。
 
-1. Fork 本仓库
-2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
-3. 提交更改 (`git commit -m 'feat: 添加某某功能'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 提交 Pull Request
+要点：
 
-### 提交规范
+- `NEXT_PUBLIC_*` 进入浏览器；其余仅服务端 / EdgeOne
+- Supabase：`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` + `SUPABASE_SECRET_KEY`（替代旧 anon / service_role）
+- 本地 `.env.local` 与 EdgeOne 控制台**同名键**同步
 
-| 前缀 | 说明 |
-| --- | --- |
-| `feat` | 新功能 |
-| `fix` | 修复 Bug |
-| `docs` | 文档更新 |
-| `style` | 代码格式调整 |
-| `refactor` | 代码重构 |
-| `test` | 测试相关 |
-| `chore` | 构建 / 工具链 |
+---
 
-### 分支管理
+## 部署（EdgeOne）
 
-- `main` — 主分支，保持稳定
-- `develop` — 开发分支
-- `feature/*` — 功能分支
-- `fix/*` — 修复分支
+1. 控制台导入 Git 仓库  
+2. 同步环境变量  
+3. 构建使用 `npm run build`，全栈输出 **`.next`**（见 `edgeone.json`）  
+4. 手机壳 / 浏览器访问分配的 https 域名  
+
+步骤：[docs/ops/deploy-edgeone.md](docs/ops/deploy-edgeone.md)
+
+---
+
+## Android
+
+配置 `app_base_url` 为 EdgeOne 或预览地址后构建 APK。  
+**不要**再拷贝 `out/` 到 assets。说明见 [android/README.md](android/README.md)。
+
+---
+
+## 文档与规范
+
+- [AGENTS.md](AGENTS.md) — 编码代理与工程边界  
+- [docs/README.md](docs/README.md) — 文档索引  
+- [docs/designs/target-architecture.md](docs/designs/target-architecture.md) — 架构终局  
+- [docs/issues/tech-debt.md](docs/issues/tech-debt.md) — 技术债务  
 
 ---
 
 ## 许可证
 
-本项目基于 [MIT 许可证](LICENSE) 开源。
-
----
-
-<p align="center">
-  <strong>桑梓智护 · 智护银龄</strong> — 让科技温暖每一位老人 ❤️
-</p>
+MIT

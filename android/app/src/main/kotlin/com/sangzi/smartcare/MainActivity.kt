@@ -16,7 +16,7 @@ import java.util.Locale
 
 /**
  * 智护银龄 — 桑梓智护项目主 Activity
- * WebView 加载 Next.js 静态导出的 HTML/JS/CSS
+ * 模式 B：WebView 加载线上 / 调试 https（或 http）基址，不内嵌静态 out/
  * 实现 JSBridge 原生端：电话拨打、TTS、ASR、存储
  */
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
@@ -64,8 +64,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         }
 
-        // 加载本地静态文件
-        webView.loadUrl("file:///android_asset/web/index.html")
+        // 模式 B：加载可配置的线上 / 调试基址（见 strings.xml app_base_url）
+        val baseUrl = getString(R.string.app_base_url).trimEnd('/')
+        webView.loadUrl("$baseUrl/")
     }
 
     override fun onInit(status: Int) {

@@ -96,7 +96,47 @@ coverage/
 .nyc_output/
 *.log
 
-# docs
-docs/*
-!docs/UI设计参考成品图/
-!docs/详解/
+# Audio files — 录音/采访等大文件，不应纳入版本库
+*.mp3
+*.wav
+*.ogg
+*.aac
+*.m4a
+*.flac
+*.wma
+*.amr
+
+# Video files — 演示视频等大文件
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+
+# Large binary media — 避免仓库膨胀
+*.zip
+*.tar
+*.gz
+*.7z
+*.rar
+
+# Images — 采访截图等，设计图在 designs/ui/ 下通过 ! 保留
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+
+# Word documents — 采访记录等
+*.docx
+*.doc
+*.xlsx
+*.xls
+
+# docs — 活文档与 archive 均纳入版本库
+# 已移除旧的 docs/* 全量忽略，避免挡住 designs/ops/archive 等新骨架
+
+# 保留 designs/ui/ 下的设计截图（用于文档展示）
+!docs/designs/ui/**/*.png
+!docs/designs/ui/**/*.jpg

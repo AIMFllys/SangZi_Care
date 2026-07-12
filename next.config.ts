@@ -11,16 +11,16 @@ const securityHeaders = [
   },
 ];
 
+/**
+ * 全栈 Next（EdgeOne Pages / Makers）。
+ * - 禁止 output: 'export'（静态 out/ 方案已废弃）
+ * - redirects / rewrites 请写在 edgeone.json，不要写在本文件
+ * - images.unoptimized 暂保留；后续可在 EdgeOne 全栈下开启优化
+ */
 const nextConfig: NextConfig = {
-  output: 'export',
   images: {
     unoptimized: true,
   },
-  /**
-   * 安全响应头 — 在 dev server 中生效。
-   * 注意：`output: 'export'` 模式下生产环境需在
-   * nginx / CDN / Android WebView 中配置这些头。
-   */
   headers: async () => [
     {
       source: '/(.*)',

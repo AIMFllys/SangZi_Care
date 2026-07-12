@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">智护银龄</string>
+    <!-- 模式 B：在线壳基址。本地调试可改为 http://10.0.2.2:7742（模拟器访问本机）或局域网 IP -->
+    <string name="app_base_url">https://example.com</string>
 </resources>
