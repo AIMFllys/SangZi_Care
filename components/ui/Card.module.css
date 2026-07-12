@@ -1,0 +1,26 @@
+/* Card — 新设计系统 */
+.card {
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--duration-fast) var(--ease-out-smooth),
+    box-shadow var(--duration-fast) var(--ease-out-smooth);
+}
+
+.glass {
+  background: var(--bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-card);
+}
+
+.solid {
+  background: var(--bg-card-solid);
+  border: 1px solid var(--border-light);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

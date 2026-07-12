@@ -10,7 +10,7 @@
 
 .loader {
     display: flex;
-    gap: 8px;
+    gap: var(--space-sm);
 }
 
 .dot {
@@ -69,7 +69,7 @@
 }
 
 .retryButton {
-    padding: 12px 32px;
+    padding: var(--space-sm) var(--space-xl);
     border-radius: var(--radius-full);
     background: var(--accent);
     color: var(--accent-text);
@@ -81,5 +81,13 @@
 }
 
 .retryButton:active {
-    transform: scale(0.95);
+  transform: scale(0.95);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot,
+  .retryButton {
+    animation: none;
+    transition: none;
+  }
 }

@@ -5,10 +5,12 @@ import { LoadingSpinner } from './LoadingSpinner';
 import styles from './Button.module.css';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'ghost' | 'soft';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   fullWidth?: boolean;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
   children: ReactNode;
 }
 
@@ -18,6 +20,8 @@ export function Button({
   loading = false,
   disabled = false,
   fullWidth = false,
+  leftIcon,
+  rightIcon,
   children,
   className,
   ...rest
@@ -27,7 +31,7 @@ export function Button({
     styles[variant],
     size !== 'md' && styles[size],
     fullWidth && styles.fullWidth,
-    disabled && styles.disabled,
+    (disabled || loading) && styles.disabled,
     loading && styles.loading,
     className,
   ]
@@ -42,7 +46,9 @@ export function Button({
       {...rest}
     >
       <span className={loading ? styles.contentHidden : styles.content}>
+        {leftIcon && <span className={styles.icon}>{leftIcon}</span>}
         {children}
+        {rightIcon && <span className={styles.icon}>{rightIcon}</span>}
       </span>
       {loading && (
         <span className={styles.spinnerOverlay}>

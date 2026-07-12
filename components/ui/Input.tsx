@@ -1,13 +1,15 @@
 'use client';
 
-import { InputHTMLAttributes } from 'react';
+import { InputHTMLAttributes, ReactNode } from 'react';
 import styles from './Input.module.css';
 
-interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'prefix'> {
   label?: string;
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  prefix?: ReactNode;
+  suffix?: ReactNode;
 }
 
 export function Input({
@@ -18,6 +20,8 @@ export function Input({
   placeholder,
   error,
   disabled,
+  prefix,
+  suffix,
   id,
   className,
   ...rest
@@ -31,18 +35,24 @@ export function Input({
           {label}
         </label>
       )}
-      <input
-        id={inputId}
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={`${styles.input} ${error ? styles.inputError : ''} ${disabled ? styles.disabled : ''}`}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${inputId}-error` : undefined}
-        {...rest}
-      />
+      <div
+        className={`${styles.field} ${error ? styles.fieldError : ''} ${disabled ? styles.fieldDisabled : ''}`}
+      >
+        {prefix && <span className={styles.affix}>{prefix}</span>}
+        <input
+          id={inputId}
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={styles.input}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${inputId}-error` : undefined}
+          {...rest}
+        />
+        {suffix && <span className={styles.affix}>{suffix}</span>}
+      </div>
       {error && (
         <p id={`${inputId}-error`} className={styles.error} role="alert">
           {error}
