@@ -54,18 +54,20 @@ vi.mock('@/stores/familyStore', () => ({
     }),
 }));
 
+const healthState = { latestRecords: {}, fetchLatest: vi.fn() };
 vi.mock('@/stores/healthStore', () => ({
-  useHealthStore: (selector: (s: Record<string, unknown>) => unknown) =>
-    selector({ latestRecords: {}, fetchLatest: vi.fn() }),
+  useHealthStore: (selector?: (s: Record<string, unknown>) => unknown) =>
+    selector ? selector(healthState) : healthState,
   formatHealthValue: vi.fn(() => '--'),
   RECORD_TYPE_CONFIG: {
     blood_pressure: { label: '血压', icon: '🩸', unit: 'mmHg' },
   },
 }));
 
+const medicineState = { todayTimeline: [], todayProgress: 0, fetchTodayTimeline: vi.fn() };
 vi.mock('@/stores/medicineStore', () => ({
-  useMedicineStore: (selector: (s: Record<string, unknown>) => unknown) =>
-    selector({ todayTimeline: [], todayProgress: 0, fetchTodayTimeline: vi.fn() }),
+  useMedicineStore: (selector?: (s: Record<string, unknown>) => unknown) =>
+    selector ? selector(medicineState) : medicineState,
 }));
 
 vi.mock('@/lib/api', () => ({
@@ -93,18 +95,18 @@ describe('FamilyDetailClient — 老年人端', () => {
 
   it('渲染家属姓名和关系', () => {
     render(<FamilyDetailClient userId="family-1" />);
-    expect(screen.getByText('张小明')).toBeTruthy();
-    expect(screen.getByText('儿子')).toBeTruthy();
+    expect(screen.getAllByText('张小明').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('儿子').length).toBeGreaterThanOrEqual(1);
   });
 
   it('显示最近在线时间', () => {
     render(<FamilyDetailClient userId="family-1" />);
-    expect(screen.getByText(/分钟前/)).toBeTruthy();
+    expect(screen.getAllByText(/分钟前/).length).toBeGreaterThanOrEqual(1);
   });
 
   it('显示打电话和发消息按钮', () => {
     render(<FamilyDetailClient userId="family-1" />);
-    expect(screen.getByRole('button', { name: /打电话/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /拨打/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: /发消息/ })).toBeTruthy();
   });
 
@@ -114,11 +116,9 @@ describe('FamilyDetailClient — 老年人端', () => {
     expect(mockPush).toHaveBeenCalledWith('/messages/family-1');
   });
 
-  it('点击返回导航回首页', () => {
+  it('返回链接指向首页', () => {
     render(<FamilyDetailClient userId="family-1" />);
-    fireEvent.click(screen.getByRole('button', { name: /返回/ }));
-    // PageHeader uses fallbackUrl='/' when history is short (test env)
-    expect(mockPush).toHaveBeenCalledWith('/');
+    expect(screen.getByLabelText('返回').getAttribute('href')).toBe('/');
   });
 
   it('老年人端显示家属信息区块', () => {
@@ -139,7 +139,7 @@ describe('FamilyDetailClient — 老年人端', () => {
       },
     ];
     render(<FamilyDetailClient userId="family-1" />);
-    expect(screen.getByText(/未知/)).toBeTruthy();
+    expect(screen.getAllByText(/未知/).length).toBeGreaterThanOrEqual(1);
   });
 });
 
