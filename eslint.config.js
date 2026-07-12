@@ -10,6 +10,7 @@ module.exports = [
       'node_modules/**',
       'dist/**',
       'out/**',
+      '.trae/**',
       'eslint.config.js',
     ],
   },
