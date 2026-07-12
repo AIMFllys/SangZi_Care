@@ -1,19 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchApi } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
-import { ChevronLeft } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import PageHeader from '@/components/layout/PageHeader';
 import styles from './page.module.css';
 
 /** 字体大小选项 */
 export const FONT_SIZE_OPTIONS = [
-  { key: 'normal', label: '标准', sample: '16px' },
-  { key: 'large', label: '大字', sample: '20px' },
-  { key: 'xlarge', label: '特大', sample: '24px' },
+  { key: 'normal', label: '标准', sampleClass: styles.sizeSampleNormal },
+  { key: 'large', label: '大字', sampleClass: styles.sizeSampleLarge },
+  { key: 'xlarge', label: '特大', sampleClass: styles.sizeSampleXlarge },
 ] as const;
 
 /** 字体大小 CSS 变量映射 */
@@ -50,7 +51,6 @@ export function applyFontSize(size: string) {
 }
 
 export default function AccessibilityPage() {
-  const router = useRouter();
   const { isReady } = useAuth();
   const user = useUserStore((s) => s.user);
   const setUser = useUserStore((s) => s.setUser);
@@ -61,7 +61,6 @@ export default function AccessibilityPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // 初始化
   useEffect(() => {
     if (user) {
       setFontSize(user.font_size || 'normal');
@@ -69,7 +68,6 @@ export default function AccessibilityPage() {
     }
   }, [user]);
 
-  // 字体大小即时预览
   function handleFontSizeChange(size: string) {
     setFontSize(size);
     applyFontSize(size);
@@ -106,89 +104,100 @@ export default function AccessibilityPage() {
   }
 
   if (!isReady) {
-    return <div className={styles.loading}>加载中…</div>;
+    return (
+      <div className="device-wrapper">
+        <div className={`${styles.page} page-content`}>
+          <div className={styles.loading}>加载中…</div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <main className={styles.container}>
-      <div className={styles.header}>
-        <button
-          className={styles.backButton}
-          onClick={() => router.push(ROUTES.SETTINGS)}
-          aria-label="返回设置"
-          style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+    <div className="device-wrapper">
+      <div className={`${styles.page} page-content`}>
+        <PageHeader
+          title="无障碍设置"
+          backHref={ROUTES.SETTINGS}
+          backAriaLabel="返回设置"
+          transparent
+        />
+
+        {success && (
+          <div className={styles.successBanner} role="status">
+            保存成功
+          </div>
+        )}
+        {error && (
+          <div className={styles.errorBanner} role="alert">
+            {error}
+          </div>
+        )}
+
+        <section className={styles.section} aria-label="字体大小设置">
+          <Card variant="glass" className={styles.optionCard}>
+            <h2 className={styles.sectionTitle}>字体大小</h2>
+            <p className={styles.sectionDesc}>选择适合您的字体大小，立即预览效果</p>
+            <div className={styles.sizeOptions} role="radiogroup" aria-label="字体大小">
+              {FONT_SIZE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  role="radio"
+                  aria-checked={fontSize === opt.key}
+                  className={`${styles.sizeOption} ${fontSize === opt.key ? styles.sizeOptionActive : ''}`}
+                  onClick={() => handleFontSizeChange(opt.key)}
+                >
+                  <span className={`${styles.sizeOptionLabel} ${opt.sampleClass}`}>
+                    {opt.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <Card variant="solid" className={styles.previewCard}>
+              <p className={styles.previewTitle}>预览效果</p>
+              <p className={styles.previewBody}>
+                桑梓智护，让关爱更近一步。这是当前字体大小的预览文字。
+              </p>
+            </Card>
+          </Card>
+        </section>
+
+        <section className={styles.section} aria-label="语音速度设置">
+          <Card variant="glass" className={styles.optionCard}>
+            <h2 className={styles.sectionTitle}>语音播放速度</h2>
+            <p className={styles.sectionDesc}>调整语音助手和健康广播的播放速度</p>
+            <div className={styles.sliderRow}>
+              <span className={styles.sliderLabel}>慢</span>
+              <input
+                type="range"
+                min="0.5"
+                max="1.5"
+                step="0.1"
+                value={voiceSpeed}
+                onChange={(e) => handleVoiceSpeedChange(parseFloat(e.target.value))}
+                className={styles.slider}
+                aria-label="语音速度"
+                aria-valuemin={0.5}
+                aria-valuemax={1.5}
+                aria-valuenow={voiceSpeed}
+              />
+              <span className={styles.sliderLabel}>快</span>
+              <span className={styles.sliderValue}>{voiceSpeed.toFixed(1)}x</span>
+            </div>
+          </Card>
+        </section>
+
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
+          onClick={handleSave}
+          loading={saving}
         >
-          <ChevronLeft size={20} /> 返回
-        </button>
-        <h1 className={styles.title}>无障碍设置</h1>
+          保存设置
+        </Button>
       </div>
-
-      {success && (
-        <div className={styles.successBanner} role="status">保存成功</div>
-      )}
-      {error && (
-        <div className={styles.errorBanner} role="alert">{error}</div>
-      )}
-
-      {/* 字体大小 */}
-      <section className={styles.section} aria-label="字体大小设置">
-        <h2 className={styles.sectionTitle}>字体大小</h2>
-        <p className={styles.sectionDesc}>选择适合您的字体大小，立即预览效果</p>
-        <div className={styles.sizeOptions} role="radiogroup" aria-label="字体大小">
-          {FONT_SIZE_OPTIONS.map((opt) => (
-            <button
-              key={opt.key}
-              type="button"
-              role="radio"
-              aria-checked={fontSize === opt.key}
-              className={`${styles.sizeOption} ${fontSize === opt.key ? styles.sizeOptionActive : ''}`}
-              onClick={() => handleFontSizeChange(opt.key)}
-            >
-              <span className={styles.sizeOptionLabel} style={{ fontSize: opt.sample }}>
-                {opt.label}
-              </span>
-            </button>
-          ))}
-        </div>
-        <div className={styles.previewCard} aria-label="字体预览">
-          <p className={styles.previewTitle}>预览效果</p>
-          <p className={styles.previewBody}>
-            桑梓智护，让关爱更近一步。这是当前字体大小的预览文字。
-          </p>
-        </div>
-      </section>
-
-      {/* 语音速度 */}
-      <section className={styles.section} aria-label="语音速度设置">
-        <h2 className={styles.sectionTitle}>语音播放速度</h2>
-        <p className={styles.sectionDesc}>调整语音助手和健康广播的播放速度</p>
-        <div className={styles.sliderRow}>
-          <span className={styles.sliderLabel}>慢</span>
-          <input
-            type="range"
-            min="0.5"
-            max="1.5"
-            step="0.1"
-            value={voiceSpeed}
-            onChange={(e) => handleVoiceSpeedChange(parseFloat(e.target.value))}
-            className={styles.slider}
-            aria-label="语音速度"
-            aria-valuemin={0.5}
-            aria-valuemax={1.5}
-            aria-valuenow={voiceSpeed}
-          />
-          <span className={styles.sliderLabel}>快</span>
-          <span className={styles.sliderValue}>{voiceSpeed.toFixed(1)}x</span>
-        </div>
-      </section>
-
-      <button
-        className={styles.saveButton}
-        onClick={handleSave}
-        disabled={saving}
-      >
-        {saving ? '保存中…' : '保存设置'}
-      </button>
-    </main>
+    </div>
   );
 }

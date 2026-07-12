@@ -5,25 +5,6 @@
   padding: var(--safe-top) var(--space-lg) var(--space-lg);
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md) 0;
-}
-
-.backLink {
-  font-size: var(--font-body);
-  color: var(--accent-primary);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.title {
-  font-size: var(--font-heading);
-  font-weight: 700;
-}
-
 /* 内容区 */
 .loading {
   display: flex;
@@ -50,16 +31,6 @@
   color: var(--color-danger);
 }
 
-.retryBtn {
-  padding: var(--space-sm) var(--space-lg);
-  border-radius: var(--radius-full);
-  background: var(--accent-primary);
-  color: white;
-  border: none;
-  font-size: var(--font-body);
-  cursor: pointer;
-}
-
 /* 分组 */
 .section {
   margin-top: var(--space-xl);
@@ -72,6 +43,7 @@
   font-size: var(--font-title);
   font-weight: 700;
   margin-bottom: var(--space-md);
+  color: var(--text-primary);
 }
 
 .emptySection {
@@ -86,11 +58,7 @@
   display: flex;
   gap: var(--space-md);
   padding: var(--space-lg);
-  border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
   margin-bottom: var(--space-md);
-  box-shadow: var(--shadow-card);
 }
 
 .indicator {
@@ -116,6 +84,7 @@
 .medicineName {
   font-size: var(--font-body);
   font-weight: 700;
+  color: var(--text-primary);
 }
 
 .dosage {
@@ -130,14 +99,16 @@
 }
 
 .timeTag {
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  background: rgba(59, 130, 246, 0.08);
-  font-size: var(--font-small);
-  color: #3b82f6;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .dateRange {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: var(--font-small);
   color: var(--text-muted);
+  margin-top: 2px;
 }

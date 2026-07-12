@@ -84,10 +84,9 @@ describe('AccessibilityPage 无障碍设置页', () => {
     expect(screen.getByText('无障碍设置')).toBeDefined();
   });
 
-  it('返回按钮导航到设置页', () => {
+  it('返回按钮指向设置页', () => {
     render(<AccessibilityPage />);
-    fireEvent.click(screen.getByLabelText('返回设置'));
-    expect(mockPush).toHaveBeenCalledWith('/settings');
+    expect(screen.getByLabelText('返回设置').getAttribute('href')).toBe('/settings');
   });
 
   it('显示三个字体大小选项', () => {

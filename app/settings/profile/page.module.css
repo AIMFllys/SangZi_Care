@@ -1,8 +1,7 @@
-/* settings/profile — 个人信息 */
-.container {
+.page {
   min-height: 100dvh;
-  background: var(--bg-base);
   padding: var(--safe-top) var(--space-lg) var(--space-lg);
+  background: var(--bg-base);
 }
 
 .loading {
@@ -11,27 +10,7 @@
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md) 0 var(--space-lg);
-}
-
-.backButton {
-  background: none;
-  border: none;
   font-size: var(--font-body);
-  color: var(--accent-primary);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.title {
-  font-size: var(--font-heading);
-  font-weight: 700;
 }
 
 .successBanner,
@@ -44,20 +23,35 @@
 }
 
 .successBanner {
-  background: rgba(34, 197, 94, 0.1);
+  background: var(--color-success-soft);
   color: var(--color-success);
 }
 
 .errorBanner {
-  background: rgba(239, 68, 68, 0.1);
+  background: var(--color-danger-soft);
   color: var(--color-danger);
 }
 
-/* 表单 */
-.section {
+.avatarSection {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-lg) 0 var(--space-xl);
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  background: var(--accent-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
+  gap: var(--space-md);
 }
 
 .formGroup {
@@ -67,24 +61,9 @@
 }
 
 .formLabel {
-  font-size: var(--font-caption);
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.formInput {
-  padding: var(--space-md);
-  border-radius: var(--radius-lg);
-  border: 1.5px solid var(--divider);
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(8px);
   font-size: var(--font-body);
-  outline: none;
-  transition: border-color var(--duration-fast);
-}
-
-.formInput:focus {
-  border-color: var(--accent-primary);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 /* 性别选择 */
@@ -98,17 +77,18 @@
   padding: var(--space-md);
   border-radius: var(--radius-lg);
   border: 1.5px solid var(--divider);
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--bg-input);
   font-size: var(--font-body);
   font-weight: 600;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all var(--duration-fast);
 }
 
 .genderChipActive {
   background: var(--accent-soft);
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* 慢性病 */
@@ -119,77 +99,28 @@
 }
 
 .diseaseTag {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-full);
   background: var(--accent-soft);
   font-size: var(--font-caption);
-  color: var(--accent-primary);
-}
-
-.diseaseRemove {
-  background: none;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  color: var(--text-muted);
+  color: var(--accent);
 }
 
 .diseaseInputRow {
   display: flex;
+  align-items: flex-start;
   gap: var(--space-sm);
 }
 
 .diseaseInput {
   flex: 1;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-lg);
-  border: 1.5px solid var(--divider);
-  background: rgba(255, 255, 255, 0.5);
-  font-size: var(--font-body);
-  outline: none;
 }
 
-.diseaseInput:focus {
-  border-color: var(--accent-primary);
-}
-
-.diseaseAddBtn {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-full);
-  background: var(--accent-primary);
-  color: white;
-  font-size: 20px;
-  border: none;
-  cursor: pointer;
-}
-
-.diseaseAddBtn:disabled {
-  opacity: 0.4;
-}
-
-/* 保存按钮 */
-.saveButton {
-  width: 100%;
-  padding: var(--space-md);
-  border-radius: var(--radius-lg);
-  background: var(--accent-primary);
-  color: white;
-  font-size: var(--font-body);
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
+.actions {
+  display: flex;
+  gap: var(--space-md);
   margin-top: var(--space-xl);
-  transition: transform var(--duration-fast);
-}
-
-.saveButton:active {
-  transform: scale(0.98);
-}
-
-.saveButton:disabled {
-  opacity: 0.5;
 }

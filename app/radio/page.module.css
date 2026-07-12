@@ -12,8 +12,8 @@
 }
 
 .backBtn {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-full);
   background: none;
   border: none;
@@ -36,7 +36,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: 12px var(--space-lg);
+  padding: var(--space-sm) var(--space-lg);
   margin-bottom: var(--space-lg);
 }
 
@@ -59,8 +59,8 @@
 }
 
 .searchBtn {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-full);
   background: var(--accent);
   color: var(--accent-text);
@@ -124,19 +124,19 @@
 }
 
 .catOrange {
-  background: rgba(251, 146, 60, 0.12);
+  background: var(--accent-soft);
 }
 
 .catGreen {
-  background: rgba(34, 197, 94, 0.12);
+  background: var(--color-success-soft);
 }
 
 .catBlue {
-  background: rgba(59, 130, 246, 0.12);
+  background: var(--color-info-soft);
 }
 
 .catPurple {
-  background: rgba(168, 85, 247, 0.12);
+  background: var(--color-ai-soft);
 }
 
 .categoryName {
@@ -190,8 +190,8 @@
 }
 
 .playBtn {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-full);
   background: var(--accent);
   color: var(--accent-text);
@@ -231,8 +231,8 @@
 }
 
 .playerBtn {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-full);
   background: var(--accent);
   color: var(--accent-text);

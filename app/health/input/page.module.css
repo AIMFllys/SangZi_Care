@@ -1,62 +1,20 @@
-/* ============================================
-   健康数据录入页 — 高级设计系统
-   设计语言: 温暖优雅 · 无障碍优先 · 精致质感
-   ============================================ */
-
 .page {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  background: linear-gradient(180deg, var(--color-surface) 0%, #f5f3f0 100%);
-  padding-bottom: var(--spacing-xl);
-}
-
-/* 顶部栏 */
-.header {
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-base);
-  gap: var(--spacing-sm);
-}
-
-.backBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  font-size: var(--font-size-xl);
-  color: var(--color-primary);
-  background: var(--color-bg-card);
-  border: none;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
-  cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.backBtn:active {
-  transform: scale(0.95);
-  box-shadow: var(--shadow-xs);
-}
-
-.title {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-text);
-  flex: 1;
-  letter-spacing: -0.01em;
+  min-height: 100dvh;
+  background: var(--bg-base);
+  padding-bottom: var(--space-xl);
 }
 
 /* 记录类型选择器 */
 .typeSection {
-  padding: 0 var(--spacing-base) var(--spacing-base);
+  padding: var(--space-md) var(--space-lg) var(--space-md);
 }
 
 .typeGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-sm);
+  gap: var(--space-sm);
 }
 
 .typeCard {
@@ -65,173 +23,60 @@
   align-items: center;
   justify-content: center;
   min-height: 100px;
-  padding: var(--spacing-base);
-  background: var(--color-bg-card);
-  border: 2px solid var(--color-border);
-  border-radius: var(--border-radius-lg);
+  padding: var(--space-md);
   cursor: pointer;
-  transition: all var(--transition-fast);
-  box-shadow: var(--shadow-sm);
-}
-
-.typeCard:active {
-  transform: scale(0.97);
 }
 
 .typeCardSelected {
-  border-color: var(--color-primary);
-  background: linear-gradient(135deg, var(--color-primary-light) 0%, #FFF3E8 100%);
-  box-shadow: 0 4px 16px rgba(255, 143, 68, 0.2);
+  border: 2px solid var(--accent);
+  background: var(--accent-soft);
 }
 
 .typeIcon {
-  font-size: 36px;
-  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-heading);
+  margin-bottom: var(--space-xs);
+  color: var(--text-secondary);
+}
+
+.typeIconSelected {
+  color: var(--accent);
 }
 
 .typeLabel {
-  font-size: var(--font-size-base);
+  font-size: var(--font-body);
   font-weight: 600;
-  color: var(--color-text);
+  color: var(--text-primary);
 }
 
-.typeCardSelected .typeLabel {
-  color: var(--color-primary-dark);
+.typeLabelSelected {
+  color: var(--accent);
   font-weight: 700;
 }
 
 /* 录入方式切换 */
 .methodToggle {
   display: flex;
-  margin: 0 var(--spacing-base) var(--spacing-base);
-  background: var(--color-bg-card);
-  border-radius: var(--border-radius);
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
-}
-
-.methodTab {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--min-touch-target);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  gap: var(--spacing-xs);
-}
-
-.methodTabActive {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-  color: #ffffff;
+  gap: var(--space-sm);
+  margin: 0 var(--space-lg) var(--space-md);
 }
 
 /* 表单区域 */
 .formSection {
-  padding: 0 var(--spacing-base);
+  padding: 0 var(--space-lg);
   flex: 1;
 }
 
-.fieldGroup {
-  margin-bottom: var(--spacing-lg);
-}
-
-.fieldLabel {
-  display: block;
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: var(--spacing-sm);
-}
-
-.fieldRow {
+.fields {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.numberInput {
-  flex: 1;
-  min-height: 64px;
-  padding: var(--spacing-base);
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--color-text);
-  background: var(--color-bg-card);
-  border: 2px solid var(--color-border-strong);
-  border-radius: var(--border-radius);
-  text-align: center;
-  outline: none;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  -moz-appearance: textfield;
-  box-shadow: var(--shadow-sm);
-}
-
-.numberInput::-webkit-outer-spin-button,
-.numberInput::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.numberInput:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(255, 143, 68, 0.12), 0 2px 8px rgba(255, 143, 68, 0.08);
-}
-
-.numberInput::placeholder {
-  font-size: var(--font-size-lg);
-  font-weight: 400;
-  color: var(--color-text-muted);
-}
-
-.inputError {
-  border-color: var(--color-danger);
-}
-
-.fieldUnit {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-}
-
-.fieldSeparator {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-text-secondary);
+  flex-direction: column;
+  gap: var(--space-md);
 }
 
 /* 血糖类型切换 */
 .sugarToggle {
   display: flex;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-base);
-}
-
-.sugarBtn {
-  flex: 1;
-  min-height: var(--min-touch-target);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  background: var(--color-bg-card);
-  border: 2px solid var(--color-border-strong);
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.sugarBtnActive {
-  border-color: var(--color-primary);
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(255, 143, 68, 0.25);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
 
 /* 语音录入区域 */
@@ -239,8 +84,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--spacing-xl) 0;
-  gap: var(--spacing-lg);
+  padding: var(--space-xl) 0;
+  gap: var(--space-lg);
 }
 
 .micBtn {
@@ -249,14 +94,13 @@
   justify-content: center;
   width: 100px;
   height: 100px;
-  font-size: 44px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-  color: #ffffff;
+  border-radius: var(--radius-full);
   border: none;
-  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+  color: var(--accent-text);
   cursor: pointer;
-  transition: all var(--transition-fast);
-  box-shadow: 0 8px 24px rgba(255, 143, 68, 0.35), 0 4px 8px rgba(255, 143, 68, 0.15);
+  box-shadow: 0 8px 24px var(--accent-soft);
+  transition: transform var(--duration-fast), box-shadow var(--duration-fast);
 }
 
 .micBtn:active {
@@ -264,8 +108,8 @@
 }
 
 .micBtnListening {
-  background: linear-gradient(135deg, var(--color-danger) 0%, #c62828 100%);
-  box-shadow: 0 8px 24px rgba(229, 57, 53, 0.35), 0 4px 8px rgba(229, 57, 53, 0.15);
+  background: linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%);
+  box-shadow: 0 8px 24px var(--color-danger-soft);
   animation: pulse 1.2s ease-in-out infinite;
 }
 
@@ -275,18 +119,19 @@
 }
 
 .voiceHint {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
+  font-size: var(--font-body);
+  color: var(--text-secondary);
   text-align: center;
 }
 
 .voiceTranscript {
   width: 100%;
-  padding: var(--spacing-base);
-  font-size: var(--font-size-lg);
-  color: var(--color-text);
-  background: var(--color-bg-card);
-  border-radius: var(--border-radius);
+  padding: var(--space-md);
+  font-size: var(--font-body);
+  color: var(--text-primary);
+  background: var(--bg-card-solid);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
   text-align: center;
   min-height: 56px;
   word-break: break-all;
@@ -295,80 +140,59 @@
 
 /* 可选字段 */
 .optionalSection {
-  padding: 0 var(--spacing-base);
-  margin-top: var(--spacing-sm);
+  padding: 0 var(--space-lg);
+  margin-top: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.fieldLabel {
+  font-size: var(--font-body);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .textarea {
   width: 100%;
   min-height: 80px;
-  padding: var(--spacing-base);
-  font-size: var(--font-size-base);
-  color: var(--color-text);
-  background: var(--color-bg-card);
-  border: 2px solid var(--color-border-strong);
-  border-radius: var(--border-radius);
+  padding: var(--space-md);
+  font-size: var(--font-body);
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1.5px solid var(--divider);
+  border-radius: var(--radius-lg);
   resize: vertical;
   outline: none;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  box-shadow: var(--shadow-sm);
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 
 .textarea:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(255, 143, 68, 0.12);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .textarea::placeholder {
-  color: var(--color-text-muted);
-}
-
-/* 错误提示 */
-.errorText {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  font-size: var(--font-size-sm);
-  color: var(--color-danger);
-  margin-top: var(--spacing-xs);
-  font-weight: 500;
-}
-
-.errorText::before {
-  content: '⚠';
+  color: var(--text-muted);
 }
 
 /* 提交按钮 */
 .submitSection {
-  padding: var(--spacing-base);
-}
-
-.submitBtn {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 64px;
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: #ffffff;
-  background: linear-gradient(135deg, var(--color-success) 0%, #2e7d32 100%);
-  border: none;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-  box-shadow: 0 4px 16px rgba(67, 160, 71, 0.3), 0 2px 4px rgba(67, 160, 71, 0.15);
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  margin-top: auto;
 }
 
-.submitBtn:active {
-  transform: scale(0.97);
-  box-shadow: 0 2px 8px rgba(67, 160, 71, 0.2);
-}
-
-.submitBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
+.cancelBtn {
+  margin-top: 0;
 }
 
 /* 成功提示 */
@@ -378,23 +202,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--bg-overlay);
   backdrop-filter: blur(4px);
   z-index: 100;
-  animation: fadeIn var(--transition-normal) ease-out;
+  animation: fadeIn var(--duration-normal) ease-out;
 }
 
 .successCard {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-2xl);
-  background: linear-gradient(180deg, #ffffff 0%, #f0fff4 100%);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-xl);
+  gap: var(--space-lg);
+  padding: var(--space-2xl);
   text-align: center;
-  animation: scaleIn var(--transition-normal) ease-out;
+  animation: scaleIn var(--duration-normal) ease-out;
 }
 
 .successIcon {
@@ -402,16 +223,16 @@
   animation: bounce 0.6s ease-out;
 }
 
+.successText {
+  font-size: var(--font-title);
+  font-weight: 700;
+  color: var(--color-success);
+}
+
 @keyframes bounce {
   0% { transform: scale(0); }
   50% { transform: scale(1.2); }
   100% { transform: scale(1); }
-}
-
-.successText {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--color-success);
 }
 
 @keyframes fadeIn {
@@ -432,15 +253,12 @@
   .successIcon {
     animation: none;
   }
-  
-  .backBtn,
+
   .typeCard,
-  .methodTab,
-  .numberInput,
-  .sugarBtn,
+  .methodToggle button,
   .micBtn,
   .textarea,
-  .submitBtn {
+  .submitSection button {
     transition: none;
   }
 }

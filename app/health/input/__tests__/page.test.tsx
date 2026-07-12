@@ -184,6 +184,13 @@ describe('buildRecordValues', () => {
 // 组件渲染测试
 // ============================================================
 
+// Mock next/link
+vi.mock('next/link', () => ({
+  default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
+    <a href={href} {...props}>{children}</a>
+  ),
+}));
+
 // Mock 依赖
 const mockCreateRecord = vi.fn();
 vi.mock('@/stores/healthStore', async (importOriginal) => {
@@ -243,11 +250,11 @@ describe('HealthInputPage 组件', () => {
 
   it('渲染5个记录类型选择按钮', () => {
     render(<HealthInputPage />);
-    expect(screen.getByText('血压')).toBeDefined();
-    expect(screen.getByText('血糖')).toBeDefined();
-    expect(screen.getByText('心率')).toBeDefined();
-    expect(screen.getByText('体重')).toBeDefined();
-    expect(screen.getByText('体温')).toBeDefined();
+    expect(screen.getByRole('button', { name: '血压' })).toBeDefined();
+    expect(screen.getByRole('button', { name: '血糖' })).toBeDefined();
+    expect(screen.getByRole('button', { name: '心率' })).toBeDefined();
+    expect(screen.getByRole('button', { name: '体重' })).toBeDefined();
+    expect(screen.getByRole('button', { name: '体温' })).toBeDefined();
   });
 
   it('默认选中血压类型', () => {
@@ -343,9 +350,15 @@ describe('HealthInputPage 组件', () => {
     expect(mockStartListening).toHaveBeenCalled();
   });
 
-  it('返回按钮导航到健康记录页', () => {
+  it('返回按钮指向健康记录页', () => {
     render(<HealthInputPage />);
-    fireEvent.click(screen.getByLabelText('返回健康记录'));
+    const backLink = screen.getByLabelText('返回');
+    expect(backLink.closest('a')?.getAttribute('href')).toBe('/health');
+  });
+
+  it('取消按钮导航到健康记录页', () => {
+    render(<HealthInputPage />);
+    fireEvent.click(screen.getByText('取消'));
     expect(mockPush).toHaveBeenCalledWith('/health');
   });
 

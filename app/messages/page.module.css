@@ -1,36 +1,14 @@
 .page {
   min-height: 100dvh;
-  padding: var(--safe-top) var(--space-lg) var(--space-lg);
+  padding: var(--safe-top) var(--space-lg) calc(var(--tabbar-height) + var(--safe-bottom) + var(--space-lg));
   background: var(--bg-base);
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-xl) 0 var(--space-lg);
-}
-
-.title {
-  font-size: var(--font-title);
-  font-weight: 800;
 }
 
 .subtitle {
   font-size: var(--font-caption);
   color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.headerAction {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  cursor: pointer;
+  margin: var(--space-xs) 0 var(--space-lg);
+  padding: 0 var(--space-sm);
 }
 
 /* 联系人列表 */
@@ -57,7 +35,8 @@
   width: 56px;
   height: 56px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--accent-soft), var(--accent-glow));
+  background: var(--accent-soft);
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -80,22 +59,30 @@
   min-width: 0;
 }
 
+.contactNameRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
 .contactName {
   font-size: var(--font-body);
   font-weight: 700;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .contactRelation {
-  font-size: var(--font-small);
-  color: var(--text-muted);
-  margin-left: var(--space-xs);
+  flex-shrink: 0;
 }
 
 .contactPreview {
   font-size: var(--font-caption);
   color: var(--text-secondary);
-  margin-top: 2px;
+  margin-top: var(--space-xs);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -117,46 +104,11 @@
 .unreadBadge {
   min-width: 20px;
   height: 20px;
-  padding: 0 6px;
+  padding: 0 var(--space-xs);
   border-radius: var(--radius-full);
-  background: var(--color-danger);
-  color: var(--text-inverse);
-  font-size: 11px;
-  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* 操作按钮 */
-.actionRow {
-  display: flex;
-  gap: var(--space-sm);
-  margin-top: var(--space-sm);
-}
-
-.actionBtn {
-  flex: 1;
-  padding: 8px;
-  border-radius: var(--radius-md);
-  border: none;
-  font-size: var(--font-caption);
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.callBtn {
-  background: var(--color-success-soft);
-  color: var(--color-success);
-}
-
-.msgBtn {
-  background: var(--color-info-soft);
-  color: var(--color-info);
 }
 
 /* 添加按钮 */
@@ -166,10 +118,17 @@
   justify-content: center;
   gap: var(--space-sm);
   padding: var(--space-lg);
+  margin-top: var(--space-md);
   border: 2px dashed var(--border-light);
   border-radius: var(--radius-lg);
   font-size: var(--font-body);
+  font-weight: 600;
   color: var(--text-muted);
   cursor: pointer;
-  margin-top: var(--space-md);
+  background: transparent;
+}
+
+.addCard:hover {
+  border-color: var(--accent-soft);
+  color: var(--accent);
 }

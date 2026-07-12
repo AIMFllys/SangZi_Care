@@ -17,8 +17,8 @@
 }
 
 .backBtn {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-full);
   background: none;
   border: none;
@@ -51,10 +51,10 @@
 }
 
 .modeToggle {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-full);
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--border-light);
   border: none;
   font-size: 20px;
   cursor: pointer;
@@ -73,20 +73,20 @@
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-full);
   border: 1.5px solid var(--divider);
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--bg-input);
   font-size: var(--font-body);
   outline: none;
 }
 
 .textInput:focus {
-  border-color: var(--accent-primary);
+  border-color: var(--accent);
 }
 
 .sendBtn {
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-full);
-  background: var(--accent-primary);
-  color: white;
+  background: var(--accent);
+  color: var(--accent-text);
   font-size: var(--font-caption);
   font-weight: 600;
   border: none;

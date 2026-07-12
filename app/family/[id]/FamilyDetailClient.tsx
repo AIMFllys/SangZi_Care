@@ -118,7 +118,7 @@ export default function FamilyDetailClient({ userId }: Props) {
   if (!bind || !targetUser) {
     return (
       <main className={styles.container}>
-        <PageHeader title="详情" fallbackUrl="/" />
+        <PageHeader title="详情" backHref="/" />
         <div className={styles.empty}>未找到该用户信息</div>
       </main>
     );
@@ -127,7 +127,7 @@ export default function FamilyDetailClient({ userId }: Props) {
   return (
     <main className={styles.container}>
       {/* 顶部导航 */}
-      <PageHeader title={isElder ? '家属详情' : '老人详情'} fallbackUrl="/" />
+      <PageHeader title={isElder ? '家属详情' : '老人详情'} backHref="/" />
 
       {/* 用户基本信息卡片 */}
       <section className={styles.profileCard} aria-label="基本信息">
@@ -207,7 +207,7 @@ export default function FamilyDetailClient({ userId }: Props) {
                     <span className={styles.medicineName}>{item.plan.medicine_name}</span>
                     <span className={styles.medicineTime}>{item.scheduled_time}</span>
                     <span className={`${styles.medicineStatus} ${styles[`status_${item.status}`]}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      {item.status === 'taken' ? <><CheckCircle size={14} /> 已服</> : item.status === 'pending' ? <><Clock size={14} /> 待服</> : <><AlertTriangle size={14} /> 未服</>}
+                      {item.status === 'taken' ? <><CheckCircle size={16} /> 已服</> : item.status === 'pending' ? <><Clock size={16} /> 待服</> : <><AlertTriangle size={16} /> 未服</>}
                     </span>
                   </li>
                 ))}

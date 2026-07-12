@@ -4,7 +4,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 // ---------- Mock HTMLMediaElement ----------
 
 beforeEach(() => {
-  // jsdom 不实现 HTMLMediaElement 方法，需要 mock
   window.HTMLMediaElement.prototype.play = vi.fn().mockResolvedValue(undefined);
   window.HTMLMediaElement.prototype.pause = vi.fn();
   window.HTMLMediaElement.prototype.load = vi.fn();
@@ -13,8 +12,9 @@ beforeEach(() => {
 // ---------- Mock 依赖 ----------
 
 const mockPush = vi.fn();
+const mockBack = vi.fn();
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, back: mockBack }),
 }));
 
 const mockPlay = vi.fn();
@@ -127,10 +127,10 @@ describe('RadioPage 组件', () => {
     expect(screen.getByText(/健康广播/)).toBeDefined();
   });
 
-  it('返回按钮导航到首页', () => {
+  it('返回按钮导航到上一页', () => {
     render(<RadioPage />);
     fireEvent.click(screen.getByLabelText('返回首页'));
-    expect(mockPush).toHaveBeenCalledWith('/');
+    expect(mockBack).toHaveBeenCalled();
   });
 
   it('加载状态显示加载文字', () => {
@@ -143,108 +143,42 @@ describe('RadioPage 组件', () => {
     mockStoreState.error = '网络错误';
     render(<RadioPage />);
     expect(screen.getByText('网络错误')).toBeDefined();
-    expect(screen.getByText('重试')).toBeDefined();
+    expect(screen.getByText('重新加载')).toBeDefined();
   });
 
   it('点击重试按钮重新加载', () => {
     mockStoreState.error = '网络错误';
     render(<RadioPage />);
-    fireEvent.click(screen.getByText('重试'));
+    fireEvent.click(screen.getByText('重新加载'));
     expect(mockFetchRecommendations).toHaveBeenCalled();
-    expect(mockFetchCategories).toHaveBeenCalled();
   });
 
   it('空列表显示空状态', () => {
     render(<RadioPage />);
-    expect(screen.getByText('暂无推荐广播')).toBeDefined();
+    expect(screen.getByText('暂无推荐')).toBeDefined();
   });
 
-  it('有广播时显示播放控制按钮', () => {
+  it('有广播时显示推荐列表', () => {
     mockStoreState.broadcasts = [makeBroadcast()];
     render(<RadioPage />);
-    expect(screen.getByLabelText('上一条')).toBeDefined();
+    expect(screen.getByText('春季养生小贴士')).toBeDefined();
+    expect(screen.getByText(/季节保健/)).toBeDefined();
     expect(screen.getByLabelText('播放')).toBeDefined();
-    expect(screen.getByLabelText('下一条')).toBeDefined();
   });
 
-  it('播放中显示暂停按钮', () => {
+  it('播放中显示底部播放器', () => {
     mockStoreState.broadcasts = [makeBroadcast()];
     mockStoreState.isPlaying = true;
     render(<RadioPage />);
     expect(screen.getByLabelText('暂停')).toBeDefined();
+    expect(screen.getAllByText('春季养生小贴士').length).toBeGreaterThanOrEqual(2);
   });
 
-  it('显示当前广播标题', () => {
-    mockStoreState.broadcasts = [makeBroadcast()];
+  it('显示热门分类', () => {
     render(<RadioPage />);
-    // 标题同时出现在播放卡片和列表中，使用 getAllByText
-    const titles = screen.getAllByText('春季养生小贴士');
-    expect(titles.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('显示当前广播分类', () => {
-    mockStoreState.broadcasts = [makeBroadcast()];
-    render(<RadioPage />);
-    const categories = screen.getAllByText('季节保健');
-    expect(categories.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('显示推荐收听列表标题', () => {
-    mockStoreState.broadcasts = [
-      makeBroadcast({ id: 'bc-1', title: '广播一' }),
-      makeBroadcast({ id: 'bc-2', title: '广播二' }),
-    ];
-    render(<RadioPage />);
-    expect(screen.getByText('📋 推荐收听')).toBeDefined();
-  });
-
-  it('显示多条广播在推荐列表中', () => {
-    mockStoreState.broadcasts = [
-      makeBroadcast({ id: 'bc-1', title: '广播一' }),
-      makeBroadcast({ id: 'bc-2', title: '广播二' }),
-    ];
-    render(<RadioPage />);
-    // 广播一同时出现在播放卡片和列表中
-    expect(screen.getAllByText('广播一').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('广播二')).toBeDefined();
-  });
-
-  it('显示进度条当前时间', () => {
-    mockStoreState.broadcasts = [makeBroadcast()];
-    mockStoreState.currentTime = 65;
-    mockStoreState.duration = 180;
-    render(<RadioPage />);
-    expect(screen.getByText('01:05')).toBeDefined();
-  });
-
-  it('显示分类标签', () => {
-    mockStoreState.broadcasts = [makeBroadcast()];
-    mockStoreState.categories = [
-      { key: 'diet', name: '饮食营养', description: '' },
-      { key: 'exercise', name: '运动养生', description: '' },
-    ];
-    render(<RadioPage />);
-    expect(screen.getByText('饮食营养')).toBeDefined();
-    expect(screen.getByText('运动养生')).toBeDefined();
-  });
-
-  it('点击下一条按钮调用 next', () => {
-    mockStoreState.broadcasts = [makeBroadcast()];
-    render(<RadioPage />);
-    fireEvent.click(screen.getByLabelText('下一条'));
-    expect(mockNext).toHaveBeenCalled();
-  });
-
-  it('点击上一条按钮调用 prev', () => {
-    mockStoreState.broadcasts = [makeBroadcast()];
-    render(<RadioPage />);
-    fireEvent.click(screen.getByLabelText('上一条'));
-    expect(mockPrev).toHaveBeenCalled();
-  });
-
-  it('正在播放标签显示', () => {
-    mockStoreState.broadcasts = [makeBroadcast()];
-    render(<RadioPage />);
-    expect(screen.getByText('正在播放')).toBeDefined();
+    expect(screen.getByText('京剧名段')).toBeDefined();
+    expect(screen.getByText('养生常识')).toBeDefined();
+    expect(screen.getByText('每日新闻')).toBeDefined();
+    expect(screen.getByText('评书大全')).toBeDefined();
   });
 });

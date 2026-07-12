@@ -3,11 +3,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import MedicineHistoryPage from '../page';
 import type { MedicationPlanResponse } from '@/stores/medicineStore';
 
-// Mock CSS modules
-vi.mock('../page.module.css', () => ({
-  default: new Proxy({}, { get: (_t, prop) => String(prop) }),
-}));
-
 // Mock next/link
 vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
@@ -71,13 +66,13 @@ describe('MedicineHistoryPage', () => {
 
   it('显示页面标题和返回链接', () => {
     render(<MedicineHistoryPage />);
-    expect(screen.getByText('📋 用药历史')).toBeTruthy();
-    expect(screen.getByText('← 返回')).toBeTruthy();
+    expect(screen.getByText('用药历史')).toBeTruthy();
+    expect(screen.getByLabelText('返回')).toBeTruthy();
   });
 
   it('返回链接指向用药管家页', () => {
     render(<MedicineHistoryPage />);
-    const backLink = screen.getByText('← 返回');
+    const backLink = screen.getByLabelText('返回');
     expect(backLink.closest('a')?.getAttribute('href')).toBe('/medicine');
   });
 
@@ -137,9 +132,9 @@ describe('MedicineHistoryPage', () => {
 
     expect(screen.getByText('阿莫西林')).toBeTruthy();
     expect(screen.getByText('250mg')).toBeTruthy();
-    expect(screen.getByText('🕐 08:00')).toBeTruthy();
-    expect(screen.getByText('🕐 20:00')).toBeTruthy();
-    expect(screen.getByText('📅 2024/03/01 ~ 2024/06/30')).toBeTruthy();
+    expect(screen.getByText('08:00')).toBeTruthy();
+    expect(screen.getByText('20:00')).toBeTruthy();
+    expect(screen.getByText('2024/03/01 ~ 2024/06/30')).toBeTruthy();
   });
 
   it('无结束日期时显示"起"', () => {
@@ -152,7 +147,7 @@ describe('MedicineHistoryPage', () => {
       }),
     ];
     render(<MedicineHistoryPage />);
-    expect(screen.getByText('📅 2024/01/15 起')).toBeTruthy();
+    expect(screen.getByText('2024/01/15 起')).toBeTruthy();
   });
 
   it('多个活跃计划全部显示在当前用药区域', () => {

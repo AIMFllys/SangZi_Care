@@ -1,26 +1,7 @@
-/* ============================================================
- * 绑定管理页 — Premium Glass Design
- * ============================================================ */
-
-/* --- Page Container --- */
-.container {
+.page {
   min-height: 100dvh;
-  background:
-    linear-gradient(180deg, var(--bg-base) 0%, var(--bg-elevated) 50%, var(--bg-base) 100%);
-  padding: var(--safe-top) var(--space-lg) calc(var(--tabbar-height) + var(--safe-bottom) + var(--space-xl));
-  animation: pageIn 0.4s var(--ease-out-smooth) both;
-}
-
-@keyframes pageIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  padding: var(--safe-top) var(--space-lg) var(--space-lg);
+  background: var(--bg-base);
 }
 
 .loading {
@@ -32,109 +13,27 @@
   font-size: var(--font-body);
 }
 
-/* --- Header --- */
-.header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-lg) 0;
-  margin-bottom: var(--space-sm);
-}
-
-.backButton {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  background: none;
-  border: none;
-  font-size: var(--font-caption);
-  color: var(--accent);
-  font-weight: 600;
-  cursor: pointer;
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-full);
-  transition: background var(--duration-fast), transform var(--duration-fast);
-}
-
-.backButton:active {
-  transform: scale(0.95);
-  background: var(--accent-soft);
-}
-
-.title {
-  font-size: var(--font-title);
-  font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: -0.02em;
-}
-
-/* --- Banners --- */
 .successBanner,
 .errorBanner {
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-md);
   font-size: var(--font-caption);
-  font-weight: 500;
   margin-bottom: var(--space-md);
   text-align: center;
-  animation: bannerIn 0.3s var(--ease-out-smooth) both;
-}
-
-@keyframes bannerIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 
 .successBanner {
   background: var(--color-success-soft);
   color: var(--color-success);
-  border: 1px solid rgba(46, 125, 50, 0.15);
 }
 
 .errorBanner {
   background: var(--color-danger-soft);
   color: var(--color-danger);
-  border: 1px solid rgba(229, 57, 53, 0.12);
 }
 
-/* --- Section --- */
 .section {
-  background: var(--bg-card);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-lg);
-  animation: sectionIn 0.5s var(--ease-out-smooth) both;
-}
-
-.section:nth-child(3) {
-  animation-delay: 0.08s;
-}
-
-.section:nth-child(4) {
-  animation-delay: 0.16s;
-}
-
-@keyframes sectionIn {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  margin-bottom: var(--space-xl);
 }
 
 .sectionTitle {
@@ -142,19 +41,16 @@
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: var(--space-md);
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
 }
 
 .hint {
   font-size: var(--font-caption);
   color: var(--text-secondary);
   line-height: 1.6;
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
 
-/* --- Bind List (Existing Binds) --- */
+/* Bind list */
 .bindList {
   display: flex;
   flex-direction: column;
@@ -162,24 +58,15 @@
 }
 
 .bindCard {
-  background: var(--bg-card-solid);
-  border-radius: var(--radius-md);
-  padding: var(--space-md) var(--space-lg);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-light);
-  transition: box-shadow var(--duration-normal) var(--ease-out-smooth),
-    transform var(--duration-fast) var(--ease-out-smooth);
-}
-
-.bindCard:active {
-  transform: scale(0.99);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
 }
 
 .bindCardHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-md);
   padding-bottom: var(--space-sm);
   border-bottom: 1px solid var(--divider);
 }
@@ -190,51 +77,34 @@
   color: var(--text-primary);
 }
 
-.statusBadge {
-  font-size: var(--font-small);
-  font-weight: 600;
-  padding: 3px 12px;
-  border-radius: var(--radius-full);
-  letter-spacing: 0.02em;
-}
-
-.statusActive {
-  background: var(--color-success-soft);
-  color: var(--color-success);
-}
-
-.statusInactive {
-  background: var(--color-warning-soft);
-  color: var(--color-warning);
-}
-
-/* --- Permission Toggles --- */
 .permissions {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-bottom: var(--space-md);
+  gap: var(--space-xs);
 }
 
 .permissionRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 56px;
   padding: var(--space-sm) 0;
   cursor: pointer;
 }
 
 .permissionLabel {
-  font-size: var(--font-caption);
+  font-size: var(--font-body);
   color: var(--text-secondary);
   font-weight: 500;
 }
 
-/* Toggle Switch */
+/* Toggle */
 .toggle {
   position: relative;
-  width: 48px;
-  height: 28px;
+  width: 52px;
+  min-width: 52px;
+  height: 48px;
+  min-height: 48px;
   border-radius: var(--radius-full);
   border: none;
   cursor: pointer;
@@ -257,13 +127,13 @@
 
 .toggleThumb {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 22px;
-  height: 22px;
+  top: 12px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
   border-radius: var(--radius-full);
-  background: white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  background: var(--bg-card-solid);
+  box-shadow: var(--shadow-sm);
   transition: transform var(--duration-normal) var(--ease-spring);
 }
 
@@ -271,72 +141,14 @@
   transform: translateX(20px);
 }
 
-/* --- Unbind Button --- */
-.unbindButton {
-  width: 100%;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  border: 1.5px solid var(--color-danger);
-  background: transparent;
-  color: var(--color-danger);
-  font-size: var(--font-caption);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--duration-fast), color var(--duration-fast), transform var(--duration-fast);
-}
-
-.unbindButton:active {
-  transform: scale(0.97);
-  background: var(--color-danger-soft);
-}
-
-/* --- Generate Code Button (Elder) --- */
-.generateButton {
-  width: 100%;
-  padding: var(--space-md);
-  border-radius: var(--radius-lg);
-  border: none;
-  font-size: var(--font-body);
-  font-weight: 700;
-  cursor: pointer;
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  color: var(--accent-text);
-  box-shadow: 0 4px 16px rgba(245, 146, 62, 0.3);
-  transition: transform var(--duration-fast) var(--ease-out-smooth),
-    box-shadow var(--duration-fast);
-}
-
-.generateButton:active {
-  transform: scale(0.97);
-}
-
-.generateButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* --- Code Display --- */
+/* Generate code */
 .codeDisplay {
   text-align: center;
   margin-top: var(--space-lg);
   padding: var(--space-lg);
-  background: var(--accent-glow);
+  background: var(--accent-soft);
   border-radius: var(--radius-md);
   border: 1.5px dashed var(--accent-light);
-  animation: codeReveal 0.5s var(--ease-spring) both;
-}
-
-@keyframes codeReveal {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
 
 .codeLabel {
@@ -361,58 +173,26 @@
   margin-top: var(--space-sm);
 }
 
-/* --- Form Group (Family: Enter Code) --- */
+/* Form group */
 .formGroup {
   margin-bottom: var(--space-md);
 }
 
 .formLabel {
   display: block;
-  font-size: var(--font-caption);
+  font-size: var(--font-body);
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: var(--space-sm);
 }
 
-.formInput {
-  width: 100%;
-  padding: var(--space-md);
-  border-radius: var(--radius-md);
-  border: 2px solid var(--divider);
-  font-size: var(--font-heading);
+.bindCodeInput :global(input) {
   text-align: center;
   letter-spacing: 0.25em;
-  outline: none;
-  background: var(--bg-input);
-  color: var(--text-primary);
-  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
   font-variant-numeric: tabular-nums;
 }
 
-.formInput::placeholder {
-  font-size: var(--font-caption);
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-}
-
-.formInput:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
-}
-
-.formInputError {
-  border-color: var(--color-danger);
-  box-shadow: 0 0 0 4px var(--color-danger-soft);
-}
-
-.formError {
-  font-size: var(--font-small);
-  color: var(--color-danger);
-  margin-top: var(--space-xs);
-  font-weight: 500;
-}
-
-/* --- Relation Grid (Family Type Chip Select) --- */
+/* Relation chips */
 .relationGrid {
   display: flex;
   flex-wrap: wrap;
@@ -428,11 +208,7 @@
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-out-smooth);
-}
-
-.relationChip:active {
-  transform: scale(0.95);
+  transition: all var(--duration-fast);
 }
 
 .relationChipActive {
@@ -440,39 +216,9 @@
   border-color: var(--accent);
   color: var(--accent);
   font-weight: 700;
-  box-shadow: 0 2px 8px var(--accent-glow);
 }
 
-/* --- Bind Button (Family) --- */
-.bindButton {
-  width: 100%;
-  padding: var(--space-md);
-  border-radius: var(--radius-lg);
-  border: none;
-  font-size: var(--font-body);
-  font-weight: 700;
-  cursor: pointer;
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  color: var(--accent-text);
-  box-shadow: 0 4px 16px rgba(245, 146, 62, 0.3);
-  margin-top: var(--space-sm);
-  transition: transform var(--duration-fast) var(--ease-out-smooth),
-    box-shadow var(--duration-fast),
-    opacity var(--duration-fast);
-}
-
-.bindButton:active {
-  transform: scale(0.97);
-}
-
-.bindButton:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* --- Modal Overlay --- */
+/* Modal */
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -483,18 +229,7 @@
   background: var(--bg-overlay);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  animation: overlayIn 0.2s ease-out both;
   padding: var(--space-lg);
-}
-
-@keyframes overlayIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
 }
 
 .modalContent {
@@ -504,19 +239,6 @@
   max-width: 360px;
   width: 100%;
   box-shadow: var(--shadow-lg);
-  animation: modalIn 0.3s var(--ease-spring) both;
-}
-
-@keyframes modalIn {
-  from {
-    opacity: 0;
-    transform: scale(0.92) translateY(12px);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }
 
 .modalTitle {
@@ -528,7 +250,7 @@
 }
 
 .modalMessage {
-  font-size: var(--font-caption);
+  font-size: var(--font-body);
   color: var(--text-secondary);
   line-height: 1.6;
   text-align: center;
@@ -538,57 +260,4 @@
 .modalActions {
   display: flex;
   gap: var(--space-md);
-}
-
-.modalBtnCancel,
-.modalBtnDanger {
-  flex: 1;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  font-size: var(--font-caption);
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform var(--duration-fast), opacity var(--duration-fast);
-}
-
-.modalBtnCancel {
-  background: var(--bg-input);
-  border: 1.5px solid var(--divider);
-  color: var(--text-secondary);
-}
-
-.modalBtnDanger {
-  background: var(--color-danger);
-  border: none;
-  color: white;
-  box-shadow: 0 2px 12px rgba(229, 57, 53, 0.25);
-}
-
-.modalBtnCancel:active,
-.modalBtnDanger:active {
-  transform: scale(0.96);
-}
-
-.modalBtnCancel:disabled,
-.modalBtnDanger:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* --- Empty State --- */
-.emptyState {
-  text-align: center;
-  padding: var(--space-2xl) var(--space-lg);
-}
-
-.emptyIcon {
-  font-size: 48px;
-  margin-bottom: var(--space-sm);
-  opacity: 0.5;
-}
-
-.emptyText {
-  font-size: var(--font-caption);
-  color: var(--text-muted);
 }

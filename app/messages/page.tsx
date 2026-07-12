@@ -4,11 +4,13 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { useMessageStore } from '@/stores/messageStore';
-import { useFamilyStore } from '@/stores/familyStore';
 import { useFamilyBinds } from '@/hooks/useFamilyBinds';
-import { getRelationEmoji, formatMessageTime, getMessagePreview } from '@/lib/messageUtils';
+import { getRelationIcon, formatMessageTime, getMessagePreview } from '@/lib/messageUtils';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
-import { ArrowRight, Users, Plus } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Users, Plus } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function MessagesPage() {
@@ -29,13 +31,9 @@ export default function MessagesPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>亲友联系人</h1>
-          <p className={styles.subtitle}>随时与您的至亲保持联系</p>
-        </div>
-        <div className={`glass-card ${styles.headerAction} interactive`}><ArrowRight size={24} /></div>
-      </div>
+      <PageHeader title="亲友联系人" transparent />
+
+      <p className={styles.subtitle}>随时与您的至亲保持联系</p>
 
       <DataStateWrapper
         loading={loading}
@@ -45,18 +43,23 @@ export default function MessagesPage() {
       >
         <div className={styles.contactList}>
           {contacts.map((contact) => {
-            const emoji = getRelationEmoji(contact.relationship);
+            const relationIcon = getRelationIcon(contact.relationship);
 
             return (
-              <div key={contact.userId} className={`glass-card ${styles.contactCard} interactive`}>
+              <Card
+                key={contact.userId}
+                variant="glass"
+                className={styles.contactCard}
+                onClick={() => router.push(`/messages/${contact.userId}`)}
+              >
                 <div className={styles.avatarWrapper}>
-                  <div className={styles.avatar}>{emoji}</div>
+                  <div className={styles.avatar}>{relationIcon}</div>
                 </div>
 
-                <div className={styles.contactInfo} onClick={() => router.push(`/messages/${contact.userId}`)}>
-                  <div>
+                <div className={styles.contactInfo}>
+                  <div className={styles.contactNameRow}>
                     <span className={styles.contactName}>{contact.name}</span>
-                    <span className={styles.contactRelation}>{contact.relationship}</span>
+                    <Badge variant="normal" className={styles.contactRelation}>{contact.relationship}</Badge>
                   </div>
                   <div className={styles.contactPreview}>
                     {contact.lastMessage
@@ -72,18 +75,24 @@ export default function MessagesPage() {
                     </span>
                   )}
                   {contact.unreadCount > 0 && (
-                    <span className={styles.unreadBadge}>{contact.unreadCount}</span>
+                    <Badge variant="danger" className={styles.unreadBadge}>{contact.unreadCount}</Badge>
                   )}
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
 
-        <div className={`${styles.addCard} interactive`} onClick={() => router.push('/settings/bind')} style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-          <Plus size={20} /> 添加亲友
-        </div>
       </DataStateWrapper>
+
+      <Card
+        variant="glass"
+        className={styles.addCard}
+        onClick={() => router.push('/settings/bind')}
+      >
+        <Plus size={20} />
+        <span>添加亲友</span>
+      </Card>
     </div>
   );
 }

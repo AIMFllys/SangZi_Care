@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/lib/constants';
+import { Card } from '@/components/ui';
 import { User, Users } from 'lucide-react';
 import styles from './page.module.css';
 
@@ -40,27 +41,29 @@ export default function OnboardingPage() {
       </div>
 
       <div className={styles.cards}>
-        <button
-          className={`${styles.roleCard} ${styles.elderCard}`}
-          onClick={() => handleSelect('elder')}
-          disabled={selecting !== null}
-          aria-label="选择身份：我是长辈"
+        <Card
+          variant="solid"
+          className={`${styles.roleCard} ${styles.elderCard} ${selecting ? styles.roleCardDisabled : ''}`}
+          onClick={selecting ? undefined : () => handleSelect('elder')}
         >
-          <span className={styles.roleEmoji} aria-hidden="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={48} color="currentColor" /></span>
+          <span className={styles.roleIcon} aria-hidden="true">
+            <User size={48} color="var(--accent)" />
+          </span>
           <span className={styles.roleLabel}>我是长辈</span>
           <span className={styles.roleDesc}>大字体、语音优先、简单易用</span>
-        </button>
+        </Card>
 
-        <button
-          className={`${styles.roleCard} ${styles.familyCard}`}
-          onClick={() => handleSelect('family')}
-          disabled={selecting !== null}
-          aria-label="选择身份：我是家属"
+        <Card
+          variant="solid"
+          className={`${styles.roleCard} ${styles.familyCard} ${selecting ? styles.roleCardDisabled : ''}`}
+          onClick={selecting ? undefined : () => handleSelect('family')}
         >
-          <span className={styles.roleEmoji} aria-hidden="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Users size={48} color="currentColor" /></span>
+          <span className={styles.roleIcon} aria-hidden="true">
+            <Users size={48} color="var(--color-info)" />
+          </span>
           <span className={styles.roleLabel}>我是家属</span>
           <span className={styles.roleDesc}>关注长辈健康、管理用药计划</span>
-        </button>
+        </Card>
       </div>
     </main>
   );

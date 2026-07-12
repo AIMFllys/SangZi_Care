@@ -1,18 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { useMedicineStore } from '@/stores/medicineStore';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
-import { Pill, Syringe, TestTube, Ambulance, CheckCircle, Clock, ArrowLeft, ChevronLeft, ChevronRight, Timer } from 'lucide-react';
+import { Button, Card, IconButton } from '@/components/ui';
+import PageHeader from '@/components/layout/PageHeader';
+import { Pill, Tablets, TestTube, Syringe, CheckCircle, Clock, ChevronLeft, ChevronRight, Timer } from 'lucide-react';
 import styles from './page.module.css';
 
-const PILL_COLORS = [styles.medicineIconBlue, styles.medicineIconPink, styles.medicineIconGreen, styles.medicineIconOrange];
-const PILL_ICONS = [<Pill size={24} key="pill" />, <TestTube size={24} key="tube" />, <Syringe size={24} key="syringe" />, <Pill size={24} key="pill2" />];
+const PILL_COLORS = [styles.medicineIconInfo, styles.medicineIconDanger, styles.medicineIconWarning, styles.medicineIconSuccess];
+const PILL_ICONS = [<Pill size={24} key="pill" />, <Tablets size={24} key="tablets" />, <TestTube size={24} key="tube" />, <Syringe size={24} key="syringe" />];
 
 export default function MedicinePage() {
-  const router = useRouter();
   const user = useUserStore((s) => s.user);
 
   const todayTimeline = useMedicineStore((s) => s.todayTimeline);
@@ -45,7 +45,7 @@ export default function MedicinePage() {
       <div className={styles.page}>
         {/* 顶部状态栏 */}
         <div className={styles.topBar}>
-          <div className={`glass-card ${styles.voiceIndicator}`}>
+          <Card variant="glass" className={styles.voiceIndicator}>
             <div className={styles.voiceBars}>
               <div className={styles.bar} />
               <div className={styles.bar} />
@@ -53,41 +53,62 @@ export default function MedicinePage() {
               <div className={styles.bar} />
             </div>
             语音提醒中...
-          </div>
-          <button className={styles.sosBtn} aria-label="SOS 紧急呼叫">SOS</button>
+          </Card>
+          <IconButton
+            aria-label="SOS 紧急呼叫"
+            className={styles.sosBtn}
+            onClick={() => { /* SOS 逻辑保留 */ }}
+          >
+            <span className={styles.sosText}>SOS</span>
+          </IconButton>
         </div>
 
         <div className={styles.heroSection}>
           <div className={styles.pillIconWrapper}>
-            <div className={styles.pillIconInner}><Ambulance size={48} /></div>
+            <div className={styles.pillIconInner}>
+              <Pill size={48} />
+              <Tablets size={48} />
+            </div>
           </div>
           <h1 className={styles.heroTitle}>该吃药啦！</h1>
           <p className={styles.heroSubtitle}>请服用您的晨间药物</p>
         </div>
 
         {/* 药品列表 */}
-        <div className={`glass-card ${styles.medicineCard}`}>
+        <Card variant="solid" className={styles.medicineCard}>
           {currentMeds.map((med, i) => (
             <div key={`${med.plan.id}-${med.scheduled_time}`} className={styles.medicineItem}>
               <div className={`${styles.medicineIcon} ${PILL_COLORS[i % PILL_COLORS.length]}`}>
                 {PILL_ICONS[i % PILL_ICONS.length]}
               </div>
-              <div>
+              <div className={styles.medicineInfo}>
                 <div className={styles.medicineName}>{med.plan.medicine_name}</div>
                 <div className={styles.medicineDose}>{med.plan.dosage}</div>
               </div>
             </div>
           ))}
-        </div>
+        </Card>
 
         {/* 操作按钮 */}
         <div className={styles.actions}>
-          <button className={styles.confirmBtn} onClick={handleConfirm} style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-            <CheckCircle size={20} /> 我已吃药
-          </button>
-          <button className={styles.snoozeBtn} onClick={() => setShowReminder(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-            <Clock size={20} /> 15分钟后再提醒
-          </button>
+          <Button
+            variant="success"
+            size="lg"
+            fullWidth
+            leftIcon={<CheckCircle size={20} />}
+            onClick={handleConfirm}
+          >
+            我已吃药
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            fullWidth
+            leftIcon={<Clock size={20} />}
+            onClick={() => setShowReminder(false)}
+          >
+            15分钟后再提醒
+          </Button>
         </div>
       </div>
     );
@@ -96,16 +117,16 @@ export default function MedicinePage() {
   // 时间线列表视图
   return (
     <div className={styles.page}>
-      <div className={styles.topBar}>
-        <button className={styles.dateNavBtn} onClick={() => router.back()}><ArrowLeft size={24} /></button>
-        <h1 style={{ fontSize: 'var(--font-heading)', fontWeight: 700 }}>用药管家</h1>
-        <div style={{ width: 36 }} />
-      </div>
+      <PageHeader title="用药管家" backHref="/" />
 
       <div className={styles.dateNav}>
-        <button className={styles.dateNavBtn}><ChevronLeft size={24} /></button>
+        <IconButton aria-label="上一天">
+          <ChevronLeft size={24} />
+        </IconButton>
         <span className={styles.dateNavLabel}>今天</span>
-        <button className={styles.dateNavBtn}><ChevronRight size={24} /></button>
+        <IconButton aria-label="下一天">
+          <ChevronRight size={24} />
+        </IconButton>
       </div>
 
       <DataStateWrapper
@@ -116,11 +137,15 @@ export default function MedicinePage() {
       >
         <div className={styles.timeline}>
           {todayTimeline.map((item) => (
-            <div key={`${item.plan.id}-${item.scheduled_time}`} className={`glass-card ${styles.timeSlot} interactive`}>
+            <Card key={`${item.plan.id}-${item.scheduled_time}`} variant="glass" className={styles.timeSlot}>
               <span className={styles.timeSlotTime}>{item.scheduled_time}</span>
               <span className={styles.timeSlotMed}>{item.plan.medicine_name} · {item.plan.dosage}</span>
-              <span className={styles.timeSlotStatus}>{item.status === 'taken' ? <CheckCircle size={20} color="var(--color-success)" /> : <Timer size={20} color="var(--text-muted)" />}</span>
-            </div>
+              <span className={styles.timeSlotStatus}>
+                {item.status === 'taken'
+                  ? <CheckCircle size={20} color="var(--color-success)" />
+                  : <Timer size={20} color="var(--text-muted)" />}
+              </span>
+            </Card>
           ))}
         </div>
       </DataStateWrapper>

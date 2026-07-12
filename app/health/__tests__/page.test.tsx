@@ -13,6 +13,13 @@ const mockFetchLatest = vi.fn();
 const mockFetchTrend = vi.fn();
 const mockSetSelectedType = vi.fn();
 
+const mockUser = { id: 'user-1', role: 'elder', name: '李奶奶' };
+
+vi.mock('@/stores/userStore', () => ({
+  useUserStore: (selector: (s: Record<string, unknown>) => unknown) =>
+    selector({ user: mockUser }),
+}));
+
 let mockStoreState = {
   latestRecords: {} as Record<string, HealthRecordResponse | null>,
   trendData: [] as HealthRecordResponse[],
@@ -74,7 +81,7 @@ describe('HealthPage', () => {
 
   it('渲染页面标题', () => {
     render(<HealthPage />);
-    expect(screen.getByText(/健康记录/)).toBeDefined();
+    expect(screen.getByText(/健康看板/)).toBeDefined();
   });
 
   it('初始加载时调用 fetchLatest', () => {
@@ -92,25 +99,31 @@ describe('HealthPage', () => {
     mockStoreState.error = '网络错误';
     render(<HealthPage />);
     expect(screen.getByText('网络错误')).toBeDefined();
-    expect(screen.getByText('重试')).toBeDefined();
+    expect(screen.getByText('重新加载')).toBeDefined();
   });
 
   it('点击重试按钮重新加载', () => {
     mockStoreState.error = '网络错误';
     render(<HealthPage />);
 
-    fireEvent.click(screen.getByText('重试'));
+    fireEvent.click(screen.getByText('重新加载'));
     expect(mockFetchLatest).toHaveBeenCalledTimes(2); // 初始 + 重试
   });
 
-  it('渲染5个健康卡片', () => {
+  it('渲染健康数据卡片', () => {
+    mockStoreState.latestRecords = {
+      blood_pressure: makeRecord({
+        values: { systolic: 120, diastolic: 80 },
+      }),
+      heart_rate: makeRecord({
+        record_type: 'heart_rate',
+        values: { value: 72 },
+      }),
+    };
     render(<HealthPage />);
 
     expect(screen.getByText('血压')).toBeDefined();
-    expect(screen.getByText('血糖')).toBeDefined();
     expect(screen.getByText('心率')).toBeDefined();
-    expect(screen.getByText('体重')).toBeDefined();
-    expect(screen.getByText('体温')).toBeDefined();
   });
 
   it('渲染有数据的卡片', () => {
@@ -124,45 +137,22 @@ describe('HealthPage', () => {
     expect(screen.getByText('135/88')).toBeDefined();
   });
 
-  it('无数据的卡片显示暂无数据', () => {
+  it('点击设置按钮导航到设置页', () => {
     render(<HealthPage />);
 
-    const noDataElements = screen.getAllByText('暂无数据');
-    expect(noDataElements.length).toBe(5); // 所有5个卡片都无数据
+    fireEvent.click(screen.getByLabelText('前往设置'));
+    expect(mockPush).toHaveBeenCalledWith('/settings');
   });
 
-  it('点击卡片切换选中类型', () => {
+  it('渲染添加新记录按钮', () => {
     render(<HealthPage />);
-
-    fireEvent.click(screen.getByText('心率').closest('button')!);
-    expect(mockSetSelectedType).toHaveBeenCalledWith('heart_rate');
+    expect(screen.getByText('添加新记录')).toBeDefined();
   });
 
-  it('渲染趋势数据列表', () => {
-    mockStoreState.trendData = [
-      makeRecord({ id: 'r1', values: { systolic: 130, diastolic: 85 } }),
-      makeRecord({ id: 'r2', values: { systolic: 125, diastolic: 82 } }),
-    ];
+  it('点击添加新记录按钮导航到录入页', () => {
     render(<HealthPage />);
 
-    expect(screen.getByText('130/85')).toBeDefined();
-    expect(screen.getByText('125/82')).toBeDefined();
-  });
-
-  it('无趋势数据时显示提示', () => {
-    render(<HealthPage />);
-    expect(screen.getByText('暂无趋势数据')).toBeDefined();
-  });
-
-  it('渲染录入健康数据链接', () => {
-    render(<HealthPage />);
-    expect(screen.getByText(/录入健康数据/)).toBeDefined();
-  });
-
-  it('点击返回按钮导航到首页', () => {
-    render(<HealthPage />);
-
-    fireEvent.click(screen.getByLabelText('返回首页'));
-    expect(mockPush).toHaveBeenCalledWith('/');
+    fireEvent.click(screen.getByText('添加新记录'));
+    expect(mockPush).toHaveBeenCalledWith('/health/input');
   });
 });

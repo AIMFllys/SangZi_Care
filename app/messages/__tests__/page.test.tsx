@@ -1,49 +1,52 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getRelationEmoji, formatMessageTime, getMessagePreview } from '@/lib/messageUtils';
+import { isValidElement } from 'react';
+import { getRelationIcon, formatMessageTime, getMessagePreview } from '@/lib/messageUtils';
 import type { MessageResponse } from '@/stores/messageStore';
 
 // ============================================================
 // 纯函数单元测试
 // ============================================================
 
-describe('getRelationEmoji', () => {
-  it('儿子返回👦', () => {
-    expect(getRelationEmoji('儿子')).toBe('👦');
+describe('getRelationIcon', () => {
+  it('已知关系返回 Lucide 图标元素', () => {
+    expect(isValidElement(getRelationIcon('子女'))).toBe(true);
+    expect(isValidElement(getRelationIcon('配偶'))).toBe(true);
+    expect(isValidElement(getRelationIcon('朋友'))).toBe(true);
   });
 
-  it('女儿返回👧', () => {
-    expect(getRelationEmoji('女儿')).toBe('👧');
-  });
-
-  it('配偶返回💑', () => {
-    expect(getRelationEmoji('配偶')).toBe('💑');
-  });
-
-  it('未知关系返回👤', () => {
-    expect(getRelationEmoji('朋友')).toBe('👤');
+  it('未知关系返回默认 User 图标', () => {
+    const icon = getRelationIcon('同事');
+    expect(isValidElement(icon)).toBe(true);
   });
 });
 
 describe('formatMessageTime', () => {
-  it('今天的消息显示时:分', () => {
+  it('1分钟内的消息显示"刚刚"', () => {
     const now = new Date();
-    now.setHours(14, 30, 0, 0);
-    const result = formatMessageTime(now.toISOString());
-    expect(result).toBe('14:30');
+    const justNow = new Date(now.getTime() - 30 * 1000);
+    const result = formatMessageTime(justNow.toISOString());
+    expect(result).toBe('刚刚');
   });
 
-  it('昨天的消息显示"昨天"', () => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    yesterday.setHours(10, 0, 0, 0);
-    const result = formatMessageTime(yesterday.toISOString());
-    expect(result).toBe('昨天');
+  it('今天稍早的消息显示相对分钟数', () => {
+    const now = new Date();
+    const twoMinAgo = new Date(now.getTime() - 2 * 60 * 1000);
+    const result = formatMessageTime(twoMinAgo.toISOString());
+    expect(result).toBe('2分钟前');
+  });
+
+  it('超过48小时的消息显示"N天前"', () => {
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+    twoDaysAgo.setHours(twoDaysAgo.getHours() - 1);
+    const result = formatMessageTime(twoDaysAgo.toISOString());
+    expect(result).toBe('2天前');
   });
 
   it('更早的消息显示月/日', () => {
     const old = new Date('2024-03-15T10:00:00Z');
     const result = formatMessageTime(old.toISOString());
-    expect(result).toMatch(/\d+\/\d+/);
+    expect(result).toMatch(/\d+月\d+日/);
   });
 
   it('空字符串返回空', () => {
@@ -53,40 +56,14 @@ describe('formatMessageTime', () => {
 
 describe('getMessagePreview', () => {
   it('文字消息返回内容', () => {
-    const msg: MessageResponse = {
-      id: '1',
-      sender_id: 'a',
-      receiver_id: 'b',
-      type: 'text',
-      content: '你好',
-      audio_url: null,
-      audio_duration: null,
-      is_ai_generated: null,
-      is_read: false,
-      read_at: null,
-      created_at: '2024-06-15T10:00:00Z',
-    };
     expect(getMessagePreview('text', '你好')).toBe('你好');
   });
 
-  it('语音消息返回🎤标识和时长', () => {
-    const msg: MessageResponse = {
-      id: '1',
-      sender_id: 'a',
-      receiver_id: 'b',
-      type: 'voice',
-      content: null,
-      audio_url: 'https://example.com/audio.mp3',
-      audio_duration: 5.2,
-      is_ai_generated: null,
-      is_read: false,
-      read_at: null,
-      created_at: '2024-06-15T10:00:00Z',
-    };
+  it('语音消息返回语音标识', () => {
     expect(getMessagePreview('voice', '')).toBeDefined();
   });
 
-  it('无消息返回"暂无消息"', () => {
+  it('无消息返回空', () => {
     expect(getMessagePreview('text', '')).toBe('');
   });
 });
@@ -136,7 +113,7 @@ vi.mock('@/stores/userStore', () => ({
 let mockBinds: any[] = [];
 const mockFetchBinds = vi.fn();
 function familyStoreState() {
-  return { binds: mockBinds, fetchBinds: mockFetchBinds };
+  return { binds: mockBinds, fetchBinds: mockFetchBinds, isLoading: false };
 }
 
 vi.mock('@/stores/familyStore', () => ({
@@ -167,7 +144,7 @@ describe('MessagesPage 组件', () => {
 
   it('渲染页面标题', () => {
     render(<MessagesPage />);
-    expect(screen.getByText(/捂话/)).toBeDefined();
+    expect(screen.getByText(/亲友联系人/)).toBeDefined();
   });
 
   it('加载状态显示加载文本', () => {
@@ -180,14 +157,14 @@ describe('MessagesPage 组件', () => {
     mockError = '网络错误';
     render(<MessagesPage />);
     expect(screen.getByText('网络错误')).toBeDefined();
-    expect(screen.getByText('重试')).toBeDefined();
+    expect(screen.getByText('重新加载')).toBeDefined();
   });
 
   it('无绑定关系时显示空状态', () => {
     mockBinds = [];
     render(<MessagesPage />);
-    expect(screen.getByText('暂无联系人，请先绑定家属')).toBeDefined();
-    expect(screen.getByText('去绑定家属')).toBeDefined();
+    expect(screen.getByText('还没有联系人')).toBeDefined();
+    expect(screen.getByText('绑定家人后就能聊天啦')).toBeDefined();
   });
 
   it('有联系人时渲染联系人列表', () => {
@@ -232,21 +209,9 @@ describe('MessagesPage 组件', () => {
     expect(mockPush).toHaveBeenCalledWith('/messages/u2');
   });
 
-  it('返回按钮导航到首页', () => {
+  it('显示添加亲友入口', () => {
+    mockBinds = [];
     render(<MessagesPage />);
-    fireEvent.click(screen.getByLabelText('返回首页'));
-    expect(mockPush).toHaveBeenCalledWith('/');
-  });
-
-  it('显示总未读数徽章', () => {
-    mockUnreadTotal = 5;
-    render(<MessagesPage />);
-    expect(screen.getByText('5')).toBeDefined();
-  });
-
-  it('未读数超过99显示99+', () => {
-    mockUnreadTotal = 150;
-    render(<MessagesPage />);
-    expect(screen.getByText('99+')).toBeDefined();
+    expect(screen.getByText('添加亲友')).toBeDefined();
   });
 });

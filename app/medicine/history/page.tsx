@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import { useMedicineStore } from '@/stores/medicineStore';
 import type { MedicationPlanResponse } from '@/stores/medicineStore';
 import { ROUTES } from '@/lib/constants';
-import { ArrowLeft, ClipboardList, Clock, Calendar, CheckCircle, Archive } from 'lucide-react';
+import { Clock, Calendar, CheckCircle, Archive } from 'lucide-react';
+import { Button, Card, Badge } from '@/components/ui';
+import PageHeader from '@/components/layout/PageHeader';
 import styles from './page.module.css';
 
 /** 格式化日期范围显示 */
@@ -24,7 +25,7 @@ function PlanCard({
   isActive: boolean;
 }) {
   return (
-    <div className={styles.planCard}>
+    <Card variant="glass" className={styles.planCard}>
       <div
         className={`${styles.indicator} ${isActive ? styles.indicatorActive : styles.indicatorInactive}`}
         aria-hidden="true"
@@ -35,17 +36,17 @@ function PlanCard({
         {plan.schedule_times && plan.schedule_times.length > 0 && (
           <div className={styles.scheduleTimes}>
             {plan.schedule_times.map((time) => (
-              <span key={time} className={styles.timeTag} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Clock size={14} /> {time}
-              </span>
+              <Badge key={time} variant="normal" className={styles.timeTag}>
+                <Clock size={16} /> {time}
+              </Badge>
             ))}
           </div>
         )}
-        <span className={styles.dateRange} style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-          <Calendar size={14} /> {formatDateRange(plan.start_date, plan.end_date)}
+        <span className={styles.dateRange}>
+          <Calendar size={16} /> {formatDateRange(plan.start_date, plan.end_date)}
         </span>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -67,14 +68,7 @@ export default function MedicineHistoryPage() {
   return (
     <div className={styles.page}>
       {/* 顶部栏 */}
-      <header className={styles.header}>
-        <Link href={ROUTES.MEDICINE} className={styles.backLink} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <ArrowLeft size={20} /> 返回
-        </Link>
-        <h1 className={styles.title} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ClipboardList size={24} /> 用药历史
-        </h1>
-      </header>
+      <PageHeader title="用药历史" backHref={ROUTES.MEDICINE} />
 
       {/* 内容区域 */}
       {isLoading ? (
@@ -84,15 +78,15 @@ export default function MedicineHistoryPage() {
       ) : error ? (
         <div className={styles.errorBox}>
           <span className={styles.errorText}>{error}</span>
-          <button className={styles.retryBtn} onClick={handleRetry}>
+          <Button variant="primary" onClick={handleRetry}>
             重试
-          </button>
+          </Button>
         </div>
       ) : (
         <>
           {/* 当前用药 */}
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 className={styles.sectionTitle}>
               <CheckCircle size={20} color="var(--color-success)" /> 当前用药
             </h2>
             {activePlans.length === 0 ? (
@@ -106,7 +100,7 @@ export default function MedicineHistoryPage() {
 
           {/* 历史用药 */}
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 className={styles.sectionTitle}>
               <Archive size={20} color="var(--text-muted)" /> 历史用药
             </h2>
             {inactivePlans.length === 0 ? (

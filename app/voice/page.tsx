@@ -3,12 +3,14 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAIChat } from '@/hooks/useAIChat';
-import { ArrowLeft, Settings, Mic, Bot, Square } from 'lucide-react';
+import { Mic, Bot, Square, Settings } from 'lucide-react';
+import { Button, Card, IconButton } from '@/components/ui';
+import PageHeader from '@/components/layout/PageHeader';
 import styles from './page.module.css';
 
 export default function VoicePage() {
   const router = useRouter();
-  const { messages, sendMessage, isLoading: aiLoading } = useAIChat();
+  const { messages, sendMessage } = useAIChat();
   const [isListening, setIsListening] = useState(false);
   const [recognizedText, setRecognizedText] = useState('');
   const [status, setStatus] = useState('点击麦克风开始对话');
@@ -45,12 +47,15 @@ export default function VoicePage() {
 
   return (
     <div className={styles.page}>
-      {/* 头部 */}
-      <div className={styles.header}>
-        <button className={styles.backBtn} onClick={() => router.back()}><ArrowLeft size={24} /></button>
-        <h1 className={styles.title}>智能语音助手</h1>
-        <button className={styles.settingsBtn}><Settings size={24} /></button>
-      </div>
+      <PageHeader
+        title="智能语音助手"
+        onBack={() => router.back()}
+        rightAction={
+          <IconButton variant="ghost" aria-label="设置">
+            <Settings size={24} />
+          </IconButton>
+        }
+      />
 
       {/* 状态 */}
       <p className={styles.statusText}>{status}</p>
@@ -61,40 +66,45 @@ export default function VoicePage() {
       {/* 麦克风球 */}
       <div className={styles.micSection}>
         <div className={styles.micWrapper}>
-          <div className={`${styles.micRing} ${styles.micRing1}`} />
-          <div className={`${styles.micRing} ${styles.micRing2}`} />
-          <div className={styles.floatingDots}>
-            <div className={`${styles.dot} ${styles.dot1}`} />
-            <div className={`${styles.dot} ${styles.dot2}`} />
-            <div className={`${styles.dot} ${styles.dot3}`} />
-            <div className={`${styles.dot} ${styles.dot4}`} />
-          </div>
+          <div className={styles.micRing} />
+          <div className={`${styles.micRing} ${styles.micRingDelayed}`} />
           <div
-            className={`${styles.micBall} ${isListening ? styles.micBallActive : ''}`}
+            className={`${styles.micBall} interactive ${isListening ? styles.micBallActive : ''}`}
             onClick={handleMicClick}
             role="button"
             aria-label={isListening ? '停止听取' : '开始说话'}
           >
-            <span className={styles.micIcon}><Mic size={56} color="currentColor" /></span>
+            <span className={styles.micIcon}>
+              <Mic size={56} />
+            </span>
           </div>
         </div>
       </div>
 
       {/* AI 回复 */}
       {lastAiMessage && (
-        <div className={`glass-card ${styles.responseCard}`}>
+        <Card variant="glass" className={styles.responseCard}>
           <div className={styles.responseLabel}>
-            <span className={styles.responseIcon}><Bot size={20} /></span>
+            <span className={styles.responseIcon}>
+              <Bot size={20} color="var(--accent)" />
+            </span>
             AI 回复
           </div>
           <p className={styles.responseText}>{lastAiMessage.content}</p>
-        </div>
+        </Card>
       )}
 
       {/* 结束对话 */}
-      <button className={styles.endBtn} onClick={handleEnd} style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-        <Square size={20} /> 结束对话
-      </button>
+      <Button
+        variant="ghost"
+        size="lg"
+        fullWidth
+        leftIcon={<Square size={20} />}
+        className={styles.endButton}
+        onClick={handleEnd}
+      >
+        结束对话
+      </Button>
     </div>
   );
 }

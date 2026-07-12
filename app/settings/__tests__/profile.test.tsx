@@ -82,10 +82,9 @@ describe('ProfilePage 个人信息编辑页', () => {
     expect(screen.getByText('个人信息')).toBeDefined();
   });
 
-  it('返回按钮导航到设置页', () => {
+  it('返回按钮指向设置页', () => {
     render(<ProfilePage />);
-    fireEvent.click(screen.getByLabelText('返回设置'));
-    expect(mockPush).toHaveBeenCalledWith('/settings');
+    expect(screen.getByLabelText('返回设置').getAttribute('href')).toBe('/settings');
   });
 
   it('预填充用户姓名', () => {

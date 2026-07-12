@@ -6,7 +6,11 @@ import { useUserStore } from '@/stores/userStore';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchApi } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
-import { ChevronLeft, X, Plus } from 'lucide-react';
+import { User, X, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { IconButton } from '@/components/ui/IconButton';
+import PageHeader from '@/components/layout/PageHeader';
 import styles from './page.module.css';
 
 const GENDER_OPTIONS = ['男', '女'] as const;
@@ -35,7 +39,6 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // 初始化表单
   useEffect(() => {
     if (user) {
       setForm({
@@ -95,138 +98,153 @@ export default function ProfilePage() {
   }
 
   if (!isReady) {
-    return <div className={styles.loading}>加载中…</div>;
+    return (
+      <div className="device-wrapper">
+        <div className={`${styles.page} page-content`}>
+          <div className={styles.loading}>加载中…</div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <main className={styles.container}>
-      <div className={styles.header}>
-        <button
-          className={styles.backButton}
-          onClick={() => router.push(ROUTES.SETTINGS)}
-          aria-label="返回设置"
-          style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-        >
-          <ChevronLeft size={20} /> 返回
-        </button>
-        <h1 className={styles.title}>个人信息</h1>
-      </div>
+    <div className="device-wrapper">
+      <div className={`${styles.page} page-content`}>
+        <PageHeader
+          title="个人信息"
+          backHref={ROUTES.SETTINGS}
+          backAriaLabel="返回设置"
+          transparent
+        />
 
-      {success && (
-        <div className={styles.successBanner} role="status">保存成功</div>
-      )}
-      {error && (
-        <div className={styles.errorBanner} role="alert">{error}</div>
-      )}
+        {success && (
+          <div className={styles.successBanner} role="status">
+            保存成功
+          </div>
+        )}
+        {error && (
+          <div className={styles.errorBanner} role="alert">
+            {error}
+          </div>
+        )}
 
-      <section className={styles.section}>
-        <div className={styles.formGroup}>
-          <label htmlFor="profile-name" className={styles.formLabel}>姓名</label>
-          <input
+        <div className={styles.avatarSection}>
+          <div className={styles.avatar}>
+            <User size={40} color="var(--accent)" />
+          </div>
+        </div>
+
+        <section className={styles.form} aria-label="个人信息表单">
+          <Input
             id="profile-name"
-            type="text"
+            label="姓名"
             value={form.name}
-            onChange={(e) => {
-              setForm((p) => ({ ...p, name: e.target.value }));
+            onChange={(value) => {
+              setForm((p) => ({ ...p, name: value }));
               setError(null);
               setSuccess(false);
             }}
             placeholder="请输入姓名"
-            className={styles.formInput}
           />
-        </div>
 
-        <div className={styles.formGroup}>
-          <label htmlFor="profile-birth" className={styles.formLabel}>出生日期</label>
-          <input
+          <Input
             id="profile-birth"
+            label="出生日期"
             type="date"
             value={form.birth_date}
-            onChange={(e) => {
-              setForm((p) => ({ ...p, birth_date: e.target.value }));
+            onChange={(value) => {
+              setForm((p) => ({ ...p, birth_date: value }));
               setSuccess(false);
             }}
-            className={styles.formInput}
           />
-        </div>
 
-        <div className={styles.formGroup}>
-          <span className={styles.formLabel}>性别</span>
-          <div className={styles.genderGrid} role="radiogroup" aria-label="性别选择">
-            {GENDER_OPTIONS.map((g) => (
-              <button
-                key={g}
-                type="button"
-                role="radio"
-                aria-checked={form.gender === g}
-                className={`${styles.genderChip} ${form.gender === g ? styles.genderChipActive : ''}`}
-                onClick={() => {
-                  setForm((p) => ({ ...p, gender: g }));
-                  setSuccess(false);
-                }}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className={styles.formGroup}>
-          <span className={styles.formLabel}>慢性病</span>
-          {form.chronic_diseases.length > 0 && (
-            <div className={styles.diseaseList}>
-              {form.chronic_diseases.map((d) => (
-                <span key={d} className={styles.diseaseTag}>
-                  {d}
-                  <button
-                    type="button"
-                    className={styles.diseaseRemove}
-                    onClick={() => handleRemoveDisease(d)}
-                    aria-label={`移除${d}`}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <X size={14} />
-                  </button>
-                </span>
+          <div className={styles.formGroup}>
+            <span className={styles.formLabel}>性别</span>
+            <div className={styles.genderGrid} role="radiogroup" aria-label="性别选择">
+              {GENDER_OPTIONS.map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  role="radio"
+                  aria-checked={form.gender === g}
+                  className={`${styles.genderChip} ${form.gender === g ? styles.genderChipActive : ''}`}
+                  onClick={() => {
+                    setForm((p) => ({ ...p, gender: g }));
+                    setSuccess(false);
+                  }}
+                >
+                  {g}
+                </button>
               ))}
             </div>
-          )}
-          <div className={styles.diseaseInputRow}>
-            <input
-              type="text"
-              value={newDisease}
-              onChange={(e) => setNewDisease(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddDisease();
-                }
-              }}
-              placeholder="输入慢性病名称"
-              className={styles.diseaseInput}
-              aria-label="添加慢性病"
-            />
-            <button
-              type="button"
-              className={styles.diseaseAddBtn}
-              onClick={handleAddDisease}
-              disabled={!newDisease.trim()}
-              aria-label="添加"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              <Plus size={20} />
-            </button>
           </div>
-        </div>
-      </section>
 
-      <button
-        className={styles.saveButton}
-        onClick={handleSave}
-        disabled={saving}
-      >
-        {saving ? '保存中…' : '保存'}
-      </button>
-    </main>
+          <div className={styles.formGroup}>
+            <span className={styles.formLabel}>慢性病</span>
+            {form.chronic_diseases.length > 0 && (
+              <div className={styles.diseaseList}>
+                {form.chronic_diseases.map((d) => (
+                  <span key={d} className={styles.diseaseTag}>
+                    {d}
+                    <IconButton
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleRemoveDisease(d)}
+                      aria-label={`移除${d}`}
+                    >
+                      <X size={16} />
+                    </IconButton>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className={styles.diseaseInputRow}>
+              <Input
+                value={newDisease}
+                onChange={setNewDisease}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddDisease();
+                  }
+                }}
+                placeholder="输入慢性病名称"
+                aria-label="添加慢性病"
+                className={styles.diseaseInput}
+              />
+              <IconButton
+                size="md"
+                variant="soft"
+                onClick={handleAddDisease}
+                disabled={!newDisease.trim()}
+                aria-label="添加"
+              >
+                <Plus size={20} />
+              </IconButton>
+            </div>
+          </div>
+        </section>
+
+        <div className={styles.actions}>
+          <Button
+            variant="ghost"
+            size="lg"
+            fullWidth
+            onClick={() => router.push(ROUTES.SETTINGS)}
+          >
+            取消
+          </Button>
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            onClick={handleSave}
+            loading={saving}
+          >
+            保存
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

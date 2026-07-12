@@ -12,7 +12,9 @@ import type { HealthRecordCreate } from '@/stores/healthStore';
 import { useUserStore } from '@/stores/userStore';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { ROUTES } from '@/lib/constants';
-import { ArrowLeft, Mic, Square, Edit3, FileEdit, CheckCircle, Activity, Droplet, Heart, Scale, Thermometer } from 'lucide-react';
+import { Mic, Square, Edit3, FileEdit, CheckCircle, Activity, Droplet, Heart, Scale, Thermometer } from 'lucide-react';
+import { Button, Input, Card } from '@/components/ui';
+import PageHeader from '@/components/layout/PageHeader';
 import styles from './page.module.css';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -357,6 +359,12 @@ export default function HealthInputPage() {
     }
   }, [selectedType, formValues, inputMethod, currentUser, createRecord, router]);
 
+  // ------ 取消 ------
+
+  const handleCancel = useCallback(() => {
+    router.push(ROUTES.HEALTH);
+  }, [router]);
+
   // ------ 渲染表单字段 ------
 
   const renderFormFields = () => {
@@ -366,147 +374,114 @@ export default function HealthInputPage() {
       case 'blood_pressure':
         return (
           <>
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>收缩压（高压）</label>
-              <div className={styles.fieldRow}>
-                <input
-                  className={`${styles.numberInput} ${errors.systolic ? styles.inputError : ''}`}
-                  type="number"
-                  inputMode="numeric"
-                  placeholder="120"
-                  value={formValues.systolic}
-                  onChange={(e) => updateField('systolic', e.target.value)}
-                  aria-label="收缩压"
-                />
-                <span className={styles.fieldUnit}>mmHg</span>
-              </div>
-              {errors.systolic && <span className={styles.errorText}>{errors.systolic}</span>}
-            </div>
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>舒张压（低压）</label>
-              <div className={styles.fieldRow}>
-                <input
-                  className={`${styles.numberInput} ${errors.diastolic ? styles.inputError : ''}`}
-                  type="number"
-                  inputMode="numeric"
-                  placeholder="80"
-                  value={formValues.diastolic}
-                  onChange={(e) => updateField('diastolic', e.target.value)}
-                  aria-label="舒张压"
-                />
-                <span className={styles.fieldUnit}>mmHg</span>
-              </div>
-              {errors.diastolic && <span className={styles.errorText}>{errors.diastolic}</span>}
-            </div>
+            <Input
+              label="收缩压（高压）"
+              value={formValues.systolic}
+              onChange={(value) => updateField('systolic', value)}
+              type="number"
+              inputMode="numeric"
+              placeholder="120"
+              error={errors.systolic}
+              suffix="mmHg"
+              aria-label="收缩压"
+            />
+            <Input
+              label="舒张压（低压）"
+              value={formValues.diastolic}
+              onChange={(value) => updateField('diastolic', value)}
+              type="number"
+              inputMode="numeric"
+              placeholder="80"
+              error={errors.diastolic}
+              suffix="mmHg"
+              aria-label="舒张压"
+            />
           </>
         );
 
       case 'blood_sugar':
         return (
           <>
-            <div className={styles.fieldGroup}>
-              <div className={styles.sugarToggle}>
-                <button
-                  type="button"
-                  className={`${styles.sugarBtn} ${formValues.sugarType === 'fasting' ? styles.sugarBtnActive : ''}`}
-                  onClick={() => updateField('sugarType', 'fasting')}
-                >
-                  空腹
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.sugarBtn} ${formValues.sugarType === 'postprandial' ? styles.sugarBtnActive : ''}`}
-                  onClick={() => updateField('sugarType', 'postprandial')}
-                >
-                  餐后
-                </button>
-              </div>
-              <div className={styles.fieldRow}>
-                <input
-                  className={`${styles.numberInput} ${errors.bloodSugarValue ? styles.inputError : ''}`}
-                  type="number"
-                  inputMode="decimal"
-                  step="0.1"
-                  placeholder="5.6"
-                  value={formValues.bloodSugarValue}
-                  onChange={(e) => updateField('bloodSugarValue', e.target.value)}
-                  aria-label="血糖值"
-                />
-                <span className={styles.fieldUnit}>{config?.unit}</span>
-              </div>
-              {errors.bloodSugarValue && (
-                <span className={styles.errorText}>{errors.bloodSugarValue}</span>
-              )}
+            <div className={styles.sugarToggle} role="group" aria-label="血糖测量类型">
+              <Button
+                type="button"
+                variant={formValues.sugarType === 'fasting' ? 'primary' : 'secondary'}
+                size="lg"
+                fullWidth
+                onClick={() => updateField('sugarType', 'fasting')}
+              >
+                空腹
+              </Button>
+              <Button
+                type="button"
+                variant={formValues.sugarType === 'postprandial' ? 'primary' : 'secondary'}
+                size="lg"
+                fullWidth
+                onClick={() => updateField('sugarType', 'postprandial')}
+              >
+                餐后
+              </Button>
             </div>
+            <Input
+              label="血糖值"
+              value={formValues.bloodSugarValue}
+              onChange={(value) => updateField('bloodSugarValue', value)}
+              type="number"
+              inputMode="decimal"
+              step="0.1"
+              placeholder="5.6"
+              error={errors.bloodSugarValue}
+              suffix={config?.unit}
+              aria-label="血糖值"
+            />
           </>
         );
 
       case 'heart_rate':
         return (
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>心率</label>
-            <div className={styles.fieldRow}>
-              <input
-                className={`${styles.numberInput} ${errors.heartRateValue ? styles.inputError : ''}`}
-                type="number"
-                inputMode="numeric"
-                placeholder="72"
-                value={formValues.heartRateValue}
-                onChange={(e) => updateField('heartRateValue', e.target.value)}
-                aria-label="心率值"
-              />
-              <span className={styles.fieldUnit}>{config?.unit}</span>
-            </div>
-            {errors.heartRateValue && (
-              <span className={styles.errorText}>{errors.heartRateValue}</span>
-            )}
-          </div>
+          <Input
+            label="心率"
+            value={formValues.heartRateValue}
+            onChange={(value) => updateField('heartRateValue', value)}
+            type="number"
+            inputMode="numeric"
+            placeholder="72"
+            error={errors.heartRateValue}
+            suffix={config?.unit}
+            aria-label="心率值"
+          />
         );
 
       case 'weight':
         return (
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>体重</label>
-            <div className={styles.fieldRow}>
-              <input
-                className={`${styles.numberInput} ${errors.weightValue ? styles.inputError : ''}`}
-                type="number"
-                inputMode="decimal"
-                step="0.1"
-                placeholder="65.0"
-                value={formValues.weightValue}
-                onChange={(e) => updateField('weightValue', e.target.value)}
-                aria-label="体重值"
-              />
-              <span className={styles.fieldUnit}>{config?.unit}</span>
-            </div>
-            {errors.weightValue && (
-              <span className={styles.errorText}>{errors.weightValue}</span>
-            )}
-          </div>
+          <Input
+            label="体重"
+            value={formValues.weightValue}
+            onChange={(value) => updateField('weightValue', value)}
+            type="number"
+            inputMode="decimal"
+            step="0.1"
+            placeholder="65.0"
+            error={errors.weightValue}
+            suffix={config?.unit}
+            aria-label="体重值"
+          />
         );
 
       case 'temperature':
         return (
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>体温</label>
-            <div className={styles.fieldRow}>
-              <input
-                className={`${styles.numberInput} ${errors.temperatureValue ? styles.inputError : ''}`}
-                type="number"
-                inputMode="decimal"
-                step="0.1"
-                placeholder="36.5"
-                value={formValues.temperatureValue}
-                onChange={(e) => updateField('temperatureValue', e.target.value)}
-                aria-label="体温值"
-              />
-              <span className={styles.fieldUnit}>{config?.unit}</span>
-            </div>
-            {errors.temperatureValue && (
-              <span className={styles.errorText}>{errors.temperatureValue}</span>
-            )}
-          </div>
+          <Input
+            label="体温"
+            value={formValues.temperatureValue}
+            onChange={(value) => updateField('temperatureValue', value)}
+            type="number"
+            inputMode="decimal"
+            step="0.1"
+            placeholder="36.5"
+            error={errors.temperatureValue}
+            suffix={config?.unit}
+            aria-label="体温值"
+          />
         );
 
       default:
@@ -517,35 +492,34 @@ export default function HealthInputPage() {
   return (
     <div className={styles.page}>
       {/* 顶部栏 */}
-      <header className={styles.header}>
-        <button
-          className={styles.backBtn}
-          onClick={() => router.push(ROUTES.HEALTH)}
-          aria-label="返回健康记录"
-          type="button"
-        >
-          <ArrowLeft size={24} />
-        </button>
-        <h1 className={styles.title} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FileEdit size={24} /> 录入健康数据</h1>
-      </header>
+      <PageHeader
+        title="录入健康数据"
+        backHref={ROUTES.HEALTH}
+        rightAction={<FileEdit size={24} />}
+      />
 
       {/* 记录类型选择 */}
       <section className={styles.typeSection} aria-label="选择记录类型">
         <div className={styles.typeGrid}>
           {RECORD_TYPES.map((type) => {
             const config = RECORD_TYPE_CONFIG[type];
+            const selected = selectedType === type;
             return (
-              <button
+              <Card
                 key={type}
-                type="button"
-                className={`${styles.typeCard} ${selectedType === type ? styles.typeCardSelected : ''}`}
+                variant="solid"
                 onClick={() => handleTypeChange(type as RecordType)}
-                aria-pressed={selectedType === type}
+                className={`${styles.typeCard} ${selected ? styles.typeCardSelected : ''}`}
+                aria-pressed={selected}
                 aria-label={config.label}
               >
-                <div className={styles.typeIcon} style={{ marginBottom: 8 }}>{ICON_MAP[type]}</div>
-                <span className={styles.typeLabel}>{config.label}</span>
-              </button>
+                <div className={`${styles.typeIcon} ${selected ? styles.typeIconSelected : ''}`}>
+                  {ICON_MAP[type]}
+                </div>
+                <span className={`${styles.typeLabel} ${selected ? styles.typeLabelSelected : ''}`}>
+                  {config.label}
+                </span>
+              </Card>
             );
           })}
         </div>
@@ -553,26 +527,30 @@ export default function HealthInputPage() {
 
       {/* 录入方式切换 */}
       <div className={styles.methodToggle} role="tablist" aria-label="录入方式">
-        <button
+        <Button
           type="button"
           role="tab"
-          className={`${styles.methodTab} ${inputMethod === 'manual' ? styles.methodTabActive : ''}`}
+          variant={inputMethod === 'manual' ? 'primary' : 'secondary'}
+          size="lg"
+          fullWidth
+          leftIcon={<Edit3 size={18} />}
           onClick={() => handleMethodChange('manual')}
           aria-selected={inputMethod === 'manual'}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
         >
-          <Edit3 size={18} /> 手动录入
-        </button>
-        <button
+          手动录入
+        </Button>
+        <Button
           type="button"
           role="tab"
-          className={`${styles.methodTab} ${inputMethod === 'voice' ? styles.methodTabActive : ''}`}
+          variant={inputMethod === 'voice' ? 'primary' : 'secondary'}
+          size="lg"
+          fullWidth
+          leftIcon={<Mic size={20} />}
           onClick={() => handleMethodChange('voice')}
           aria-selected={inputMethod === 'voice'}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
         >
-          <Mic size={18} /> 语音录入
-        </button>
+          语音录入
+        </Button>
       </div>
 
       {/* 表单区域 */}
@@ -600,14 +578,17 @@ export default function HealthInputPage() {
         )}
 
         {/* 数值输入字段 */}
-        {renderFormFields()}
+        <div className={styles.fields}>
+          {renderFormFields()}
+        </div>
       </div>
 
       {/* 可选字段 */}
       <div className={styles.optionalSection}>
         <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>备注</label>
+          <label htmlFor="notes" className={styles.fieldLabel}>备注</label>
           <textarea
+            id="notes"
             className={styles.textarea}
             placeholder="添加备注信息（可选）"
             value={formValues.notes}
@@ -615,8 +596,9 @@ export default function HealthInputPage() {
           />
         </div>
         <div className={styles.fieldGroup}>
-          <label className={styles.fieldLabel}>症状</label>
+          <label htmlFor="symptoms" className={styles.fieldLabel}>症状</label>
           <textarea
+            id="symptoms"
             className={styles.textarea}
             placeholder="描述当前症状（可选）"
             value={formValues.symptoms}
@@ -627,24 +609,36 @@ export default function HealthInputPage() {
 
       {/* 提交按钮 */}
       <div className={styles.submitSection}>
-        <button
+        <Button
           type="button"
-          className={styles.submitBtn}
+          variant="success"
+          size="lg"
+          fullWidth
+          leftIcon={<CheckCircle size={20} />}
           onClick={handleSubmit}
-          disabled={isSubmitting}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
+          loading={isSubmitting}
         >
-          {isSubmitting ? '保存中...' : <><CheckCircle size={20} /> 保存记录</>}
-        </button>
+          保存记录
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          size="lg"
+          fullWidth
+          onClick={handleCancel}
+          className={styles.cancelBtn}
+        >
+          取消
+        </Button>
       </div>
 
       {/* 成功提示 */}
       {showSuccess && (
         <div className={styles.successOverlay} role="alert">
-          <div className={styles.successCard}>
+          <Card variant="solid" className={styles.successCard}>
             <span className={styles.successIcon}><CheckCircle size={48} color="var(--color-success)" /></span>
             <span className={styles.successText}>记录保存成功！</span>
-          </div>
+          </Card>
         </div>
       )}
     </div>

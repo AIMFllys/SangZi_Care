@@ -1,57 +1,24 @@
 .page {
   min-height: 100dvh;
-  padding: var(--safe-top) var(--space-lg) var(--space-lg);
-  background: linear-gradient(180deg, #f0f4ff 0%, var(--bg-base) 100%);
+  padding: 0 var(--space-lg) var(--space-lg);
+  background: linear-gradient(180deg, var(--bg-base) 0%, var(--bg-elevated) 100%);
   display: flex;
   flex-direction: column;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) 0;
-}
-
-.backBtn {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-full);
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.title {
-  font-size: var(--font-heading);
-  font-weight: 700;
-}
-
-.settingsBtn {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-full);
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
 }
 
 /* 状态文案 */
 .statusText {
   text-align: center;
   font-size: var(--font-body);
-  color: #3b82f6;
-  font-weight: 600;
+  color: var(--text-secondary);
   margin-top: var(--space-xl);
 }
 
 /* 识别文字 */
 .recognizedText {
   text-align: center;
-  font-size: var(--font-title);
-  font-weight: 900;
+  font-size: var(--font-heading);
+  font-weight: 700;
   color: var(--text-primary);
   margin-top: var(--space-md);
   padding: 0 var(--space-md);
@@ -76,39 +43,29 @@
 
 .micRing {
   position: absolute;
+  width: 210px;
+  height: 210px;
   border-radius: var(--radius-full);
-  background: rgba(59, 130, 246, 0.06);
+  background: var(--accent-soft);
+  animation: pulse-ring 2.4s ease-out infinite;
 }
 
-.micRing1 {
-  width: 280px;
-  height: 280px;
-  animation: pulse-ring 3s ease-out infinite;
-}
-
-.micRing2 {
-  width: 220px;
-  height: 220px;
-  animation: pulse-ring 3s ease-out infinite 1s;
+.micRingDelayed {
+  animation-delay: 0.8s;
 }
 
 .micBall {
-  width: 140px;
-  height: 140px;
+  width: 180px;
+  height: 180px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, #7db8f7, #3b82f6);
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 40px rgba(59, 130, 246, 0.2), 0 4px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 40px var(--accent-soft);
   cursor: pointer;
-  transition: transform var(--duration-normal) var(--ease-spring);
   position: relative;
   z-index: 1;
-}
-
-.micBall:active {
-  transform: scale(0.93);
 }
 
 .micBallActive {
@@ -116,54 +73,14 @@
 }
 
 .micIcon {
-  font-size: 44px;
-  color: white;
-}
-
-/* 浮动小球 */
-.floatingDots {
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  pointer-events: none;
-}
-
-.dot {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border-radius: var(--radius-full);
-  background: rgba(59, 130, 246, 0.25);
-  animation: float-subtle 4s ease-in-out infinite;
-}
-
-.dot1 {
-  top: 20%;
-  left: 15%;
-  animation-delay: 0s;
-}
-
-.dot2 {
-  top: 35%;
-  right: 10%;
-  animation-delay: 1s;
-}
-
-.dot3 {
-  bottom: 30%;
-  left: 25%;
-  animation-delay: 2s;
-}
-
-.dot4 {
-  bottom: 20%;
-  right: 20%;
-  animation-delay: 0.5s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-text);
 }
 
 /* AI 回复卡 */
 .responseCard {
-  padding: var(--space-lg);
   margin-top: auto;
 }
 
@@ -172,13 +89,16 @@
   align-items: center;
   gap: var(--space-sm);
   font-size: var(--font-caption);
-  color: #3b82f6;
+  color: var(--text-secondary);
   font-weight: 600;
   margin-bottom: var(--space-sm);
 }
 
 .responseIcon {
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
 }
 
 .responseText {
@@ -188,24 +108,8 @@
 }
 
 /* 结束按钮 */
-.endBtn {
-  width: 100%;
-  padding: var(--space-md);
-  border-radius: var(--radius-lg);
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--text-secondary);
-  font-size: var(--font-body);
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
+.endButton {
   margin-top: var(--space-md);
-  transition: transform var(--duration-fast);
 }
 
-.endBtn:active {
-  transform: scale(0.97);
-}
+/* 全局 pulse-ring / pulse-glow / reduced-motion 由 styles/globals.css 统一提供 */
