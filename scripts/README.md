@@ -23,7 +23,7 @@ npm run dev                  # http://localhost:7742
 
 探针：`http://localhost:7742/api/ping`
 
-过渡期若仍需 Python API：另开终端启动 `backend/`，并保持 `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`。  
+业务 API 全部由 Next.js 同源提供（`/api/v1/...`），无需独立后端进程。历史 Python `backend/` 已删除。  
 详见 [docs/ops/local-setup.md](../docs/ops/local-setup.md)。
 
 ## Windows 批处理（dev/）

@@ -23,7 +23,7 @@
 
 | 功能 | 说明 |
 |------|------|
-| AI 语音助手 | 豆包大模型对话（能力迁移中） |
+| AI 语音助手 | 豆包大模型对话（已迁入 `app/api`） |
 | 用药管家 | 计划、今日提醒、确认服药 |
 | 健康记录 | 血压/血糖/心率等录入与看板 |
 | 捂话 | 家属与老人文字/语音消息 |
@@ -46,7 +46,6 @@
 | 数据 | Supabase（publishable / secret 新密钥体系） |
 | 部署 | 腾讯云 EdgeOne Pages / Makers（产物 `.next`） |
 | 移动端 | Android WebView 打开线上 https |
-| 遗留对照 | `backend/` Python FastAPI（**待迁入** `app/api`，勿扩展） |
 
 ---
 
@@ -70,10 +69,10 @@ npm run dev
 打开 [http://localhost:7742](http://localhost:7742)。  
 探针：`GET http://localhost:7742/api/ping`。
 
-### 过渡期 API
+### API
 
-业务 API 仍可能由本地 Python 提供（`NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`）。  
-迁入 Next 后改为同源，无需独立后端进程。详见 [docs/ops/local-setup.md](docs/ops/local-setup.md)。
+业务 API 由 Next.js 同源提供（`/api/v1/...`），无需独立后端进程。  
+详见 [docs/ops/local-setup.md](docs/ops/local-setup.md)。
 
 ### 构建
 
@@ -90,7 +89,6 @@ npm start
 app/           # 页面与 app/api
 components/    # UI / 业务组件
 hooks/ lib/ stores/ styles/ types/
-backend/       # Python 只读对照
 android/       # 在线壳
 docs/          # 详解 · designs · ops · archive
 scripts/       # setup · build · deploy · dev

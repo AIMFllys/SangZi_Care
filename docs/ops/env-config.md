@@ -14,7 +14,7 @@
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 客户端 | 新 publishable key（`sb_publishable_...`）；替代旧 `ANON_KEY` |
 | `SUPABASE_SECRET_KEY` | 仅服务端 | 新 secret key（`sb_secret_...`）；替代旧 `SERVICE_ROLE_KEY` |
 | `NEXT_PUBLIC_APP_URL` | 客户端 | 生产/预览站点 URL（Android 壳可对齐） |
-| `NEXT_PUBLIC_API_BASE_URL` | 客户端 | **过渡期**指向 Python（如 `http://localhost:8000`）；迁入 Next 后改为同源 |
+| `NEXT_PUBLIC_API_BASE_URL` | 客户端 | API 已迁入 Next 同源；默认留空。仅调试旧 Python 时指向 `http://localhost:8000` |
 | `JWT_SECRET` / `VOLCANO_*` / `SMTP_*` | 仅服务端 | API 迁入 Next 时使用；勿加 `NEXT_PUBLIC_` |
 
 ## 规则

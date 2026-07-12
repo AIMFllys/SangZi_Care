@@ -41,6 +41,6 @@
 
 ## 明确不在活文档区的内容
 
-- 独立 Python FastAPI 部署指南（已归档；`backend/` 仅迁移期对照）
+- 独立 Python FastAPI 部署指南（已废弃；历史 `backend/` 已删除，API 全在 Next `app/api`）
 - 静态导出拷贝进 APK 的流程（已废弃；Android 改为打开线上域名）
 - 以 MCP/Kiro 配置为主的旧「必读」教程（见 `archive/`）

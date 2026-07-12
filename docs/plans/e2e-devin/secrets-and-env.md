@@ -12,7 +12,7 @@
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 客户端 |
 | `SUPABASE_SECRET_KEY` | 服务端 API（迁入后） |
 | `NEXT_PUBLIC_APP_URL` | 可选，默认 `http://localhost:7742` |
-| `NEXT_PUBLIC_API_BASE_URL` | 过渡期可设 `http://localhost:8000`；切流后**留空** |
+| `NEXT_PUBLIC_API_BASE_URL` | 已切流同源；默认留空（历史 Python `backend/` 已删除）|
 | `JWT_SECRET` | Next auth 签发 |
 | `SMTP_*` | 发验证码（E2E 登录需要） |
 | `VOLCANO_*` | 可选；无则 AI 走降级 |
@@ -29,15 +29,7 @@ npm run dev                  # http://localhost:7742
 
 探针：`GET http://localhost:7742/api/ping`
 
-### 过渡期双进程（仅 API 未切流时）
-
-```bash
-# 终端 A：npm run dev
-# 终端 B：按 backend/README 启动 FastAPI :8000
-# .env.local: NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-```
-
-**目标态**：只跑 Next。
+业务 API 全部由 Next.js 同源提供，无需独立后端进程。历史 Python `backend/` 已删除。
 
 ## Playwright + CDP（可选）
 

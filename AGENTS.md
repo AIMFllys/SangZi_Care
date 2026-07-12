@@ -7,7 +7,7 @@
 - **部署**：腾讯云 EdgeOne Pages / Makers **全栈 Next.js**（Git 连接自动部署）
 - **移动端**：Android WebView **在线壳**（打开 https 域名；不内嵌静态整站；不考虑离线）
 - **数据**：Supabase；客户端 publishable key，服务端 secret key
-- **遗留**：`backend/`（Python FastAPI）仅迁移期**只读对照**；新业务禁止只写在 Python
+- **API**：业务 API 全部落在 Next `app/api/**`（历史 Python FastAPI `backend/` 已删除）
 - **目标架构**：见 [docs/designs/target-architecture.md](docs/designs/target-architecture.md)
 
 ## Tech Stack
@@ -21,7 +21,6 @@
 - **DB**: Supabase（PostgreSQL）
 - **Test**: Vitest + Testing Library
 - **Deploy**: EdgeOne；构建产物目录 **`.next`**
-- **Legacy**: Python FastAPI under `backend/`（对照用）
 
 ## Key Commands
 
@@ -31,7 +30,7 @@
 - Start: `npm start`
 - Typecheck: `npm run tsc`
 - Lint: `npm run lint`
-- 过渡期可选：另开终端运行 `backend/`（见 docs/ops）；API 迁入 Next 后不再需要
+- API 全部落在 Next `app/api`；无需另起 Python 进程
 
 ## Definition of Done
 
@@ -48,10 +47,9 @@
 
 ```
 .
-├── app/                    # Next App Router（页面 + 未来 app/api）
+├── app/                    # Next App Router（页面 + app/api）
 ├── components/             # UI 与业务组件
 ├── hooks/ · lib/ · stores/ · styles/ · types/
-├── backend/                # Python 遗留对照（勿扩展新业务）
 ├── android/                # 在线 WebView 壳
 ├── docs/                   # 见 docs/README.md
 │   ├── 详解/               # 现状真相
@@ -65,7 +63,7 @@
 └── package.json
 ```
 
-- 业务 API **目标**落在 `app/api/**/route.ts`（阶段 B 逐项迁移）
+- 业务 API 落在 `app/api/**/route.ts`（已全部迁入；历史 Python `backend/` 已删除）
 - 本阶段不强制迁到 `src/features/`
 
 ## Non-Obvious Patterns
@@ -100,7 +98,7 @@
 
 ## When Writing Code
 
-- 迁移期：**禁止**只在 `backend/` 新增产品功能；对照实现可在 Next 侧重写
+- 业务 API 一律写在 Next.js `app/api/**`（历史 Python `backend/` 已删除，勿恢复）
 - 页面保持适老化（大触控、可读字号）；新 UI 可用 Tailwind，旧 CSS Modules 不强制重写
 - 调试原型可放临时路由，勿把密钥打进客户端
 - 变更架构/部署相关文件时同步更新 `docs/详解` 或 `designs/target-architecture.md`
@@ -109,7 +107,7 @@
 
 - 是否重新引入 `output: 'export'`
 - 是否把 secret 写进 `NEXT_PUBLIC_*` 或提交 `.env`
-- 是否只改了 Python 而未规划 Next 侧等价实现
+- 是否试图恢复 Python `backend/` 或在其下新增业务
 - redirects 是否误写进 next.config
 
 ## Boundaries
@@ -121,7 +119,6 @@
 
 ### 先询问
 
-- 删除整个 `backend/`
 - 大版本依赖变更、更换包管理器
 - 改 `edgeone.json` 区域/时长等部署关键项（若影响生产）
 - 强制全量 Tailwind / `src/` 大挪移

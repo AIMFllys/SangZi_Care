@@ -1,7 +1,7 @@
 # 目标架构 — 桑梓智护全栈 Next.js
 
 > Created: 2026-07-10  
-> Updated: 2026-07-10  
+> Updated: 2026-07-12  
 > Status: accepted
 
 ## 问题陈述
@@ -17,7 +17,7 @@
 | 构建 | **禁止** `output: 'export'`；全栈产物为 **`.next`** |
 | 移动端 | **模式 B**：WebView/浏览器打开线上 https，不内嵌整站 |
 | 数据 | **Supabase**；客户端用 publishable key，服务端用 secret key |
-| 旧后端 | `backend/`（Python）**只读对照**，业务 API 后续迁入 `app/api` |
+| 旧后端 | 历史 Python `backend/` **已删除**（2026-07-12），业务 API 全部在 `app/api` |
 | 包管理 | 本阶段保持 **npm**（以 lockfile 为准） |
 
 ## 终局数据流
@@ -40,10 +40,12 @@
 - Android 改为可配置线上 URL
 - **不**重写 Python 业务路由
 
-### 阶段 B（后续）— 逐项迁 API
+### 阶段 B（已完成 2026-07）— API 全部迁入 app/api
 
-顺序建议：auth → users/family → health/medicine/messages → ai/radio/emergency  
-前端 `fetchApi` 改为同源 `/api/...`，最后归档或删除 `backend/`。
+按顺序完成：auth → users/family → health/medicine/messages → ai/radio/emergency。  
+- 9 个 API 域全部迁入 `app/api/v1/<域>/route.ts`（原 `backend/api/v1/<file>.py` 已删除；迁移记录见 [docs/plans/api-migration/](../plans/api-migration/)）
+- 前端 `fetchApi` 已改同源 `/api/...`（`lib/api.ts` 默认 `''`），不再依赖 8000 端口
+- 历史 Python `backend/` 已于 2026-07-12 删除（见 [12-cleanup.md](../plans/api-migration/12-cleanup.md)）
 
 ## 明确不做（本阶段及原则）
 
