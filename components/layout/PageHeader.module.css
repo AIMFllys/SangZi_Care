@@ -1,80 +1,103 @@
-/* PageHeader — 新设计系统 */
 .header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    width: 100%;
-    background: var(--bg-glass);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--divider);
-    transition: background var(--duration-fast);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  background: var(--bg-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--divider);
+  transition: background var(--duration-fast);
 }
 
 .transparent {
-    background: transparent;
-    backdrop-filter: none;
-    border-bottom: none;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: none;
 }
 
 .inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 var(--space-md);
-    height: 64px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  height: var(--header-height);
+  padding: 0 var(--space-lg);
 }
 
-.backBtn {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: var(--space-sm);
-    border-radius: var(--radius-full);
-    background: none;
-    border: none;
-    cursor: pointer;
-    margin-left: -8px;
+.left {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
-.backBtn:focus-visible {
-    outline: 3px solid var(--accent-primary);
-    outline-offset: 2px;
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color var(--duration-fast), transform var(--duration-fast);
 }
 
-.backCircle {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-full);
-    background: rgba(0, 0, 0, 0.04);
-    transition: background var(--duration-fast);
+.backButton:active {
+  transform: scale(0.96);
 }
 
-.backBtn:active .backCircle {
-    background: rgba(0, 0, 0, 0.08);
+.backButton:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.backIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--min-touch-target);
+  height: var(--min-touch-target);
+  border-radius: var(--radius-full);
+  background: var(--bg-hover);
+}
+
+@media (hover: hover) {
+  .backButton:hover .backIcon {
+    background: var(--bg-hover-strong);
+  }
 }
 
 .title {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    font-size: var(--font-title);
-    font-weight: 700;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    pointer-events: none;
+  flex: 1;
+  font-size: var(--font-title);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .right {
-    flex-shrink: 0;
-    z-index: 10;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
+.actionSlot,
 .spacer {
-    width: 44px;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.actionSlot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

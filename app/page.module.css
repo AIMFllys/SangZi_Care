@@ -22,7 +22,6 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-lg) var(--space-xl);
     margin-bottom: var(--space-xl);
 }
 
@@ -47,7 +46,10 @@
 }
 
 .weatherIcon {
-    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
 }
 
 .weatherTemp {
@@ -74,8 +76,8 @@
 
 .voiceBallRing {
     position: absolute;
-    width: 220px;
-    height: 220px;
+    width: 210px;
+    height: 210px;
     border-radius: var(--radius-full);
     background: var(--accent-soft);
     animation: pulse-ring 2.4s ease-out infinite;
@@ -93,19 +95,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 40px var(--accent-soft), 0 4px 16px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 8px 40px var(--accent-soft);
     cursor: pointer;
-    transition: transform var(--duration-normal) var(--ease-spring);
     position: relative;
     z-index: 1;
 }
 
-.voiceBall:active {
-    transform: scale(0.93);
-}
-
 .voiceIcon {
-    font-size: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--accent-text);
 }
 
@@ -128,73 +127,36 @@
 }
 
 .swipeArrow {
-    font-size: 18px;
-    transform: rotate(180deg);
-}
-
-/* ---- SOS 按钮 ---- */
-.sosButton {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-sm);
-    width: 100%;
-    padding: var(--space-md) var(--space-lg);
+    color: var(--text-muted);
+}
+
+/* ---- SOS 按钮 ---- */
+button.sosButton {
     margin-top: var(--space-lg);
-    border-radius: var(--radius-lg);
-    background: var(--color-danger);
-    color: var(--text-inverse);
-    font-size: var(--font-heading);
-    font-weight: 800;
-    border: none;
-    cursor: pointer;
+    background: linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%);
     box-shadow: 0 4px 20px var(--color-danger-soft);
-    transition: transform var(--duration-fast) var(--ease-out-smooth);
 }
 
-.sosButton:active {
-    transform: scale(0.97);
-}
-
-.sosIcon {
-    font-size: 24px;
+button.sosButton:active:not(:disabled) {
+    background: linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%);
+    box-shadow: 0 2px 10px var(--color-danger-soft);
 }
 
 /* ---- Family 端 ---- */
 .familyPage {
-    padding: var(--safe-top) var(--space-lg) 0;
+    min-height: 100dvh;
+    padding: var(--safe-top) var(--space-lg) calc(var(--tabbar-height) + var(--safe-bottom) + var(--space-lg));
     background: linear-gradient(180deg, var(--bg-base) 0%, var(--bg-elevated) 100%);
-}
-
-.familyHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-xl) 0 var(--space-lg);
-}
-
-.familyTitle {
-    font-size: var(--font-title);
-    font-weight: 800;
-    color: var(--text-primary);
-}
-
-.notifIcon {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-full);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    cursor: pointer;
 }
 
 /* 老人选择 tabs */
 .elderTabs {
     display: flex;
     gap: var(--space-sm);
-    margin-bottom: var(--space-lg);
+    margin: var(--space-md) 0 var(--space-xl);
     overflow-x: auto;
     scrollbar-width: none;
 }
@@ -206,8 +168,9 @@
 .elderTab {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: var(--space-sm);
-    padding: 10px 20px;
+    padding: var(--space-sm) var(--space-md);
     border-radius: var(--radius-full);
     font-size: var(--font-caption);
     font-weight: 600;
@@ -216,7 +179,12 @@
     border: 1px solid var(--border-light);
     background: var(--bg-card-solid);
     color: var(--text-secondary);
-    transition: all var(--duration-fast);
+    transition: background-color var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
+    min-height: var(--min-touch-target);
+}
+
+.elderTab:active {
+    transform: scale(0.97);
 }
 
 .elderTabActive {
@@ -225,15 +193,27 @@
     border-color: var(--accent);
 }
 
+.elderTabAdd {
+    padding: var(--space-sm);
+    aspect-ratio: 1 / 1;
+    color: var(--accent);
+    border-color: var(--border-light);
+}
+
 .elderTabAvatar {
     width: 28px;
     height: 28px;
     border-radius: var(--radius-full);
     background: var(--accent-soft);
+    color: var(--accent);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.elderTabLabel {
+    line-height: 1;
 }
 
 /* 摘要卡片 */
@@ -241,31 +221,34 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--space-md);
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-xl);
 }
 
 .summaryCard {
-    padding: var(--space-lg);
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
     position: relative;
     overflow: hidden;
+    min-height: 160px;
 }
 
 .summaryIcon {
-    font-size: 20px;
+    display: inline-flex;
+    color: var(--accent);
 }
 
 .summaryLabel {
     font-size: var(--font-caption);
     color: var(--text-secondary);
+    font-weight: 500;
 }
 
 .summaryValue {
     font-size: var(--font-title);
-    font-weight: 900;
+    font-weight: 800;
     color: var(--text-primary);
+    line-height: 1.2;
 }
 
 .summaryMeta {
@@ -274,26 +257,27 @@
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-xs);
 }
 
 .summaryValueUnit {
     font-size: var(--font-body);
-    font-weight: 400;
+    font-weight: 500;
+    color: var(--text-secondary);
 }
 
 .summaryBgIcon {
     position: absolute;
-    right: -8px;
-    bottom: -8px;
-    font-size: 56px;
+    right: calc(-1 * var(--space-sm));
+    bottom: calc(-1 * var(--space-sm));
+    color: var(--accent);
     opacity: 0.08;
+    pointer-events: none;
 }
 
 /* 健康趋势 */
 .trendSection {
     margin-bottom: var(--space-lg);
-    padding: var(--space-lg);
 }
 
 .trendHeader {
@@ -304,6 +288,9 @@
 }
 
 .trendTitle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
     font-size: var(--font-heading);
     font-weight: 700;
     color: var(--text-primary);
@@ -314,8 +301,7 @@
     height: 20px;
     border-radius: 2px;
     background: var(--accent);
-    margin-right: var(--space-sm);
-    display: inline-block;
+    flex-shrink: 0;
 }
 
 .trendLink {
@@ -325,6 +311,14 @@
     cursor: pointer;
     border: none;
     background: none;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-md);
+    transition: background-color var(--duration-fast);
+    min-height: var(--min-touch-target);
+}
+
+.trendLink:active {
+    background: var(--accent-soft);
 }
 
 .trendChart {
@@ -332,16 +326,16 @@
     align-items: flex-end;
     justify-content: space-between;
     height: 120px;
-    gap: 8px;
+    gap: var(--space-sm);
     padding: var(--space-md) 0;
 }
 
 .trendBar {
     flex: 1;
-    border-radius: var(--radius-sm) var(--radius-sm) 4px 4px;
+    border-radius: var(--radius-sm) var(--radius-sm) var(--radius-sm) var(--radius-sm);
     background: var(--accent-soft);
     transition: height var(--duration-normal);
-    min-height: 12px;
+    min-height: var(--space-md);
 }
 
 .trendBarActive {
@@ -370,6 +364,13 @@
     font-weight: 700;
 }
 
+.trendEmpty {
+    text-align: center;
+    padding: var(--space-xl) 0;
+    font-size: var(--font-caption);
+    color: var(--text-muted);
+}
+
 /* 警告横幅 */
 .alertBanner {
     display: flex;
@@ -382,7 +383,8 @@
 }
 
 .alertIcon {
-    font-size: 18px;
+    display: inline-flex;
+    color: var(--color-danger);
     flex-shrink: 0;
 }
 
@@ -396,4 +398,7 @@
     font-size: var(--font-small);
     color: var(--text-secondary);
     margin-top: var(--space-xs);
+    line-height: 1.5;
 }
+
+/* 全局 pulse-ring 与 reduced-motion 由 styles/globals.css 统一提供 */

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { Sun, Mic, ChevronUp, Phone } from 'lucide-react';
+import { Button, Card } from '@/components/ui';
 import styles from '../../app/page.module.css';
 
 /** 日期格式化 */
@@ -54,16 +55,18 @@ export default function ElderHomeView() {
       </div>
 
       {/* 时间天气卡 */}
-      <div className={`glass-card ${styles.timeCard}`}>
+      <Card variant="glass" className={styles.timeCard}>
         <div>
           <div className={styles.time}>{time}</div>
           <div className={styles.dateText}>{date}</div>
         </div>
         <div className={styles.weather}>
-          <span className={styles.weatherIcon}><Sun size={28} /></span>
+          <span className={styles.weatherIcon}>
+            <Sun size={32} color="var(--accent)" />
+          </span>
           <span className={styles.weatherTemp}>24° 晴</span>
         </div>
-      </div>
+      </Card>
 
       {/* 语音球 */}
       <div className={styles.voiceSection}>
@@ -76,7 +79,9 @@ export default function ElderHomeView() {
           <div className={styles.voiceBallRing} />
           <div className={styles.voiceBallRing} />
           <div className={`${styles.voiceBall} interactive`}>
-            <span className={styles.voiceIcon}><Mic size={56} color="currentColor" /></span>
+            <span className={styles.voiceIcon}>
+              <Mic size={56} />
+            </span>
           </div>
         </div>
         <p className={styles.voiceLabel}>点我说话</p>
@@ -84,19 +89,24 @@ export default function ElderHomeView() {
 
       {/* 上滑提示 */}
       <div className={styles.swipeHint}>
-        <span className={styles.swipeArrow}><ChevronUp size={24} /></span>
+        <span className={styles.swipeArrow}>
+          <ChevronUp size={24} />
+        </span>
         <span>上滑更多功能</span>
       </div>
 
       {/* 紧急呼叫 — TODO: T5.1 实装后指向 /emergency */}
-      <button
+      <Button
+        variant="danger"
+        size="lg"
+        fullWidth
+        leftIcon={<Phone size={24} />}
         className={styles.sosButton}
         onClick={() => router.push('/settings')}
         aria-label="紧急呼叫 SOS"
       >
-        <Phone size={24} className={styles.sosIcon} />
         紧急呼叫 (SOS)
-      </button>
+      </Button>
     </div>
   );
 }

@@ -9,6 +9,7 @@ export type UserRole = 'elder' | 'family';
 
 /**
  * 客户端壳组件 — data-theme 主题切换 + 全局底部导航 + 认证守卫
+ * 外层 .device-wrapper 已移至根布局，以保证所有页面居中约束
  */
 export default function ClientShell({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<UserRole>('elder');
@@ -34,15 +35,13 @@ export default function ClientShell({ children }: { children: ReactNode }) {
   }, [theme]);
 
   return (
-    <div className="device-wrapper" data-theme={theme}>
-      <AuthProvider>
-        <ErrorBoundary>
-          <main className="page-content">
-            {children}
-          </main>
-        </ErrorBoundary>
-        <TabBar />
-      </AuthProvider>
-    </div>
+    <AuthProvider>
+      <ErrorBoundary>
+        <main className="page-content">
+          {children}
+        </main>
+      </ErrorBoundary>
+      <TabBar />
+    </AuthProvider>
   );
 }

@@ -20,15 +20,17 @@ export const viewport: Viewport = {
 
 /**
  * 根布局 — Server Component
- * 客户端逻辑（主题切换、认证、路由守卫）迁移至 ClientShell
+ * 客户端逻辑（主题切换、认证、路由守卫、底部导航）迁移至 ClientShell
  */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body>
-        <ClientShell>
-          {children}
-        </ClientShell>
+        <div className="device-wrapper">
+          <ClientShell>
+            {children}
+          </ClientShell>
+        </div>
       </body>
     </html>
   );

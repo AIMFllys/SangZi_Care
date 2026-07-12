@@ -6,6 +6,9 @@ import { useHealthStore, formatHealthValue } from '@/stores/healthStore';
 import { useMedicineStore } from '@/stores/medicineStore';
 import { useFamilyBinds } from '@/hooks/useFamilyBinds';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
+import PageHeader from '@/components/layout/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { IconButton } from '@/components/ui/IconButton';
 import { Bell, User, Users, Pill, MapPin, Home, CheckCircle, AlertCircle, Plus } from 'lucide-react';
 import styles from '../../app/page.module.css';
 
@@ -63,59 +66,72 @@ export default function FamilyHomeView() {
   return (
     <div className={styles.familyPage}>
       {/* 头部 */}
-      <div className={styles.familyHeader}>
-        <h1 className={styles.familyTitle}>家人看板</h1>
-        <div className={`glass-card ${styles.notifIcon} interactive`}><Bell size={20} /></div>
-      </div>
+      <PageHeader
+        title="家人看板"
+        rightAction={
+          <IconButton aria-label="通知" variant="soft" size="md">
+            <Bell size={22} />
+          </IconButton>
+        }
+        transparent
+      />
 
       {/* 老人选择 tabs */}
       <div className={styles.elderTabs}>
         {binds.map((bind, i) => (
           <button
             key={bind.user.id}
+            type="button"
             className={`${styles.elderTab} ${i === selectedElder ? styles.elderTabActive : ''}`}
             onClick={() => setSelectedElder(i)}
           >
-            <span className={styles.elderTabAvatar}><User size={16} /></span>
-            {bind.user.name || bind.bind.relation || '家人'}
+            <span className={styles.elderTabAvatar}>
+              <User size={20} />
+            </span>
+            <span className={styles.elderTabLabel}>{bind.user.name || bind.bind.relation || '家人'}</span>
           </button>
         ))}
-        <button className={styles.elderTab} onClick={() => router.push('/settings/bind')}>
-          <Plus size={16} />
+        <button
+          type="button"
+          className={`${styles.elderTab} ${styles.elderTabAdd}`}
+          onClick={() => router.push('/settings/bind')}
+          aria-label="添加家人"
+        >
+          <Plus size={20} />
         </button>
       </div>
 
       <DataStateWrapper loading={bindsLoading} empty={binds.length === 0 ? { icon: <Users size={48} />, title: '还没有绑定家人', description: '去设置页面添加您的家人吧' } : false}>
         {/* 摘要卡片 */}
         <div className={styles.summaryGrid}>
-          <div className={`glass-card ${styles.summaryCard} interactive`} onClick={() => router.push('/medicine')}>
+          <Card variant="glass" className={styles.summaryCard} onClick={() => router.push('/medicine')}>
             <span className={styles.summaryIcon}><Pill size={24} /></span>
             <span className={styles.summaryLabel}>今日用药</span>
             <span className={styles.summaryValue}>{medicineDone}<span className={styles.summaryValueUnit}> / {medicineTotal}</span></span>
             <span className={styles.summaryMeta}>
               {medicineDone >= medicineTotal && medicineTotal > 0
-                ? <><CheckCircle size={14} /> 全部完成</>
+                ? <><CheckCircle size={16} /> 全部完成</>
                 : `还有 ${medicineTotal - medicineDone} 次`}
             </span>
             <span className={styles.summaryBgIcon}><Pill size={56} /></span>
-          </div>
-          <div className={`glass-card ${styles.summaryCard} interactive`} onClick={() => router.push('/health')}>
+          </Card>
+          <Card variant="glass" className={styles.summaryCard} onClick={() => router.push('/health')}>
             <span className={styles.summaryIcon}><MapPin size={24} /></span>
             <span className={styles.summaryLabel}>当前状态</span>
             <span className={styles.summaryValue}>在家休息</span>
             <span className={styles.summaryMeta}>更新于 10分钟前</span>
             <span className={styles.summaryBgIcon}><Home size={56} /></span>
-          </div>
+          </Card>
         </div>
 
         {/* 健康趋势 */}
-        <div className={`glass-card ${styles.trendSection}`}>
+        <Card variant="glass" className={styles.trendSection}>
           <div className={styles.trendHeader}>
             <h2 className={styles.trendTitle}>
               <span className={styles.trendTitleAccent} />
               健康趋势 (心率)
             </h2>
-            <button className={styles.trendLink} onClick={() => router.push('/health')}>详细 →</button>
+            <button type="button" className={styles.trendLink} onClick={() => router.push('/health')}>详细 →</button>
           </div>
 
           {hasTrendData ? (
@@ -136,7 +152,7 @@ export default function FamilyHomeView() {
               </div>
             </>
           ) : (
-            <p className="text-caption" style={{ textAlign: 'center', padding: 'var(--space-xl) 0' }}>
+            <p className={styles.trendEmpty}>
               暂无趋势数据，请先录入健康记录
             </p>
           )}
@@ -153,7 +169,7 @@ export default function FamilyHomeView() {
               </div>
             </div>
           )}
-        </div>
+        </Card>
       </DataStateWrapper>
     </div>
   );
