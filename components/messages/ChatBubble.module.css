@@ -23,7 +23,7 @@
 /* 气泡 — 参考成品图大圆角 */
 .bubble {
   position: relative;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-base) var(--spacing-lg);
   border-radius: var(--radius-lg);
   word-break: break-word;
   min-width: 60px;
@@ -31,25 +31,25 @@
 
 /* 自己的气泡 — 暖橙色 (参考成品图 --bubble-self: #FF8F5E) */
 .bubbleMine {
-  background-color: var(--color-primary, #FF8F44);
-  color: #ffffff;
+  background-color: var(--accent);
+  color: var(--text-inverse);
   border-top-right-radius: var(--radius-lg);
   border-top-left-radius: var(--radius-lg);
   border-bottom-left-radius: var(--radius-lg);
   border-bottom-right-radius: 4px;
-  box-shadow: 0 4px 12px rgba(255, 143, 68, 0.2);
+  box-shadow: 0 4px 12px var(--accent-soft);
 }
 
 /* 对方的气泡 — 白色 (参考成品图 --bubble-other: #FFFFFF) */
 .bubbleOther {
-  background-color: #ffffff;
-  color: var(--color-text);
+  background-color: var(--bg-card-solid);
+  color: var(--text-primary);
   border-top-right-radius: var(--radius-lg);
   border-top-left-radius: var(--radius-lg);
   border-bottom-right-radius: var(--radius-lg);
   border-bottom-left-radius: 4px;
   box-shadow: var(--shadow-sm);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-light);
 }
 
 /* 文字内容 — 大字体 */
@@ -61,19 +61,19 @@
 /* AI 标记 */
 .aiBadge {
   display: inline-block;
-  padding: 2px 8px;
-  font-size: 13px;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-small);
   font-weight: 700;
-  color: #ffffff;
-  background-color: #7c4dff;
-  border-radius: 6px;
-  margin-bottom: 6px;
+  color: var(--text-inverse);
+  background-color: var(--color-ai);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-xs);
   line-height: 1.4;
 }
 
 .bubbleOther .aiBadge {
-  color: #ffffff;
-  background-color: #7c4dff;
+  color: var(--text-inverse);
+  background-color: var(--color-ai);
 }
 
 /* 语音消息条 — 参考成品图大语音条 */
@@ -104,21 +104,21 @@
 
 /* 自己气泡中的播放按钮 */
 .bubbleMine .playIcon {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  background: var(--border-card);
+  color: var(--text-inverse);
 }
 
 /* 对方气泡中的播放按钮 — 参考成品图粉色 */
 .bubbleOther .playIcon {
-  background: #ec4899;
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
+  background: var(--color-ai);
+  color: var(--text-inverse);
+  box-shadow: 0 2px 8px var(--color-ai-soft);
 }
 
 .voiceWave {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
   flex: 1;
   height: 24px;
 }
@@ -138,9 +138,15 @@
 .waveLine:nth-child(4) { height: 22px; animation-delay: 0.1s; }
 .waveLine:nth-child(5) { height: 14px; animation-delay: 0.4s; }
 
-@keyframes wave {
+ @keyframes wave {
   0%, 100% { transform: scaleY(0.8); }
   50% { transform: scaleY(1.2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .waveLine {
+    animation: none;
+  }
 }
 
 .duration {
@@ -155,20 +161,20 @@
   opacity: 0.9;
   margin-top: var(--spacing-sm);
   padding-top: var(--spacing-sm);
-  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  border-top: 1px solid var(--border-card);
   line-height: 1.5;
 }
 
 .bubbleOther .voiceTranscript {
-  border-top-color: rgba(0, 0, 0, 0.06);
+  border-top-color: var(--divider);
 }
 
 /* 时间戳 */
 .timestamp {
-  font-size: 13px;
+  font-size: var(--font-small);
   color: var(--color-text-muted);
-  margin-top: 4px;
-  padding: 0 4px;
+  margin-top: var(--space-xs);
+  padding: 0 var(--space-xs);
 }
 
 .timestampMine {

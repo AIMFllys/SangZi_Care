@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import { Pill } from 'lucide-react';
 import type { TodayTimelineItem, TimelineGroup } from '@/stores/medicineStore';
 import { groupByPeriod } from '@/stores/medicineStore';
 
@@ -55,11 +56,11 @@ function TimelineItem({ item, onConfirm }: TimelineItemProps) {
         <div className="flex justify-end mt-2">
           {canConfirm ? (
             <button
-              className="interactive bg-[var(--color-primary)] text-white font-bold text-2xl py-4 px-8 rounded-full shadow-sm"
+              className="interactive flex items-center gap-2 bg-[var(--color-primary)] text-white font-bold text-2xl py-4 px-8 rounded-full shadow-sm"
               onClick={handleConfirm}
               aria-label={`确认服用${item.plan.medicine_name}`}
             >
-              💊 我已服药
+              <Pill size={24} aria-hidden="true" /> 已吃药
             </button>
           ) : (
             <span
@@ -113,7 +114,9 @@ export function MedicineTimeline({ items, onConfirm }: MedicineTimelineProps) {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 bg-white rounded-[2rem] border border-black/5 shadow-sm text-center gap-4">
-        <span className="text-6xl" aria-hidden="true">💊</span>
+        <span className="inline-flex text-[var(--color-primary)]" aria-hidden="true">
+          <Pill size={48} />
+        </span>
         <p className="text-2xl font-bold text-[#4b5563]">今日暂无用药计划</p>
       </div>
     );

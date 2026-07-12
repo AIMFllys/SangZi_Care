@@ -40,7 +40,7 @@
   height: 88px;
   font-size: 40px;
   background-color: var(--color-primary);
-  color: #ffffff;
+  color: var(--text-inverse);
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -100,7 +100,7 @@
 
 .sendBtn {
   background-color: var(--color-primary);
-  color: #ffffff;
+  color: var(--text-inverse);
 }
 
 .sendBtn:disabled {
@@ -111,4 +111,16 @@
 .cancelBtn:active,
 .sendBtn:active:not(:disabled) {
   opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .micBtnRecording {
+    animation: none;
+  }
+
+  .micBtn,
+  .cancelBtn,
+  .sendBtn {
+    transition: none;
+  }
 }

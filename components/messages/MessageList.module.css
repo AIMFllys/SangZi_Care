@@ -22,9 +22,9 @@
 }
 
 .dateText {
-  font-size: 13px;
+  font-size: var(--font-small);
   color: var(--color-text-secondary);
   background-color: var(--color-bg);
-  padding: 2px 12px;
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--border-radius-full);
 }

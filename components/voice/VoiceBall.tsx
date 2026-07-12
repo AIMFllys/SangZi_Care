@@ -4,7 +4,8 @@
 // VoiceBall 语音球组件
 // ============================================================
 
-import { useCallback } from 'react';
+import { useCallback, ReactNode } from 'react';
+import { Mic, Ear, Loader2, MessageCircle } from 'lucide-react';
 
 export type VoiceBallState = 'idle' | 'listening' | 'processing' | 'responding';
 
@@ -13,11 +14,11 @@ export interface VoiceBallProps {
   onActivate?: () => void;
 }
 
-const STATE_ICONS: Record<VoiceBallState, string> = {
-  idle: '🎤',
-  listening: '👂',
-  processing: '💭',
-  responding: '💬',
+const STATE_ICONS: Record<VoiceBallState, ReactNode> = {
+  idle: <Mic size={64} />,
+  listening: <Ear size={64} />,
+  processing: <Loader2 size={64} />,
+  responding: <MessageCircle size={64} />,
 };
 
 const STATE_LABELS: Record<VoiceBallState, string> = {
@@ -47,7 +48,7 @@ export default function VoiceBall({
 
   if (state === 'listening') {
     ballTransform = 'scale-105';
-    ballBg = 'linear-gradient(135deg, var(--color-primary), #E67E22)';
+    ballBg = 'linear-gradient(135deg, var(--color-primary), var(--accent-hover))';
   } else if (state === 'responding') {
     ballBg = 'linear-gradient(to bottom right, var(--color-primary-light), var(--color-primary))';
   }
@@ -76,14 +77,14 @@ export default function VoiceBall({
 
         {/* 语音球主体 */}
         <button
-          className={`relative z-20 w-[240px] h-[240px] rounded-full text-white flex flex-col items-center justify-center border-4 border-white/30 outline outline-8 outline-white/50 shadow-[0_24px_48px_rgba(255,143,68,0.4),inset_0_4px_12px_rgba(255,255,255,0.4)] interactive transition-all duration-300 ${state === 'idle' ? 'animate-pulse' : ''} ${ballTransform}`}
+          className={`relative z-20 w-[240px] h-[240px] rounded-full text-[var(--accent-text)] flex flex-col items-center justify-center border-4 border-[var(--accent-text)]/30 outline outline-8 outline-[var(--accent-text)]/50 shadow-[0_24px_48px_var(--accent-soft),inset_0_4px_12px_rgba(255,255,255,0.4)] interactive transition-all duration-300 ${state === 'idle' ? 'animate-pulse' : ''} ${ballTransform}`}
           style={{ background: ballBg }}
           onClick={handleClick}
           aria-label={STATE_ARIA[state]}
           aria-live="polite"
           type="button"
         >
-          <span className="text-[100px] leading-none drop-shadow-md" role="img" aria-hidden="true">
+          <span className="leading-none drop-shadow-md" aria-hidden="true">
             {STATE_ICONS[state]}
           </span>
         </button>
@@ -91,7 +92,7 @@ export default function VoiceBall({
 
       {/* 状态大文字 */}
       <div className="mt-6 text-center flex flex-col items-center gap-2 relative z-30">
-        <h2 className="text-[40px] font-black tracking-widest text-[#171717]" aria-live="polite">
+        <h2 className="text-[40px] font-black tracking-widest text-[var(--text-primary)]" aria-live="polite">
           {STATE_LABELS[state]}
         </h2>
       </div>

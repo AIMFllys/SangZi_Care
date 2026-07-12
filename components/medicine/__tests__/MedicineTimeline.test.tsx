@@ -69,7 +69,7 @@ describe('MedicineTimeline', () => {
   it('已完成状态显示"已服用"标签', () => {
     const items = [makeItem({ status: 'taken' })];
     render(<MedicineTimeline items={items} />);
-    expect(screen.getByText('已服用 ✓')).toBeTruthy();
+    expect(screen.getByText('已服用')).toBeTruthy();
   });
 
   it('点击"已吃药"按钮触发 onConfirm', () => {
