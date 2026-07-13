@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
     const { data, error } = await supabase
-      .from('health_records')
+      .from('oc_health_records')
       .select('*')
       .eq('user_id', targetUserId)
       .eq('record_type', recordType)

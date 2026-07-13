@@ -64,7 +64,7 @@ export async function GET(
     await resolveMessagePeer(supabase, currentUserId, peerId);
 
     const { data, error } = await supabase
-      .from('elder_care_messages')
+      .from('oc_elder_care_messages')
       .select('*')
       .or(
         `and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`,

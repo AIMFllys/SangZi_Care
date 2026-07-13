@@ -40,7 +40,7 @@ export async function PATCH(
 
     // 先查消息存在性 + 校验接收者（对齐 Python）
     const { data: existing, error: selectErr } = await supabase
-      .from('elder_care_messages')
+      .from('oc_elder_care_messages')
       .select('*')
       .eq('id', messageId)
       .limit(1);
@@ -60,7 +60,7 @@ export async function PATCH(
 
     const now = new Date().toISOString();
     const { data, error } = await supabase
-      .from('elder_care_messages')
+      .from('oc_elder_care_messages')
       .update({ is_read: true, read_at: now })
       .eq('id', messageId)
       .select('*');

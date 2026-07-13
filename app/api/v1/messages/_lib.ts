@@ -14,9 +14,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { throwApiError } from '@/lib/server';
 
 export type MessageRow =
-  Database['public']['Tables']['elder_care_messages']['Row'];
+  Database['public']['Tables']['oc_elder_care_messages']['Row'];
 export type MessageInsert =
-  Database['public']['Tables']['elder_care_messages']['Insert'];
+  Database['public']['Tables']['oc_elder_care_messages']['Insert'];
 
 /** 对齐 Python MessageResponse / 前端 messageStore.MessageResponse。 */
 export interface MessageResponse {
@@ -81,7 +81,7 @@ export async function resolveMessagePeer(
   assertSafeId(peerId, 'peer_id');
 
   const { data, error } = await supabase
-    .from('elder_family_binds')
+    .from('oc_elder_family_binds')
     .select('id')
     .eq('status', 'active')
     .or(

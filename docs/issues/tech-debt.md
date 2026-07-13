@@ -1,6 +1,6 @@
 # 技术债务登记
 
-> Updated: 2026-07-12  
+> Updated: 2026-07-13
 > 详见功能现状：[详解/功能详解.md](../详解/功能详解.md)  
 > 规划入口：[plans/README.md](../plans/README.md) · [api-migration](../plans/api-migration/) · [e2e-devin](../plans/e2e-devin/) · [known-issues](./known-issues.md)
 
@@ -12,6 +12,7 @@
 | TD-02 | 前端 `fetchApi` 改为同源，去掉对 8000 端口依赖 | ✅ 已完成（`lib/api.ts` 默认 `''`） |
 | TD-03 | Supabase 全面切换 publishable / secret 新密钥 | 待办（模板已就绪） |
 | TD-04 | 减少 service/secret 绕过 RLS，补家庭权限策略 | 待办 |
+| TD-05 | Schema `oc_` 前缀与运行时代码对齐 | ✅ 已完成（2026-07，见 [ops/oc-table-prefix.md](../ops/oc-table-prefix.md)） |
 
 ## 产品功能缺口
 

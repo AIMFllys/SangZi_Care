@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
-      .from('health_records')
+      .from('oc_health_records')
       .insert(record)
       .select('*');
 
@@ -169,7 +169,7 @@ export async function GET(request: NextRequest) {
     );
 
     let query = supabase
-      .from('health_records')
+      .from('oc_health_records')
       .select('*')
       .eq('user_id', targetUserId);
 

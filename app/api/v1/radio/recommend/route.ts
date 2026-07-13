@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     // 获取用户信息（对齐 Python select("id,name,birth_date,chronic_diseases,role")）
     const { data: userData, error: userError } = await supabase
-      .from('users')
+      .from('oc_users')
       .select('*')
       .eq('id', currentUserId);
 
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
 
     // 查询已发布的广播
     let query = supabase
-      .from('health_broadcasts')
+      .from('oc_health_broadcasts')
       .select('*')
       .eq('is_published', true);
 

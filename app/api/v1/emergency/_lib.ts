@@ -14,11 +14,11 @@
 import type { Database, Json } from '@/types/supabase';
 
 export type EmergencyCallRow =
-  Database['public']['Tables']['emergency_calls']['Row'];
+  Database['public']['Tables']['oc_emergency_calls']['Row'];
 export type EmergencyCallInsert =
-  Database['public']['Tables']['emergency_calls']['Insert'];
+  Database['public']['Tables']['oc_emergency_calls']['Insert'];
 export type EmergencyCallUpdate =
-  Database['public']['Tables']['emergency_calls']['Update'];
+  Database['public']['Tables']['oc_emergency_calls']['Update'];
 
 /** 对齐 Python EmergencyCallResponse / 前端契约。 */
 export interface EmergencyCallResponse {

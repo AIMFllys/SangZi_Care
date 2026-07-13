@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
-      .from('health_broadcasts')
+      .from('oc_health_broadcasts')
       .insert(record)
       .select();
 

@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
-      .from('emergency_calls')
+      .from('oc_emergency_calls')
       .select('*')
       .eq('user_id', currentUserId)
       .order('created_at', { ascending: false })

@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
-      .from('elder_family_binds')
+      .from('oc_elder_family_binds')
       .select('family_id')
       .eq('elder_id', body.user_id)
       .eq('status', 'active')

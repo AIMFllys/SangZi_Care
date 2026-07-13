@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     for (const rt of RECORD_TYPES) {
       const { data, error } = await supabase
-        .from('health_records')
+        .from('oc_health_records')
         .select('*')
         .eq('user_id', targetUserId)
         .eq('record_type', rt)

@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
-      .from('elder_family_binds')
+      .from('oc_elder_family_binds')
       .insert(record)
       .select('*');
 

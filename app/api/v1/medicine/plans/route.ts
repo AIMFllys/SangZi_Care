@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
     );
 
     let query = supabase
-      .from('medication_plans')
+      .from('oc_medication_plans')
       .select('*')
       .eq('user_id', targetUserId);
 
@@ -247,7 +247,7 @@ export async function POST(request: NextRequest) {
     };
 
     const { data, error } = await supabase
-      .from('medication_plans')
+      .from('oc_medication_plans')
       .insert(record)
       .select('*');
 

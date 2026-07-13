@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
     };
 
     const { data, error } = await supabase
-      .from('medication_records')
+      .from('oc_medication_records')
       .insert(record)
       .select('*');
 

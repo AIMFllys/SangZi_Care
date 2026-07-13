@@ -13,9 +13,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { throwApiError } from '@/lib/server';
 
 export type HealthRecordRow =
-  Database['public']['Tables']['health_records']['Row'];
+  Database['public']['Tables']['oc_health_records']['Row'];
 export type HealthRecordInsert =
-  Database['public']['Tables']['health_records']['Insert'];
+  Database['public']['Tables']['oc_health_records']['Insert'];
 
 /** 对齐 Python HealthRecordResponse。 */
 export interface HealthRecordResponse {
@@ -72,7 +72,7 @@ export async function resolveHealthTarget(
   }
 
   const { data, error } = await supabase
-    .from('elder_family_binds')
+    .from('oc_elder_family_binds')
     .select('id')
     .eq('family_id', currentUserId)
     .eq('elder_id', requestedUserId)

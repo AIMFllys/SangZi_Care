@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         session_id: sessionId,
       };
       const { error } = await supabase
-        .from('ai_conversations')
+        .from('oc_ai_conversations')
         .insert(record);
       if (error) {
         console.error('[POST /ai/chat] 写入对话记录失败:', error);

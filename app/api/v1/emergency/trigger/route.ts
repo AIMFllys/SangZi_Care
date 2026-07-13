@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     // 查询当前 elder 的 active 绑定中可接收紧急通知的家属
     // 修复项：使用 can_receive_emergency 布尔列（types/supabase.ts 为准）
     const { data: bindsData, error: bindsError } = await supabase
-      .from('elder_family_binds')
+      .from('oc_elder_family_binds')
       .select('family_id, relation')
       .eq('elder_id', currentUserId)
       .eq('status', 'active')
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
     };
 
     const { data, error } = await supabase
-      .from('emergency_calls')
+      .from('oc_emergency_calls')
       .insert(record)
       .select('*');
 

@@ -38,10 +38,10 @@ describe('realtimeSubscriptions 实时订阅管理', () => {
 
   it('subscribeToTable 创建频道并订阅', () => {
     const cb = vi.fn();
-    subscribeToTable('health_records', 'user-1', cb, ['INSERT']);
+    subscribeToTable('oc_health_records', 'user-1', cb, ['INSERT']);
     expect(mockOn).toHaveBeenCalledWith(
       'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'health_records' },
+      { event: 'INSERT', schema: 'public', table: 'oc_health_records' },
       expect.any(Function),
     );
     expect(mockSubscribe).toHaveBeenCalled();
@@ -49,23 +49,23 @@ describe('realtimeSubscriptions 实时订阅管理', () => {
 
   it('重复订阅同一张表时先取消旧订阅', () => {
     const cb = vi.fn();
-    subscribeToTable('health_records', 'user-1', cb);
+    subscribeToTable('oc_health_records', 'user-1', cb);
     mockUnsubscribe.mockClear();
-    subscribeToTable('health_records', 'user-1', cb);
+    subscribeToTable('oc_health_records', 'user-1', cb);
     expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
   });
 
   it('unsubscribeFromTable 取消指定表订阅', () => {
     const cb = vi.fn();
-    subscribeToTable('medication_plans', 'user-1', cb);
-    unsubscribeFromTable('medication_plans');
+    subscribeToTable('oc_medication_plans', 'user-1', cb);
+    unsubscribeFromTable('oc_medication_plans');
     expect(mockUnsubscribe).toHaveBeenCalled();
   });
 
   it('unsubscribeAll 取消所有订阅', () => {
     const cb = vi.fn();
-    subscribeToTable('health_records', 'user-1', cb);
-    subscribeToTable('medication_records', 'user-1', cb);
+    subscribeToTable('oc_health_records', 'user-1', cb);
+    subscribeToTable('oc_medication_records', 'user-1', cb);
     unsubscribeAll();
     expect(mockUnsubscribe).toHaveBeenCalledTimes(2);
   });

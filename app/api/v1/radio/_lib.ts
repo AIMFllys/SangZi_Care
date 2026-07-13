@@ -12,14 +12,14 @@ import type { Database } from '@/types/supabase';
 // ---------- Supabase 行 / 插入类型 ----------
 
 export type BroadcastRow =
-  Database['public']['Tables']['health_broadcasts']['Row'];
+  Database['public']['Tables']['oc_health_broadcasts']['Row'];
 export type BroadcastInsert =
-  Database['public']['Tables']['health_broadcasts']['Insert'];
+  Database['public']['Tables']['oc_health_broadcasts']['Insert'];
 export type PlayHistoryRow =
-  Database['public']['Tables']['broadcast_play_history']['Row'];
+  Database['public']['Tables']['oc_broadcast_play_history']['Row'];
 export type PlayHistoryInsert =
-  Database['public']['Tables']['broadcast_play_history']['Insert'];
-export type UsersRow = Database['public']['Tables']['users']['Row'];
+  Database['public']['Tables']['oc_broadcast_play_history']['Insert'];
+export type UsersRow = Database['public']['Tables']['oc_users']['Row'];
 
 // ---------- 响应 / 请求类型（对齐前端 stores/radioStore.ts） ----------
 

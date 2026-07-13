@@ -4,7 +4,7 @@
 // 对齐 backend/api/v1/users.py · get_me / update_me
 // body(PATCH): name、avatar_url、birth_date、gender、chronic_diseases、
 //              font_size、voice_speed、wake_word 的任意子集
-// 返回：当前用户全行（对齐 UserResponse / Tables<'users'>）
+// 返回：当前用户全行（对齐 UserResponse / Tables<'oc_users'>）
 // ============================================================
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -18,8 +18,8 @@ import type { Database } from '@/types/supabase';
 
 export const runtime = 'nodejs';
 
-type UserRow = Database['public']['Tables']['users']['Row'];
-type UserUpdate = Database['public']['Tables']['users']['Update'];
+type UserRow = Database['public']['Tables']['oc_users']['Row'];
+type UserUpdate = Database['public']['Tables']['oc_users']['Update'];
 
 // 允许更新的字段白名单（对齐 backend/models/user.py · UserUpdate）
 const STRING_FIELDS = [
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
-      .from('users')
+      .from('oc_users')
       .select('*')
       .eq('id', user_id)
       .limit(1);
@@ -116,7 +116,7 @@ export async function PATCH(request: NextRequest) {
 
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
-      .from('users')
+      .from('oc_users')
       .update(update_data)
       .eq('id', user_id)
       .select('*');

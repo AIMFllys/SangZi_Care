@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     };
 
     const { data, error } = await supabase
-      .from('elder_care_messages')
+      .from('oc_elder_care_messages')
       .insert(record)
       .select('*');
 

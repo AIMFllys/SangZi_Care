@@ -8,11 +8,11 @@
 import type { Database } from '@/types/supabase';
 
 export type FamilyBindRow =
-  Database['public']['Tables']['elder_family_binds']['Row'];
+  Database['public']['Tables']['oc_elder_family_binds']['Row'];
 export type FamilyBindInsert =
-  Database['public']['Tables']['elder_family_binds']['Insert'];
+  Database['public']['Tables']['oc_elder_family_binds']['Insert'];
 export type FamilyBindUpdate =
-  Database['public']['Tables']['elder_family_binds']['Update'];
+  Database['public']['Tables']['oc_elder_family_binds']['Update'];
 
 /** 对齐 Python FamilyBindResponse。 */
 export interface FamilyBindResponse {

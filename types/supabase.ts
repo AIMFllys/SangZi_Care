@@ -14,7 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      ai_conversations: {
+      oc_ai_conversations: {
         Row: {
           action_result: Json | null
           action_taken: string | null
@@ -62,15 +62,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "ai_conversations_user_id_fkey"
+            foreignKeyName: "oc_ai_conversations_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "oc_users"
             referencedColumns: ["id"]
           },
         ]
       }
-      broadcast_play_history: {
+      oc_broadcast_play_history: {
         Row: {
           broadcast_id: string
           completed: boolean | null
@@ -103,22 +103,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "broadcast_play_history_broadcast_id_fkey"
+            foreignKeyName: "oc_broadcast_play_history_broadcast_id_fkey"
             columns: ["broadcast_id"]
             isOneToOne: false
-            referencedRelation: "health_broadcasts"
+            referencedRelation: "oc_health_broadcasts"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "broadcast_play_history_user_id_fkey"
+            foreignKeyName: "oc_broadcast_play_history_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "oc_users"
             referencedColumns: ["id"]
           },
         ]
       }
-      elder_care_messages: {
+      oc_elder_care_messages: {
         Row: {
           audio_duration: number | null
           audio_url: string | null
@@ -160,22 +160,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "elder_care_messages_receiver_id_fkey"
+            foreignKeyName: "oc_elder_care_messages_receiver_id_fkey"
             columns: ["receiver_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "oc_users"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "elder_care_messages_sender_id_fkey"
+            foreignKeyName: "oc_elder_care_messages_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "oc_users"
             referencedColumns: ["id"]
           },
         ]
       }
-      elder_family_binds: {
+      oc_elder_family_binds: {
         Row: {
           bind_code: string | null
           bound_at: string | null
@@ -217,22 +217,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "elder_family_binds_elder_id_fkey"
+            foreignKeyName: "oc_elder_family_binds_elder_id_fkey"
             columns: ["elder_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "oc_users"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "elder_family_binds_family_id_fkey"
+            foreignKeyName: "oc_elder_family_binds_family_id_fkey"
             columns: ["family_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "oc_users"
             referencedColumns: ["id"]
           },
         ]
       }
-      emergency_calls: {
+      oc_emergency_calls: {
         Row: {
           answered_at: string | null
           called_contacts: Json | null
@@ -292,22 +292,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "emergency_calls_cancelled_by_fkey"
+            foreignKeyName: "oc_emergency_calls_cancelled_by_fkey"
             columns: ["cancelled_by"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "oc_users"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "emergency_calls_user_id_fkey"
+            foreignKeyName: "oc_emergency_calls_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "oc_users"
             referencedColumns: ["id"]
           },
         ]
       }
-      health_broadcasts: {
+      oc_health_broadcasts: {
         Row: {
           ai_prompt: string | null
           audio_duration: number | null
@@ -364,7 +364,7 @@ export type Database = {
         }
         Relationships: []
       }
-      health_records: {
+      oc_health_records: {
         Row: {
           abnormal_reason: string | null
           created_at: string | null
@@ -409,22 +409,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "health_records_recorded_by_fkey"
+            foreignKeyName: "oc_health_records_recorded_by_fkey"
             columns: ["recorded_by"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "oc_users"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "health_records_user_id_fkey"
+            foreignKeyName: "oc_health_records_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "oc_users"
             referencedColumns: ["id"]
           },
         ]
       }
-      medication_plans: {
+      oc_medication_plans: {
         Row: {
           created_at: string | null
           created_by: string | null
@@ -484,22 +484,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "medication_plans_created_by_fkey"
+            foreignKeyName: "oc_medication_plans_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "oc_users"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "medication_plans_user_id_fkey"
+            foreignKeyName: "oc_medication_plans_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "oc_users"
             referencedColumns: ["id"]
           },
         ]
       }
-      medication_records: {
+      oc_medication_records: {
         Row: {
           created_at: string | null
           delayed_count: number | null
@@ -535,22 +535,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "medication_records_plan_id_fkey"
+            foreignKeyName: "oc_medication_records_plan_id_fkey"
             columns: ["plan_id"]
             isOneToOne: false
-            referencedRelation: "medication_plans"
+            referencedRelation: "oc_medication_plans"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "medication_records_user_id_fkey"
+            foreignKeyName: "oc_medication_records_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "oc_users"
             referencedColumns: ["id"]
           },
         ]
       }
-      users: {
+      oc_users: {
         Row: {
           avatar_url: string | null
           birth_date: string | null

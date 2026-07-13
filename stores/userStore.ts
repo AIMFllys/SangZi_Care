@@ -7,7 +7,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { fetchApi } from '@/lib/api';
 import type { Tables } from '@/types/supabase';
 
-type User = Tables<'users'>;
+type User = Tables<'oc_users'>;
 
 interface UserState {
   user: User | null;

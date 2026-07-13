@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     // 作为老人查询
     const { data: elderRows, error: elderError } = await supabase
-      .from('elder_family_binds')
+      .from('oc_elder_family_binds')
       .select('*')
       .eq('elder_id', user_id)
       .eq('status', 'active');
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     // 作为家属查询
     const { data: familyRows, error: familyError } = await supabase
-      .from('elder_family_binds')
+      .from('oc_elder_family_binds')
       .select('*')
       .eq('family_id', user_id)
       .eq('status', 'active');

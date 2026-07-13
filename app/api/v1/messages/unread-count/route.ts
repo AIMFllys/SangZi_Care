@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = getSupabaseServerClient();
     const { count, error } = await supabase
-      .from('elder_care_messages')
+      .from('oc_elder_care_messages')
       .select('id', { count: 'exact', head: true })
       .eq('receiver_id', currentUserId)
       .eq('is_read', false);

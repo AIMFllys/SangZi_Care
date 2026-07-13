@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
-      .from('broadcast_play_history')
+      .from('oc_broadcast_play_history')
       .insert(record)
       .select();
 
@@ -73,14 +73,14 @@ export async function POST(request: NextRequest) {
     // JS SDK 无 "play_count + 1" 原生语法，采用先读后写。
     try {
       const { data: broadcast } = await supabase
-        .from('health_broadcasts')
+        .from('oc_health_broadcasts')
         .select('play_count')
         .eq('id', body.broadcast_id)
         .maybeSingle();
       if (broadcast) {
         const current = broadcast.play_count ?? 0;
         await supabase
-          .from('health_broadcasts')
+          .from('oc_health_broadcasts')
           .update({ play_count: current + 1 })
           .eq('id', body.broadcast_id);
       }

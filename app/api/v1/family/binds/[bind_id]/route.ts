@@ -85,7 +85,7 @@ export async function PATCH(
 
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
-      .from('elder_family_binds')
+      .from('oc_elder_family_binds')
       .update(update_data)
       .eq('id', bind_id)
       .select('*');
@@ -120,7 +120,7 @@ export async function DELETE(
     const now = new Date().toISOString();
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
-      .from('elder_family_binds')
+      .from('oc_elder_family_binds')
       .update({ status: 'inactive', bound_at: now })
       .eq('id', bind_id)
       .select('id');

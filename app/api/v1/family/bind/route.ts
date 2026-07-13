@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // 查找 pending 绑定码记录
     const { data: lookupRows, error: lookupError } = await supabase
-      .from('elder_family_binds')
+      .from('oc_elder_family_binds')
       .select('*')
       .eq('bind_code', bind_code)
       .eq('status', 'pending');
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     };
 
     const { data: updatedRows, error: updateError } = await supabase
-      .from('elder_family_binds')
+      .from('oc_elder_family_binds')
       .update(update_data)
       .eq('id', bindRecord.id)
       .select('*');

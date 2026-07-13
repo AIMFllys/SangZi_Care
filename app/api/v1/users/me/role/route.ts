@@ -19,7 +19,7 @@ import type { Database } from '@/types/supabase';
 
 export const runtime = 'nodejs';
 
-type UserRow = Database['public']['Tables']['users']['Row'];
+type UserRow = Database['public']['Tables']['oc_users']['Row'];
 
 interface RoleUpdateRequest {
   role?: unknown;
@@ -38,7 +38,7 @@ export async function PATCH(request: NextRequest) {
 
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
-      .from('users')
+      .from('oc_users')
       .update({
         role,
         updated_at: new Date().toISOString(),

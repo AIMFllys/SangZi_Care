@@ -42,7 +42,7 @@ export async function GET(
 
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
-      .from('ai_conversations')
+      .from('oc_ai_conversations')
       .select('user_input, ai_response')
       .eq('user_id', user_id)
       .order('created_at', { ascending: false })

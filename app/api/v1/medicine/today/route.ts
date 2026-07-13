@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     // 1. 拉取目标用户的活跃 plans
     const plansResult = await supabase
-      .from('medication_plans')
+      .from('oc_medication_plans')
       .select('*')
       .eq('user_id', targetUserId)
       .eq('is_active', true);
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
 
     // 3. 拉取当日 medication_records
     const recordsResult = await supabase
-      .from('medication_records')
+      .from('oc_medication_records')
       .select('*')
       .eq('user_id', targetUserId)
       .gte('created_at', `${todayStr}T00:00:00`)

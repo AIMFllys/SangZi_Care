@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
-      .from('emergency_calls')
+      .from('oc_emergency_calls')
       .update(updateData)
       .eq('id', emergencyCallId)
       .select('*');

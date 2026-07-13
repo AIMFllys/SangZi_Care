@@ -21,7 +21,7 @@ import type { Database } from '@/types/supabase';
 
 export const runtime = 'nodejs';
 
-type UserRow = Database['public']['Tables']['users']['Row'];
+type UserRow = Database['public']['Tables']['oc_users']['Row'];
 
 interface VerifyRequest {
   email?: unknown;
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     // --- 查找 / 自动创建用户 ---
     const supabase = getSupabaseServerClient();
     const { data: existing, error: selectErr } = await supabase
-      .from('users')
+      .from('oc_users')
       .select('*')
       .eq('email', normalizedEmail)
       .limit(1);
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       isNewUser = true;
       const defaultName = normalizedEmail.split('@')[0];
       const { data: inserted, error: insertErr } = await supabase
-        .from('users')
+        .from('oc_users')
         .insert({
           name: defaultName,
           email: normalizedEmail,

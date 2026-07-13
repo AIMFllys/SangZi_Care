@@ -10,7 +10,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import type { Tables } from '@/types/supabase';
 import styles from './VoicePanel.module.css';
 
-type AIConversation = Tables<'ai_conversations'>;
+type AIConversation = Tables<'oc_ai_conversations'>;
 
 export type VoicePanelState = 'idle' | 'listening' | 'processing' | 'responding';
 

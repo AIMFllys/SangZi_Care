@@ -1,7 +1,7 @@
 // ============================================================
 // 桑梓智护 — Supabase Realtime 订阅管理
-// 监听 health_records, medication_records, medication_plans,
-// elder_care_messages, emergency_calls 表的变更
+// 监听 oc_health_records, oc_medication_records, oc_medication_plans,
+// oc_elder_care_messages, oc_emergency_calls 表的变更
 // ============================================================
 
 import { supabase } from '@/lib/supabase';
@@ -10,11 +10,11 @@ import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/
 // ---------- 类型 ----------
 
 type TableName =
-  | 'health_records'
-  | 'medication_records'
-  | 'medication_plans'
-  | 'elder_care_messages'
-  | 'emergency_calls';
+  | 'oc_health_records'
+  | 'oc_medication_records'
+  | 'oc_medication_plans'
+  | 'oc_elder_care_messages'
+  | 'oc_emergency_calls';
 
 type ChangeEvent = 'INSERT' | 'UPDATE' | 'DELETE';
 
@@ -97,7 +97,7 @@ export function subscribeHealthRecords(
   userId: string,
   onUpdate: (record: Record<string, unknown>) => void,
 ): RealtimeChannel {
-  return subscribeToTable('health_records', userId, (payload) => {
+  return subscribeToTable('oc_health_records', userId, (payload) => {
     if (payload.new && typeof payload.new === 'object') {
       onUpdate(payload.new as Record<string, unknown>);
     }
@@ -111,7 +111,7 @@ export function subscribeMedicationRecords(
   userId: string,
   onUpdate: (record: Record<string, unknown>) => void,
 ): RealtimeChannel {
-  return subscribeToTable('medication_records', userId, (payload) => {
+  return subscribeToTable('oc_medication_records', userId, (payload) => {
     if (payload.new && typeof payload.new === 'object') {
       onUpdate(payload.new as Record<string, unknown>);
     }
@@ -125,7 +125,7 @@ export function subscribeMedicationPlans(
   userId: string,
   onUpdate: (plan: Record<string, unknown>) => void,
 ): RealtimeChannel {
-  return subscribeToTable('medication_plans', userId, (payload) => {
+  return subscribeToTable('oc_medication_plans', userId, (payload) => {
     if (payload.new && typeof payload.new === 'object') {
       onUpdate(payload.new as Record<string, unknown>);
     }
@@ -139,7 +139,7 @@ export function subscribeMessages(
   userId: string,
   onNewMessage: (message: Record<string, unknown>) => void,
 ): RealtimeChannel {
-  return subscribeToTable('elder_care_messages', userId, (payload) => {
+  return subscribeToTable('oc_elder_care_messages', userId, (payload) => {
     if (payload.new && typeof payload.new === 'object') {
       const msg = payload.new as Record<string, unknown>;
       // 只处理发给当前用户的消息
@@ -157,7 +157,7 @@ export function subscribeEmergencyCalls(
   userId: string,
   onEmergency: (call: Record<string, unknown>) => void,
 ): RealtimeChannel {
-  return subscribeToTable('emergency_calls', userId, (payload) => {
+  return subscribeToTable('oc_emergency_calls', userId, (payload) => {
     if (payload.new && typeof payload.new === 'object') {
       onEmergency(payload.new as Record<string, unknown>);
     }

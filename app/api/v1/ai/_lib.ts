@@ -9,9 +9,9 @@
 import type { Database } from '@/types/supabase';
 
 export type AiConversationRow =
-  Database['public']['Tables']['ai_conversations']['Row'];
+  Database['public']['Tables']['oc_ai_conversations']['Row'];
 export type AiConversationInsert =
-  Database['public']['Tables']['ai_conversations']['Insert'];
+  Database['public']['Tables']['oc_ai_conversations']['Insert'];
 
 /** 单条对话消息。对齐 Python ChatMessage。 */
 export interface ChatMessage {

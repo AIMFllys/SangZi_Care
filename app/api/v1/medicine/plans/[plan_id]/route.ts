@@ -123,7 +123,7 @@ export async function PATCH(
 
     // 先查存在性 + 取 user_id 做权限校验
     const { data: existing, error: selectErr } = await supabase
-      .from('medication_plans')
+      .from('oc_medication_plans')
       .select('id, user_id')
       .eq('id', plan_id)
       .limit(1);
@@ -147,7 +147,7 @@ export async function PATCH(
     update_data.updated_at = new Date().toISOString();
 
     const { data, error } = await supabase
-      .from('medication_plans')
+      .from('oc_medication_plans')
       .update(update_data)
       .eq('id', plan_id)
       .select('*');

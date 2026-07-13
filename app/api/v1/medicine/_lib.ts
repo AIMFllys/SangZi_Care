@@ -18,16 +18,16 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { throwApiError } from '@/lib/server';
 
 export type MedicationPlanRow =
-  Database['public']['Tables']['medication_plans']['Row'];
+  Database['public']['Tables']['oc_medication_plans']['Row'];
 export type MedicationPlanInsert =
-  Database['public']['Tables']['medication_plans']['Insert'];
+  Database['public']['Tables']['oc_medication_plans']['Insert'];
 export type MedicationPlanUpdate =
-  Database['public']['Tables']['medication_plans']['Update'];
+  Database['public']['Tables']['oc_medication_plans']['Update'];
 
 export type MedicationRecordRow =
-  Database['public']['Tables']['medication_records']['Row'];
+  Database['public']['Tables']['oc_medication_records']['Row'];
 export type MedicationRecordInsert =
-  Database['public']['Tables']['medication_records']['Insert'];
+  Database['public']['Tables']['oc_medication_records']['Insert'];
 
 /** 对齐 Python MedicationPlanResponse / 前端 medicineStore.MedicationPlanResponse。 */
 export interface MedicationPlanResponse {
@@ -157,7 +157,7 @@ export async function resolveMedicationTarget(
     mode === 'edit' ? 'can_edit_medication' : 'can_view_health';
 
   const { data, error } = await supabase
-    .from('elder_family_binds')
+    .from('oc_elder_family_binds')
     .select('id')
     .eq('family_id', currentUserId)
     .eq('elder_id', requestedUserId)
