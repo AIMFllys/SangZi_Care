@@ -146,7 +146,10 @@ describe('VoiceRecorder 真实 WAV 草稿', () => {
     mocks.stopListening.mockReturnValue(stopResult.promise);
     render(<VoiceRecorder onSend={onSend} onCancel={onCancel} />);
     fireEvent.click(screen.getByRole('button', { name: '开始录音' }));
-    await waitFor(() => expect(mocks.startListening).toHaveBeenCalledOnce());
+    await waitFor(() => {
+      expect(mocks.startListening).toHaveBeenCalledOnce();
+      expect(screen.getByRole('button', { name: '停止录音' })).toBeEnabled();
+    });
 
     fireEvent.click(screen.getByRole('button', { name: '停止录音' }));
     const cancel = screen.getByRole('button', { name: '取消录音' });
