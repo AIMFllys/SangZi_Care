@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MedicinePage from '../page';
 
@@ -9,6 +9,8 @@ const fetchTodayTimeline = vi.fn();
 const confirmMedication = vi.fn().mockResolvedValue(undefined);
 const fetchApi = vi.fn().mockResolvedValue({ id: 'emergency-1' });
 const push = vi.fn();
+const speak = vi.fn().mockResolvedValue(undefined);
+const stop = vi.fn();
 
 const timeline = [
   {
@@ -22,6 +24,7 @@ const timeline = [
     status: 'pending',
   },
 ];
+let timelineState = timeline;
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
 vi.mock('@/stores/userStore', () => ({
@@ -31,7 +34,7 @@ vi.mock('@/stores/userStore', () => ({
 vi.mock('@/stores/medicineStore', () => ({
   useMedicineStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
-      todayTimeline: timeline,
+      todayTimeline: timelineState,
       isLoading: false,
       error: null,
       fetchTodayTimeline,
@@ -39,11 +42,68 @@ vi.mock('@/stores/medicineStore', () => ({
     }),
 }));
 vi.mock('@/lib/api', () => ({ fetchApi: (...args: unknown[]) => fetchApi(...args) }));
+vi.mock('@/hooks/useTextToSpeech', () => ({
+  useTextToSpeech: () => ({
+    isSpeaking: false,
+    error: null,
+    currentLevel: 'mimo',
+    speak,
+    stop,
+    setSpeed: vi.fn(),
+  }),
+}));
 
 describe('MedicinePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.sessionStorage.clear();
+    timelineState = timeline;
+    confirmMedication.mockResolvedValue(undefined);
+    speak.mockResolvedValue(undefined);
+  });
+
+  it('真实提醒页只为同一稳定提醒播报一次 MiMo TTS', async () => {
+    const view = render(<MedicinePage />);
+
+    await waitFor(() => {
+      expect(speak).toHaveBeenCalledWith('现在该吃药了。降压药 1片');
+    });
+
+    view.rerender(<MedicinePage />);
+    await act(async () => Promise.resolve());
+    expect(speak).toHaveBeenCalledTimes(1);
+  });
+
+  it('提醒键变化时停止旧播报并为下一种药播报一次', async () => {
+    const view = render(<MedicinePage />);
+    await waitFor(() => expect(speak).toHaveBeenCalledTimes(1));
+
+    timelineState = [timeline[1]];
+    view.rerender(<MedicinePage />);
+
+    await waitFor(() => {
+      expect(stop).toHaveBeenCalled();
+      expect(speak).toHaveBeenNthCalledWith(2, '现在该吃药了。维生素 1粒');
+    });
+  });
+
+  it('确认与延后都会先停止播报，卸载也清理音频', async () => {
+    const confirmView = render(<MedicinePage />);
+    await waitFor(() => expect(speak).toHaveBeenCalled());
+
+    fireEvent.click(screen.getByRole('button', { name: '我已吃药' }));
+    expect(stop.mock.invocationCallOrder.at(-1))
+      .toBeLessThan(confirmMedication.mock.invocationCallOrder[0]);
+    await waitFor(() => expect(confirmMedication).toHaveBeenCalled());
+    confirmView.unmount();
+
+    vi.clearAllMocks();
+    const deferView = render(<MedicinePage />);
+    await waitFor(() => expect(speak).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole('button', { name: '15分钟后再提醒' }));
+    expect(stop).toHaveBeenCalled();
+    deferView.unmount();
+    expect(stop.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 
   it('提醒态只聚焦当前药物，延后后进入今日时间线且没有无效日期箭头', () => {

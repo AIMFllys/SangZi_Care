@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { useMedicineStore } from '@/stores/medicineStore';
 import { fetchApi } from '@/lib/api';
+import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
 import { Button, Card, IconButton } from '@/components/ui';
 import PageHeader from '@/components/layout/PageHeader';
@@ -23,6 +24,8 @@ export default function MedicinePage() {
   const error = useMedicineStore((s) => s.error);
   const fetchTodayTimeline = useMedicineStore((s) => s.fetchTodayTimeline);
   const confirmMedication = useMedicineStore((s) => s.confirmMedication);
+  const { speak, stop } = useTextToSpeech();
+  const spokenReminderKeyRef = useRef<string | null>(null);
 
   const [showReminder, setShowReminder] = useState(() => {
     if (typeof window === 'undefined') return true;
@@ -39,14 +42,42 @@ export default function MedicinePage() {
 
   const pendingMeds = todayTimeline.filter((t) => t.status !== 'taken');
   const currentMed = pendingMeds[0];
+  const reminderKey = showReminder && currentMed
+    ? `${currentMed.plan.id}:${currentMed.scheduled_time}`
+    : null;
+
+  useEffect(() => {
+    if (!reminderKey || !currentMed) {
+      if (spokenReminderKeyRef.current !== null) {
+        stop();
+        spokenReminderKeyRef.current = null;
+      }
+      return;
+    }
+
+    if (spokenReminderKeyRef.current === reminderKey) return;
+    if (spokenReminderKeyRef.current !== null) stop();
+
+    spokenReminderKeyRef.current = reminderKey;
+    void speak(
+      `现在该吃药了。${currentMed.plan.medicine_name} ${currentMed.plan.dosage}`,
+    );
+  }, [currentMed, reminderKey, speak, stop]);
+
+  useEffect(() => () => {
+    spokenReminderKeyRef.current = null;
+    stop();
+  }, [stop]);
 
   const handleConfirm = async () => {
     if (!currentMed) return;
+    stop();
     await confirmMedication(currentMed.plan.id, currentMed.scheduled_time);
     setShowReminder(false);
   };
 
   const handleDefer = () => {
+    stop();
     window.sessionStorage.setItem(
       'medicine-reminder-deferred-until',
       String(Date.now() + 15 * 60 * 1000),
