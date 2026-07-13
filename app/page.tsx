@@ -1,8 +1,10 @@
 'use client';
 
 import { useUserStore } from '@/stores/userStore';
-import ElderHomeView from '@/components/home/ElderHomeView';
-import FamilyHomeView from '@/components/home/FamilyHomeView';
+import dynamic from 'next/dynamic';
+
+const ElderHomeView = dynamic(() => import('@/components/home/ElderHomeView'));
+const FamilyHomeView = dynamic(() => import('@/components/home/FamilyHomeView'));
 
 /**
  * 主页面入口 — 根据用户角色渲染不同视图

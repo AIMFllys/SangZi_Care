@@ -1,9 +1,9 @@
 {
   "name": "sangzi-smart-care",
   "buildCommand": "npm run build",
-  "installCommand": "npm install",
+  "installCommand": "npm ci",
   "outputDirectory": ".next",
-  "nodeVersion": "22.11.0",
+  "nodeVersion": "22.13.0",
   "redirects": [],
   "headers": [
     {

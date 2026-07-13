@@ -18,6 +18,9 @@ const securityHeaders = [
  * - images.unoptimized 暂保留；后续可在 EdgeOne 全栈下开启优化
  */
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: process.cwd(),
+  },
   images: {
     unoptimized: true,
   },
