@@ -38,3 +38,13 @@ export {
   getSupabaseSecretKey,
   getSupabaseUrl,
 } from './env';
+
+export {
+  MimoError,
+  synthesizeSpeech,
+  transcribeSpeech,
+  type MimoAudioFormat,
+  type MimoErrorKind,
+  type MimoVoice,
+  type SynthesizedSpeech,
+} from './mimo';
