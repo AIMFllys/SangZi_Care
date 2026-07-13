@@ -163,7 +163,34 @@ describe('RadioPage 组件', () => {
     render(<RadioPage />);
     expect(screen.getByText('春季养生小贴士')).toBeDefined();
     expect(screen.getByText(/季节保健/)).toBeDefined();
-    expect(screen.getByLabelText('播放')).toBeDefined();
+    expect(screen.getByLabelText('播放春季养生小贴士')).toBeDefined();
+  });
+
+  it('搜索框有可访问名称并可提交筛选', () => {
+    mockStoreState.broadcasts = [
+      makeBroadcast({ id: 'health', title: '春季养生小贴士' }),
+      makeBroadcast({ id: 'news', title: '今日新闻速递', category: '每日新闻' }),
+    ];
+    render(<RadioPage />);
+
+    fireEvent.change(screen.getByRole('searchbox', { name: '搜索广播' }), {
+      target: { value: '新闻' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '搜索广播' }));
+
+    expect(screen.queryByText('春季养生小贴士')).toBeNull();
+    expect(screen.getByText('今日新闻速递')).toBeDefined();
+  });
+
+  it('分类是按钮且播放控件调用广播状态', () => {
+    mockStoreState.broadcasts = [makeBroadcast()];
+    render(<RadioPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: '播放春季养生小贴士' }));
+    expect(mockPlay).toHaveBeenCalledWith(0);
+
+    fireEvent.click(screen.getByRole('button', { name: '养生常识' }));
+    expect(mockFetchRecommendations).toHaveBeenCalled();
   });
 
   it('播放中显示底部播放器', () => {
@@ -172,6 +199,8 @@ describe('RadioPage 组件', () => {
     render(<RadioPage />);
     expect(screen.getByLabelText('暂停')).toBeDefined();
     expect(screen.getAllByText('春季养生小贴士').length).toBeGreaterThanOrEqual(2);
+    fireEvent.click(screen.getByLabelText('暂停'));
+    expect(mockPause).toHaveBeenCalled();
   });
 
   it('显示热门分类', () => {

@@ -1,9 +1,15 @@
 .page {
-  min-height: 100dvh;
-  padding: 0 var(--space-lg) var(--space-lg);
+  height: 100%;
+  min-height: 0;
+  padding: 0 var(--page-gutter, 20px) calc(var(--space-md) + var(--safe-bottom));
   background: linear-gradient(180deg, var(--bg-base) 0%, var(--bg-elevated) 100%);
   display: flex;
   flex-direction: column;
+}
+
+.page > header {
+  width: auto;
+  margin-inline: calc(-1 * var(--page-gutter, 20px));
 }
 
 /* 状态文案 */
@@ -11,7 +17,7 @@
   text-align: center;
   font-size: var(--font-body);
   color: var(--text-secondary);
-  margin-top: var(--space-xl);
+  margin-top: var(--space-md);
 }
 
 /* 识别文字 */
@@ -20,13 +26,14 @@
   font-size: var(--font-heading);
   font-weight: 700;
   color: var(--text-primary);
-  margin-top: var(--space-md);
+  margin-top: var(--space-sm);
   padding: 0 var(--space-md);
   min-height: 40px;
 }
 
 /* 麦克风球 */
 .micSection {
+  min-height: 0;
   flex: 1;
   display: flex;
   align-items: center;
@@ -43,8 +50,8 @@
 
 .micRing {
   position: absolute;
-  width: 210px;
-  height: 210px;
+  width: clamp(158px, 25dvh, 206px);
+  height: clamp(158px, 25dvh, 206px);
   border-radius: var(--radius-full);
   background: var(--accent-soft);
   animation: pulse-ring 2.4s ease-out infinite;
@@ -55,8 +62,10 @@
 }
 
 .micBall {
-  width: 180px;
-  height: 180px;
+  width: clamp(136px, 21dvh, 176px);
+  height: clamp(136px, 21dvh, 176px);
+  padding: 0;
+  border: 0;
   border-radius: var(--radius-full);
   background: linear-gradient(135deg, var(--accent-light), var(--accent));
   display: flex;
@@ -110,6 +119,21 @@
 /* 结束按钮 */
 .endButton {
   margin-top: var(--space-md);
+}
+
+@media (max-height: 650px) {
+  .statusText {
+    margin-top: var(--space-sm);
+  }
+
+  .recognizedText {
+    min-height: 28px;
+    font-size: var(--font-body);
+  }
+
+  .micRingDelayed {
+    display: none;
+  }
 }
 
 /* 全局 pulse-ring / pulse-glow / reduced-motion 由 styles/globals.css 统一提供 */

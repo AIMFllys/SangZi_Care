@@ -1,11 +1,20 @@
 .page {
-  min-height: 100dvh;
-  padding: var(--safe-top) var(--space-lg) var(--space-lg);
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 0 var(--page-gutter, 20px) calc(var(--space-lg) + var(--safe-bottom));
   background: var(--bg-base);
 }
 
+.page > header {
+  width: auto;
+  margin-inline: calc(-1 * var(--page-gutter, 20px));
+}
+
 .loading {
-  min-height: 100dvh;
+  min-height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -35,12 +44,12 @@
 .avatarSection {
   display: flex;
   justify-content: center;
-  padding: var(--space-lg) 0 var(--space-xl);
+  padding: var(--space-sm) 0 var(--space-md);
 }
 
 .avatar {
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
   border-radius: var(--radius-full);
   background: var(--accent-soft);
   display: flex;
@@ -122,5 +131,11 @@
 .actions {
   display: flex;
   gap: var(--space-md);
-  margin-top: var(--space-xl);
+  position: sticky;
+  bottom: calc(-1 * (var(--space-lg) + var(--safe-bottom)));
+  z-index: 2;
+  margin: var(--space-lg) calc(-1 * var(--page-gutter, 20px)) 0;
+  padding: var(--space-sm) var(--page-gutter, 20px) calc(var(--space-sm) + var(--safe-bottom));
+  border-top: 1px solid var(--divider);
+  background: var(--bg-card-solid);
 }

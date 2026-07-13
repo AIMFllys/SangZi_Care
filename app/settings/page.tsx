@@ -98,8 +98,7 @@ export default function SettingsPage() {
   const targetRoleLabel = isElder ? '家属端' : '长辈端';
 
   return (
-    <div className="device-wrapper">
-      <div className={`${styles.page} page-content`}>
+    <div className={styles.page}>
         <PageHeader title="设置" transparent />
 
         <Link href={ROUTES.SETTINGS_PROFILE} className={styles.userCardLink}>
@@ -194,7 +193,6 @@ export default function SettingsPage() {
           onConfirm={handleRoleSwitch}
           onCancel={() => setShowRoleSwitch(false)}
         />
-      </div>
     </div>
   );
 }

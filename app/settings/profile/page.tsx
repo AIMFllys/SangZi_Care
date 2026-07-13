@@ -99,19 +99,17 @@ export default function ProfilePage() {
 
   if (!isReady) {
     return (
-      <div className="device-wrapper">
-        <div className={`${styles.page} page-content`}>
-          <div className={styles.loading}>加载中…</div>
-        </div>
+      <div className={styles.page}>
+        <div className={styles.loading}>加载中…</div>
       </div>
     );
   }
 
   return (
-    <div className="device-wrapper">
-      <div className={`${styles.page} page-content`}>
+    <div className={styles.page}>
         <PageHeader
           title="个人信息"
+          variant="detail"
           backHref={ROUTES.SETTINGS}
           backAriaLabel="返回设置"
           transparent
@@ -244,7 +242,6 @@ export default function ProfilePage() {
             保存
           </Button>
         </div>
-      </div>
     </div>
   );
 }

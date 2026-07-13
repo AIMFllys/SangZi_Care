@@ -6,6 +6,7 @@ import { useAIChat } from '@/hooks/useAIChat';
 import { Mic, Bot, Square, Settings } from 'lucide-react';
 import { Button, Card, IconButton } from '@/components/ui';
 import PageHeader from '@/components/layout/PageHeader';
+import { ROUTES } from '@/lib/constants';
 import styles from './page.module.css';
 
 export default function VoicePage() {
@@ -49,9 +50,14 @@ export default function VoicePage() {
     <div className={styles.page}>
       <PageHeader
         title="智能语音助手"
+        variant="detail"
         onBack={() => router.back()}
         rightAction={
-          <IconButton variant="ghost" aria-label="设置">
+          <IconButton
+            variant="ghost"
+            aria-label="语音设置"
+            onClick={() => router.push(ROUTES.SETTINGS_ACCESSIBILITY)}
+          >
             <Settings size={24} />
           </IconButton>
         }
@@ -68,16 +74,16 @@ export default function VoicePage() {
         <div className={styles.micWrapper}>
           <div className={styles.micRing} />
           <div className={`${styles.micRing} ${styles.micRingDelayed}`} />
-          <div
+          <button
+            type="button"
             className={`${styles.micBall} interactive ${isListening ? styles.micBallActive : ''}`}
             onClick={handleMicClick}
-            role="button"
             aria-label={isListening ? '停止听取' : '开始说话'}
           >
             <span className={styles.micIcon}>
               <Mic size={56} />
             </span>
-          </div>
+          </button>
         </div>
       </div>
 

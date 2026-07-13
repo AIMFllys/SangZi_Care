@@ -1,11 +1,20 @@
 .page {
-  min-height: 100dvh;
-  padding: var(--safe-top) var(--space-lg) var(--space-lg);
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 0 var(--page-gutter, 20px) calc(var(--space-md) + var(--safe-bottom));
   background: var(--bg-base);
 }
 
+.page > header {
+  width: auto;
+  margin-inline: calc(-1 * var(--page-gutter, 20px));
+}
+
 .section {
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
 .sectionLabel {
@@ -21,19 +30,19 @@
   display: block;
   text-decoration: none;
   color: inherit;
-  margin-bottom: var(--space-xl);
+  margin-block: var(--space-sm) var(--space-md);
 }
 
 .userCard {
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  padding: var(--space-lg);
+  padding: var(--space-md);
 }
 
 .avatar {
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   border-radius: var(--radius-full);
   background: var(--accent-soft);
   display: flex;
@@ -75,8 +84,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  min-height: 56px;
-  padding: var(--space-md) var(--space-lg);
+  min-height: 52px;
+  padding: var(--space-sm) var(--space-md);
   transition: background var(--duration-fast);
 }
 
@@ -126,14 +135,29 @@
 
 /* Logout */
 .logoutBtn {
-  margin-top: var(--space-xl);
+  margin-top: var(--space-sm);
 }
 
 .version {
   text-align: center;
   font-size: var(--font-small);
   color: var(--text-muted);
-  margin-top: var(--space-lg);
+  margin-top: var(--space-sm);
+}
+
+@media (max-height: 650px) {
+  .userCardLink {
+    margin-block: 4px var(--space-sm);
+  }
+
+  .avatar {
+    width: 52px;
+    height: 52px;
+  }
+
+  .menuItem {
+    min-height: 48px;
+  }
 }
 
 /* Modal */

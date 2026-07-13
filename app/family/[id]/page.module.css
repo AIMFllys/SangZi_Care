@@ -1,151 +1,362 @@
-/* family/[id] — 家人详情 */
-.page {
-  min-height: 100dvh;
+.container {
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 0 var(--page-gutter, 20px) calc(var(--space-xl) + var(--safe-bottom));
   background: var(--bg-base);
-  padding: var(--safe-top) var(--space-lg) var(--space-lg);
+  scrollbar-gutter: stable both-edges;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md) 0 var(--space-lg);
+.container > header {
+  width: auto;
+  margin-inline: calc(-1 * var(--page-gutter, 20px));
 }
 
-.backBtn {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-full);
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.title {
-  font-size: var(--font-heading);
-  font-weight: 700;
-}
-
-/* 用户资料卡 */
-.profileCard {
-  display: flex;
-  align-items: center;
-  gap: var(--space-lg);
-  padding: var(--space-lg);
-  border-radius: var(--radius-xl);
-  background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-card);
-  margin-bottom: var(--space-xl);
-}
-
-.avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--accent-soft), var(--accent-glow));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 36px;
-}
-
-.profileInfo {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.profileName {
-  font-size: var(--font-heading);
-  font-weight: 700;
-}
-
-.profileRelation {
-  font-size: var(--font-caption);
+.empty,
+.loadingText,
+.emptyText {
   color: var(--text-secondary);
-}
-
-/* 健康摘要 */
-.summaryGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-md);
-  margin-bottom: var(--space-xl);
-}
-
-.summaryCard {
-  padding: var(--space-lg);
-  border-radius: var(--radius-lg);
-  background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-card);
+  font-size: var(--font-caption);
+  line-height: 1.6;
   text-align: center;
 }
 
-.summaryIcon {
-  font-size: 28px;
+.empty {
+  display: grid;
+  min-height: 50dvh;
+  place-items: center;
 }
 
-.summaryLabel {
-  font-size: var(--font-caption);
-  color: var(--text-secondary);
-  display: block;
-  margin-top: var(--space-xs);
-}
-
-.summaryValue {
-  font-size: var(--font-heading);
-  font-weight: 800;
-  display: block;
-  margin-top: var(--space-xs);
-}
-
-/* 操作按钮 */
-.actionList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.actionBtn {
-  display: flex;
+.profileCard {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
   align-items: center;
   gap: var(--space-md);
-  padding: var(--space-md) var(--space-lg);
-  border-radius: var(--radius-lg);
-  background: var(--bg-input);
-  backdrop-filter: blur(8px);
-  border: none;
-  cursor: pointer;
-  transition: transform var(--duration-fast);
+  margin-block: var(--space-sm) var(--space-md);
+  padding: var(--space-md);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
 }
 
-.actionBtn:active {
+.avatar {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--accent-soft);
+  color: var(--accent-action, var(--accent));
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.profileInfo {
+  min-width: 0;
+}
+
+.userName {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: var(--font-heading);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userRelation,
+.lastActive {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: var(--font-small);
+  line-height: 1.45;
+}
+
+.actionRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--accent-light);
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  color: var(--accent-action, var(--accent));
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.actionButton:active {
   transform: scale(0.98);
 }
 
-.actionBtnIcon {
-  width: var(--min-touch-target);
-  height: var(--min-touch-target);
+.actionButton:focus-visible {
+  outline: 3px solid var(--accent-action, var(--accent));
+  outline-offset: 2px;
+}
+
+.section {
+  min-width: 0;
+  margin-bottom: var(--space-md);
+  padding: var(--space-md);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.sectionTitle {
+  margin-bottom: var(--space-sm);
+  color: var(--text-primary);
+  font-size: var(--font-body);
+  font-weight: 800;
+}
+
+.healthGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.healthItem {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 6px;
+  min-width: 0;
+  padding: var(--space-sm);
   border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-body);
+  background: var(--bg-input);
 }
 
-.actionBtnLabel {
-  font-size: var(--font-body);
-  font-weight: 600;
+.healthIcon {
+  grid-row: 1 / 3;
+  align-self: center;
+  font-size: 22px;
 }
 
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-2xl);
+.healthLabel {
+  min-width: 0;
+  overflow: hidden;
   color: var(--text-secondary);
+  font-size: var(--font-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.healthValue {
+  color: var(--text-primary);
+  font-size: var(--font-body);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.healthUnit {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.abnormalBadge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 2px 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.medicineProgress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.progressBar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--divider);
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-success);
+}
+
+.progressText {
+  color: var(--text-secondary);
+  font-size: var(--font-small);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.medicineList,
+.conversationList {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.medicineItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  min-height: 44px;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+}
+
+.medicineName {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: var(--font-caption);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.medicineTime,
+.medicineStatus {
+  color: var(--text-secondary);
+  font-size: var(--font-small);
+  white-space: nowrap;
+}
+
+.medicineStatus {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+}
+
+.status_taken {
+  color: var(--color-success);
+}
+
+.status_pending {
+  color: var(--accent-action, var(--accent));
+}
+
+.status_missed,
+.status_skipped {
+  color: var(--color-danger);
+}
+
+.conversationItem {
+  min-width: 0;
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+}
+
+.convUserInput,
+.convAiResponse {
+  color: var(--text-primary);
+  font-size: var(--font-small);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.convAiResponse {
+  margin-top: 4px;
+  color: var(--text-secondary);
+}
+
+.convTime {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: right;
+}
+
+.elderFamilyInfo {
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+}
+
+.infoRow {
+  display: grid;
+  grid-template-columns: minmax(5rem, 0.45fr) minmax(0, 1fr);
+  gap: var(--space-md);
+  min-height: 48px;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--divider);
+}
+
+.infoRow:last-child {
+  border-bottom: 0;
+}
+
+.infoLabel {
+  color: var(--text-secondary);
+  font-size: var(--font-caption);
+}
+
+.infoValue {
+  min-width: 0;
+  color: var(--text-primary);
+  font-size: var(--font-caption);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+@media (max-width: 339px) {
+  .healthGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .medicineItem {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .medicineStatus {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-height: 650px) {
+  .profileCard {
+    margin-block: 4px var(--space-sm);
+    padding-block: var(--space-sm);
+  }
+
+  .section {
+    padding: var(--space-sm);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .actionButton:active {
+    transform: none;
+  }
 }

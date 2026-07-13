@@ -1,11 +1,20 @@
 .page {
-  min-height: 100dvh;
-  padding: var(--safe-top) var(--space-lg) var(--space-lg);
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 0 var(--page-gutter, 20px) calc(var(--space-lg) + var(--safe-bottom));
   background: var(--bg-base);
 }
 
+.page > header {
+  width: auto;
+  margin-inline: calc(-1 * var(--page-gutter, 20px));
+}
+
 .loading {
-  min-height: 100dvh;
+  min-height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -33,13 +42,13 @@
 }
 
 .section {
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
 .optionCard {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .sectionTitle {
@@ -62,7 +71,9 @@
 
 .sizeOption {
   flex: 1;
-  padding: var(--space-lg) var(--space-md);
+  min-width: 0;
+  min-height: 52px;
+  padding: var(--space-sm);
   border-radius: var(--radius-lg);
   border: 2px solid var(--divider);
   background: var(--bg-input);
@@ -96,7 +107,7 @@
 
 /* 预览卡片 */
 .previewCard {
-  padding: var(--space-lg);
+  padding: var(--space-md);
 }
 
 .previewTitle {
@@ -116,7 +127,7 @@
 .sliderRow {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
   min-height: 56px;
 }
 
@@ -150,6 +161,6 @@
   font-size: var(--font-body);
   font-weight: 700;
   color: var(--accent);
-  min-width: 48px;
+  min-width: 42px;
   text-align: right;
 }

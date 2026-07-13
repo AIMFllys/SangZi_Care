@@ -1,11 +1,20 @@
 .page {
-  min-height: 100dvh;
-  padding: var(--safe-top) var(--space-lg) var(--space-lg);
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 0 var(--page-gutter, 20px) calc(var(--space-lg) + var(--safe-bottom));
   background: var(--bg-base);
 }
 
+.page > header {
+  width: auto;
+  margin-inline: calc(-1 * var(--page-gutter, 20px));
+}
+
 .loading {
-  min-height: 100dvh;
+  min-height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -33,7 +42,7 @@
 }
 
 .section {
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
 }
 
 .sectionTitle {
@@ -87,8 +96,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 56px;
-  padding: var(--space-sm) 0;
+  min-height: 52px;
+  padding: 4px 0;
   cursor: pointer;
 }
 
@@ -103,8 +112,8 @@
   position: relative;
   width: 52px;
   min-width: 52px;
-  height: 48px;
-  min-height: 48px;
+  height: 44px;
+  min-height: 44px;
   border-radius: var(--radius-full);
   border: none;
   cursor: pointer;
@@ -127,7 +136,7 @@
 
 .toggleThumb {
   position: absolute;
-  top: 12px;
+  top: 10px;
   left: 4px;
   width: 24px;
   height: 24px;

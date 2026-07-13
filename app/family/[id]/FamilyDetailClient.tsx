@@ -118,7 +118,7 @@ export default function FamilyDetailClient({ userId }: Props) {
   if (!bind || !targetUser) {
     return (
       <main className={styles.container}>
-        <PageHeader title="详情" backHref="/" />
+        <PageHeader title="详情" backHref="/" variant="detail" />
         <div className={styles.empty}>未找到该用户信息</div>
       </main>
     );
@@ -127,7 +127,7 @@ export default function FamilyDetailClient({ userId }: Props) {
   return (
     <main className={styles.container}>
       {/* 顶部导航 */}
-      <PageHeader title={isElder ? '家属详情' : '老人详情'} backHref="/" />
+      <PageHeader title={isElder ? '家属详情' : '老人详情'} backHref="/" variant="detail" />
 
       {/* 用户基本信息卡片 */}
       <section className={styles.profileCard} aria-label="基本信息">
@@ -146,18 +146,18 @@ export default function FamilyDetailClient({ userId }: Props) {
       {/* 操作按钮 */}
       <div className={styles.actionRow}>
         <button
+          type="button"
           className={styles.actionButton}
           onClick={handleCall}
           aria-label={`拨打${targetUser.name}的电话`}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
         >
           <Phone size={20} /> 打电话
         </button>
         <button
+          type="button"
           className={styles.actionButton}
           onClick={handleMessage}
           aria-label={`给${targetUser.name}发消息`}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
         >
           <MessageSquare size={20} /> 发消息
         </button>
@@ -206,7 +206,7 @@ export default function FamilyDetailClient({ userId }: Props) {
                   <li key={`${item.plan.id}-${item.scheduled_time}`} className={styles.medicineItem}>
                     <span className={styles.medicineName}>{item.plan.medicine_name}</span>
                     <span className={styles.medicineTime}>{item.scheduled_time}</span>
-                    <span className={`${styles.medicineStatus} ${styles[`status_${item.status}`]}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span className={`${styles.medicineStatus} ${styles[`status_${item.status}`]}`}>
                       {item.status === 'taken' ? <><CheckCircle size={16} /> 已服</> : item.status === 'pending' ? <><Clock size={16} /> 待服</> : <><AlertTriangle size={16} /> 未服</>}
                     </span>
                   </li>
