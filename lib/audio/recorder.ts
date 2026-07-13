@@ -17,6 +17,7 @@ export interface VoiceRecorderSession {
 interface StartPcmWavRecordingOptions {
   maxDurationMs: number;
   signal?: AbortSignal;
+  onAutoStop?: () => void;
 }
 
 function createAbortError(): DOMException {
@@ -65,6 +66,7 @@ function resampleMono(
 export async function startPcmWavRecording({
   maxDurationMs,
   signal,
+  onAutoStop,
 }: StartPcmWavRecordingOptions): Promise<VoiceRecorderSession> {
   if (!Number.isFinite(maxDurationMs) || maxDurationMs <= 0) {
     throw new RangeError('maxDurationMs must be a positive finite number');
@@ -159,29 +161,7 @@ export async function startPcmWavRecording({
     const maxOutputFrames = Math.floor(OUTPUT_SAMPLE_RATE * durationLimitMs / 1_000);
     const chunks: Float32Array[] = [];
     let inputLength = 0;
-
-    processor.onaudioprocess = (event: AudioProcessingEvent): void => {
-      const { inputBuffer } = event;
-      if (inputBuffer.numberOfChannels <= 0 || inputBuffer.length <= 0) return;
-      const remainingFrames = maxInputFrames - inputLength;
-      if (remainingFrames <= 0) return;
-      const frameCount = Math.min(inputBuffer.length, remainingFrames);
-
-      const mono = new Float32Array(frameCount);
-      for (let channel = 0; channel < inputBuffer.numberOfChannels; channel += 1) {
-        const channelSamples = inputBuffer.getChannelData(channel);
-        for (let frame = 0; frame < frameCount; frame += 1) {
-          mono[frame] += channelSamples[frame] / inputBuffer.numberOfChannels;
-        }
-      }
-
-      chunks.push(mono);
-      inputLength += mono.length;
-    };
-
-    source.connect(processor);
-    processor.connect(context.destination);
-
+    let autoStopNotified = false;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let stopPromise: Promise<RecordingResult> | null = null;
 
@@ -226,6 +206,38 @@ export async function startPcmWavRecording({
       });
       return stopPromise;
     };
+
+    processor.onaudioprocess = (event: AudioProcessingEvent): void => {
+      const { inputBuffer } = event;
+      if (inputBuffer.numberOfChannels <= 0 || inputBuffer.length <= 0) return;
+      const remainingFrames = maxInputFrames - inputLength;
+      if (remainingFrames <= 0) return;
+      const frameCount = Math.min(inputBuffer.length, remainingFrames);
+
+      const mono = new Float32Array(frameCount);
+      for (let channel = 0; channel < inputBuffer.numberOfChannels; channel += 1) {
+        const channelSamples = inputBuffer.getChannelData(channel);
+        for (let frame = 0; frame < frameCount; frame += 1) {
+          mono[frame] += channelSamples[frame] / inputBuffer.numberOfChannels;
+        }
+      }
+
+      chunks.push(mono);
+      inputLength += mono.length;
+
+      if (inputLength >= maxInputFrames && !autoStopNotified) {
+        autoStopNotified = true;
+        void finish(false).catch(() => undefined);
+        try {
+          onAutoStop?.();
+        } catch {
+          // Resource cleanup must not depend on consumer callback behavior.
+        }
+      }
+    };
+
+    source.connect(processor);
+    processor.connect(context.destination);
 
     const stop = (): Promise<RecordingResult> => finish(false);
     const abort = (): void => {

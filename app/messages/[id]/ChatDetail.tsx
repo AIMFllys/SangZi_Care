@@ -72,9 +72,11 @@ export default function ChatDetailPage() {
     };
 
     syncViewport();
+    window.addEventListener('resize', syncViewport);
     viewport?.addEventListener('resize', syncViewport);
     viewport?.addEventListener('scroll', syncViewport);
     return () => {
+      window.removeEventListener('resize', syncViewport);
       viewport?.removeEventListener('resize', syncViewport);
       viewport?.removeEventListener('scroll', syncViewport);
       if (previous) root.style.setProperty('--chat-viewport-height', previous);

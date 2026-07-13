@@ -313,6 +313,33 @@ describe('useMessageStore', () => {
       expect(state.contacts).toHaveLength(1);
       expect(state.contacts[0].name).toBe('小红');
     });
+
+    it('只接受明确 active，pending、null 与缺失状态都不能成为联系人', async () => {
+      const activeBind = makeBind();
+      const pendingBind = makeBind({
+        bind: { status: 'pending' },
+        user: { id: 'user-pending', name: '待确认' },
+      });
+      const nullBind = makeBind({
+        bind: { status: null },
+        user: { id: 'user-null', name: '状态未知' },
+      });
+      const missingBind = makeBind({ user: { id: 'user-missing', name: '缺少状态' } });
+      delete missingBind.bind.status;
+
+      mockFetchApi
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+
+      await useMessageStore.getState().fetchContacts(
+        [activeBind, pendingBind, nullBind, missingBind],
+        'me',
+      );
+
+      expect(useMessageStore.getState().contacts.map((contact) => contact.name))
+        .toEqual(['小红']);
+      expect(mockFetchApi).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('reset', () => {

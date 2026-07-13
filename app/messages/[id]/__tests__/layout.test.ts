@@ -32,6 +32,12 @@ describe('聊天页窄屏与横屏布局契约', () => {
     expect(pageCss).toMatch(/\.textInputRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto/);
   });
 
+  it('播放错误不拦截语音录制操作，录音浮层始终位于错误条上方', () => {
+    expect(pageCss).toMatch(/\.voiceError\s*\{[\s\S]*?z-index:\s*10/);
+    expect(pageCss).toMatch(/\.voiceError\s*\{[\s\S]*?pointer-events:\s*none/);
+    expect(recorderCss).toMatch(/\.recordingHud,\s*\.reviewPanel\s*\{[\s\S]*?z-index:\s*20/);
+  });
+
   it('聊天、录音和输入区所有操作控件至少 44px', () => {
     expect(pageCss).toMatch(/\.backBtn,\s*\.modeToggle\s*\{[\s\S]*?width:\s*48px;[\s\S]*?height:\s*48px/);
     expect(pageCss).toMatch(/\.sendBtn\s*\{[\s\S]*?height:\s*48px/);

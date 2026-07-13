@@ -348,6 +348,9 @@ export function useVoiceRecognition(): UseVoiceRecognitionReturn {
       const session = await startPcmWavRecording({
         maxDurationMs: MAX_RECORDING_DURATION_MS,
         signal: operation.controller.signal,
+        onAutoStop: () => {
+          void finishOperation(operation).catch(() => undefined);
+        },
       });
       if (operation.cancelled) {
         session.abort();

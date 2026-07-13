@@ -93,7 +93,7 @@ interface MessageState {
   reset: () => void;
 }
 
-export const useMessageStore = create<MessageState>()((set, get) => ({
+export const useMessageStore = create<MessageState>()((set) => ({
   contacts: [],
   messages: [],
   unreadTotal: 0,
@@ -103,8 +103,8 @@ export const useMessageStore = create<MessageState>()((set, get) => ({
   fetchContacts: async (binds, currentUserId) => {
     set({ loading: true, error: null });
     try {
-      // 过滤活跃绑定（后端已过滤 status='active'，前端兜底：排除明确非活跃的）
-      const activeBinds = binds.filter((b) => b.bind.status !== 'inactive');
+      // 后端与前端都只接受明确活跃的绑定，未知或待确认状态不能暴露联系人。
+      const activeBinds = binds.filter((b) => b.bind.status === 'active');
 
       // 为每个联系人获取最新消息
       const contactPromises = activeBinds.map(async (bind) => {

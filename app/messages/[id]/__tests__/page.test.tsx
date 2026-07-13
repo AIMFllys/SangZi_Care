@@ -358,6 +358,38 @@ describe('ChatDetailPage 真实语音消息', () => {
     expect(screen.getByTestId('voice-recorder')).toBeInTheDocument();
   });
 
+  it('已在语音模式时产生播放错误也不会移除或禁用录音操作', async () => {
+    mocks.messages = [voiceMessage()];
+    mocks.fetchBlob.mockRejectedValue(new Error('网络失败'));
+    render(<ChatDetailPage />);
+    await openVoiceRecorder();
+
+    fireEvent.click(screen.getByRole('button', { name: /播放语音消息/ }));
+
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('网络失败'));
+    expect(screen.getByTestId('voice-recorder')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '开始录音' })).toBeEnabled();
+  });
+
+  it('visualViewport 不可用时跟随 window resize 恢复真实聊天高度', () => {
+    const viewportDescriptor = Object.getOwnPropertyDescriptor(window, 'visualViewport');
+    const heightDescriptor = Object.getOwnPropertyDescriptor(window, 'innerHeight');
+    Object.defineProperty(window, 'visualViewport', { configurable: true, value: undefined });
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 640 });
+
+    const view = render(<ChatDetailPage />);
+    expect(document.documentElement.style.getPropertyValue('--chat-viewport-height')).toBe('640px');
+
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 480 });
+    act(() => window.dispatchEvent(new Event('resize')));
+    expect(document.documentElement.style.getPropertyValue('--chat-viewport-height')).toBe('480px');
+
+    view.unmount();
+    if (viewportDescriptor) Object.defineProperty(window, 'visualViewport', viewportDescriptor);
+    else delete (window as unknown as Record<string, unknown>).visualViewport;
+    if (heightDescriptor) Object.defineProperty(window, 'innerHeight', heightDescriptor);
+  });
+
   it('返回消息列表并标记收到的未读消息', () => {
     mocks.messages = [voiceMessage({ is_read: false })];
     render(<ChatDetailPage />);

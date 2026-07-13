@@ -199,6 +199,21 @@ describe('startPcmWavRecording', () => {
     expect(view.getUint32(40, true)).toBe(16_000 * 60 * 2);
   });
 
+  it('PCM 帧达到上限时不等待墙钟就释放麦克风并通知调用方', async () => {
+    state.contextSampleRate = 16_000;
+    const onAutoStop = vi.fn();
+    const options = { maxDurationMs: 1_500, onAutoStop };
+    const session = await startPcmWavRecording(options);
+
+    emitAudio([new Float32Array(16_000 * 1.5)]);
+    await Promise.resolve();
+
+    expect(onAutoStop).toHaveBeenCalledOnce();
+    expect(state.trackStop).toHaveBeenCalledOnce();
+    expect(state.close).toHaveBeenCalledOnce();
+    await expect(session.stop()).resolves.toMatchObject({ durationMs: 1_500 });
+  });
+
   it('abort 立即释放资源，后续 stop 返回 AbortError', async () => {
     const session = await startPcmWavRecording({ maxDurationMs: 60_000 });
     session.abort();

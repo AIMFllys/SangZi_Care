@@ -142,6 +142,7 @@ describe('useVoiceRecognition MiMo state machine', () => {
     expect(mocks.startRecorder).toHaveBeenCalledWith({
       maxDurationMs: 60_000,
       signal: expect.any(AbortSignal),
+      onAutoStop: expect.any(Function),
     });
 
     await act(async () => {
@@ -490,6 +491,27 @@ describe('useVoiceRecognition MiMo state machine', () => {
       audioBlob: recordingBlob,
       durationMs: 1_250,
     });
+  });
+
+  it('PCM 帧上限回调无需等待节流墙钟就启动同一转写流程', async () => {
+    const session = makeSession();
+    let onAutoStop: (() => void) | undefined;
+    mocks.startRecorder.mockImplementation(async (options) => {
+      onAutoStop = options.onAutoStop;
+      return session;
+    });
+    const hook = renderHook(() => useVoiceRecognition());
+    await act(async () => hook.result.current.startListening());
+
+    expect(onAutoStop).toBeTypeOf('function');
+    await act(async () => {
+      onAutoStop?.();
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(hook.result.current.phase).toBe('success'));
+    expect(session.stop).toHaveBeenCalledOnce();
+    expect(mocks.fetchFormData).toHaveBeenCalledOnce();
   });
 
   it('resetTranscript 清空文本和错误并回到 idle', async () => {
