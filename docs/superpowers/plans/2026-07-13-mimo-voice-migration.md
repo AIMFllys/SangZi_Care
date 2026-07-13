@@ -287,7 +287,106 @@ git add lib/audio
 git commit -m "feat(voice): record browser audio as PCM WAV"
 ```
 
-## Task 4: Make MiMo the primary ASR path with an awaitable stop contract
+## Task 4: Add shared authenticated transports and make MiMo TTS primary
+
+This task deliberately migrates TTS before narrowing `VoiceLevel`. The old ASR hook still needs the legacy union until Task 5; changing the union and deleting Native bridge speech in an earlier commit would make `useTextToSpeech.ts`, its tests, and the full TypeScript build fail.
+
+**Files:**
+
+- Modify: `lib/api.ts`
+- Create: `lib/__tests__/api.test.ts`
+- Modify: `lib/voiceCapabilities.ts`
+- Modify: `lib/__tests__/voiceCapabilities.test.ts`
+- Modify: `stores/voiceStore.ts`
+- Modify: `stores/__tests__/voiceStore.test.ts`
+- Modify: `hooks/useTextToSpeech.ts`
+- Modify: `hooks/__tests__/useTextToSpeech.test.ts`
+- Inspect and use without adding a second preference field: `stores/userStore.ts`
+
+- [ ] **Step 1: Write failing authenticated transport tests**
+
+Test `fetchFormData<T>()` and `fetchBlob()` through the real exported helpers. Cover bearer injection, no manually supplied multipart `Content-Type`, one 401 refresh and retry with the new token, two concurrent 401 responses sharing one refresh, non-JSON errors, `ApiError.status`, and caller `AbortSignal` during the first request and retry. The intended API is:
+
+```ts
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number | null) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+export function fetchFormData<T>(
+  path: string,
+  formData: FormData,
+  options?: { method?: 'POST' | 'PATCH'; signal?: AbortSignal },
+): Promise<T>;
+
+export function fetchBlob(
+  path: string,
+  options?: {
+    method?: 'GET' | 'POST';
+    body?: unknown;
+    headers?: Record<string, string>;
+    signal?: AbortSignal;
+  },
+): Promise<Blob>;
+```
+
+- [ ] **Step 2: Write failing MiMo TTS lifecycle tests**
+
+Replace tests for Native/doubao-first behavior. Cover all of the following:
+
+- MiMo is requested even when `speechSynthesis` exists; the JSON body is exactly `{ text }`, with no upstream `speed` field.
+- `user.voice_speed` is used when finite, otherwise Elder/Family defaults are used, and every value is clamped to 0.5–2 before assigning `audio.playbackRate`.
+- stopping during fetch aborts once and is an intentional cancellation, not a visible error;
+- stopping during playback pauses, detaches handlers, revokes the Blob URL exactly once, and settles the pending `speak()` promise;
+- starting a new `speak()` cancels the old operation without letting old completion set the new operation's state;
+- unmount performs the same idempotent cleanup;
+- text is split by Unicode code point into at most 1000-character chunks, preferring `。！？；\n`, hard-splitting unpunctuated text, never sending an empty chunk, and playing chunks serially;
+- a real MiMo/network/playback failure sets a Chinese error; Web Speech may receive the same text only as an explicit TTS fallback, never as the initial path.
+
+- [ ] **Step 3: Run the focused tests and verify old behavior fails**
+
+Run:
+
+```powershell
+npx vitest run lib/__tests__/api.test.ts hooks/__tests__/useTextToSpeech.test.ts lib/__tests__/voiceCapabilities.test.ts stores/__tests__/voiceStore.test.ts
+```
+
+Expected: FAIL because binary/form-data helpers do not exist, TTS is Web/Native-first, it sends `speed`, and cancellation/chunking are missing.
+
+- [ ] **Step 4: Refactor one low-level authenticated request path**
+
+Have `fetchApi`, `fetchFormData`, and `fetchBlob` call one internal response function. Preserve `fetchApi`'s existing `skipAuth`, JSON, and 204 contracts. The internal path injects the current bearer token, shares the existing module-level refresh promise, retries a 401 only once, preserves the caller signal, and constructs fresh headers for retry. A caller that aborts while awaiting the shared refresh must stop waiting without aborting the refresh used by other requests. Wrap network failures as `ApiError` with `status: null`, but preserve `AbortError` for intentional cancellation. `fetchFormData` must let the browser create the multipart boundary. Parse safe error messages without assuming JSON. Do not expose response bodies or tokens in logs.
+
+- [ ] **Step 5: Make TTS capability order MiMo-first without breaking legacy ASR**
+
+Temporarily extend the union to `type VoiceLevel = 'mimo' | 'web' | 'native' | 'doubao'`. TTS detection returns `['mimo', 'web']` when Web Speech exists and `['mimo']` otherwise. ASR retains its old values only until Task 5. Initialize the TTS store at `mimo`; update tests to make this transitional boundary explicit.
+
+- [ ] **Step 6: Implement the seek-safe MiMo audio lifecycle**
+
+Use one operation token, one `AbortController`, one current `HTMLAudioElement`, and one idempotent cleanup routine. `stop()` and superseding `speak()` resolve intentional cancellation, remove event handlers before pause/revoke, and prevent stale operations from changing new state. Read the persisted selector directly with `useUserStore((state) => state.user?.voice_speed)`; do not add another preference source.
+
+- [ ] **Step 7: Verify the TTS/transport boundary**
+
+Run:
+
+```powershell
+npx vitest run lib/__tests__/api.test.ts hooks/__tests__/useTextToSpeech.test.ts lib/__tests__/voiceCapabilities.test.ts stores/__tests__/voiceStore.test.ts
+npm run tsc
+npm run lint -- --quiet
+```
+
+Expected: PASS; active TTS code contains no Native call, no `doubao` branch, and no numeric speed in the route request body.
+
+- [ ] **Step 8: Commit authenticated transport and MiMo TTS**
+
+```powershell
+git add lib/api.ts lib/__tests__/api.test.ts lib/voiceCapabilities.ts lib/__tests__/voiceCapabilities.test.ts stores/voiceStore.ts stores/__tests__/voiceStore.test.ts hooks/useTextToSpeech.ts hooks/__tests__/useTextToSpeech.test.ts
+git commit -m "feat(voice): play MiMo speech with user preferences"
+```
+
+## Task 5: Make MiMo the primary ASR path with an awaitable stop contract
 
 **Files:**
 
@@ -297,95 +396,84 @@ git commit -m "feat(voice): record browser audio as PCM WAV"
 - Modify: `stores/__tests__/voiceStore.test.ts`
 - Modify: `hooks/useVoiceRecognition.ts`
 - Modify: `hooks/__tests__/useVoiceRecognition.test.ts`
-- Modify: `lib/jsbridge.ts` and `lib/__tests__/jsbridge.test.ts` only for Native voice removal.
+- Modify: `lib/jsbridge.ts`
+- Modify: `lib/__tests__/jsbridge.test.ts`
 
-- [ ] **Step 1: Rewrite failing capability tests around the target policy**
+- [ ] **Step 1: Write the final capability and bridge tests**
 
-Expected capability order for an authenticated online app is `['mimo', 'web']` when Web Speech exists and `['mimo']` otherwise. Remove `'doubao'` and broken Native ASR expectations.
+Narrow the final public union to `type VoiceLevel = 'mimo' | 'web'`. For authenticated online use, ASR and TTS both order MiMo first and include Web only when the corresponding browser API exists. Delete Native ASR/TTS types, methods, callback tests, and `doubao` VoiceLevel expectations. Keep phone/storage bridge behavior compiling until the Android plan removes the JavaScript interface itself.
 
-- [ ] **Step 2: Write the failing hook contract tests**
+- [ ] **Step 2: Write failing ASR state-machine tests**
 
-The return type must include:
+The public contract is:
 
 ```ts
-type RecognitionPhase = 'idle' | 'requesting_permission' | 'recording' | 'transcribing' | 'success' | 'error';
-type StopResult = { transcript: string; audioBlob: Blob; durationMs: number };
+export type RecognitionPhase =
+  | 'idle'
+  | 'requesting_permission'
+  | 'recording'
+  | 'transcribing'
+  | 'success'
+  | 'error';
+
+export type StopResult = {
+  transcript: string;
+  audioBlob: Blob;
+  durationMs: number;
+};
 
 startListening(): Promise<void>;
 stopListening(): Promise<StopResult | null>;
 cancelListening(): void;
 ```
 
-Test that `stopListening()` does not resolve until the mocked transcription response arrives, sends a WAV filename/MIME, deduplicates concurrent stop calls, refreshes auth on 401, and aborts on unmount.
+`stopListening` itself must not be declared `async`; it returns a cached promise so concurrent callers receive the same object. Test permission → recording → transcribing → success, `recording.wav` with `audio/wav`, exactly one recorder stop/upload/transcript write, idle stop returning `null`, cancel during permission/recording/transcribing, 401 refresh through `fetchFormData`, unmount abort, stale-operation isolation, no-speech handling, and the hook's 60-second automatic stop.
 
-- [ ] **Step 3: Run tests and verify current synchronous stop fails**
+- [ ] **Step 3: Lock the only feasible Web ASR fallback semantics**
 
-Run: `npx vitest run lib/__tests__/voiceCapabilities.test.ts stores/__tests__/voiceStore.test.ts hooks/__tests__/useVoiceRecognition.test.ts`
+Web Speech cannot transcribe an already captured WAV. Therefore a retryable MiMo network/429/5xx failure must:
 
-Expected: FAIL for type/behavior differences.
+1. reject the current stop with an actionable Chinese retry message and never fabricate a transcript;
+2. select `web` only for the next explicit recording attempt;
+3. leave permission denial, 400/401-after-refresh, and 422/no-speech as direct errors without fallback.
 
-- [ ] **Step 4: Add a multipart fetch helper with token refresh**
+When the next attempt uses Web Speech, capture PCM WAV in parallel so a successful `StopResult` still contains a real audio Blob and duration. Tests must prove no Web recognition starts retroactively during the failed MiMo stop.
 
-Extend `lib/api.ts` with an authenticated `fetchFormData` that shares the existing single-flight refresh logic. Do not manually duplicate token refresh in the hook.
+- [ ] **Step 4: Run tests and verify the old synchronous WebM path fails**
 
-- [ ] **Step 5: Implement the MiMo recognition state machine**
+Run:
 
-Start `PcmWavRecorder`, transition phases explicitly, upload `recording.wav`, await JSON, store one final transcript, and return the audio Blob/duration. Web Speech is an explicit fallback only after a real MiMo network/service failure; permission denial stays actionable and is not hidden by silent fallback.
+```powershell
+npx vitest run hooks/__tests__/useVoiceRecognition.test.ts lib/__tests__/voiceCapabilities.test.ts stores/__tests__/voiceStore.test.ts lib/__tests__/jsbridge.test.ts
+```
 
-- [ ] **Step 6: Remove Native ASR/TTS capability assumptions**
+Expected: FAIL because the current hook returns synchronously, uploads WebM, calls Native speech, and has no explicit phases or cancellation result.
 
-Delete Native voice methods from the TypeScript bridge contract and capability selection so the WebView uses the same tested MiMo path as browsers. Keep the non-voice bridge module compiling until the Android plan removes the JavaScript interface entirely.
+- [ ] **Step 5: Implement MiMo and next-attempt Web recording paths**
 
-- [ ] **Step 7: Verify hook/store/capability tests**
+Always acquire audio through `startPcmWavRecording({ maxDurationMs: 60_000, signal })`. MiMo stop awaits the WAV result, uploads it with `fetchFormData`, trims exactly one final transcript, and returns the WAV/duration. The Web path runs browser recognition and the same PCM recorder concurrently, then waits for a final transcript plus WAV. A hook timer invokes the same cached stop operation at 60 seconds so the UI cannot remain in `recording` after the recorder auto-stops.
 
-Run: `npx vitest run hooks/__tests__/useVoiceRecognition.test.ts stores/__tests__/voiceStore.test.ts lib/__tests__/voiceCapabilities.test.ts lib/__tests__/jsbridge.test.ts && npm run tsc`
+- [ ] **Step 6: Remove Native and WebM runtime paths**
 
-Expected: PASS; no `doubao` VoiceLevel remains.
+Delete `MediaRecorder`, WebM/Opus, Native ASR/TTS bridge methods, and direct token/fetch duplication. Do not delete Ark/doubao text-AI modules: only `VoiceLevel` and speech runtime terminology change here.
+
+- [ ] **Step 7: Verify the final hook/store/capability boundary**
+
+Run:
+
+```powershell
+npx vitest run hooks/__tests__/useVoiceRecognition.test.ts hooks/__tests__/useTextToSpeech.test.ts lib/__tests__/api.test.ts stores/__tests__/voiceStore.test.ts lib/__tests__/voiceCapabilities.test.ts lib/__tests__/jsbridge.test.ts
+npm run tsc
+npm run lint -- --quiet
+```
+
+Expected: PASS; searches find no `MediaRecorder`, `recording.webm`, `nativeASR`, `nativeTTS`, or `VoiceLevel` value `doubao` in active speech code.
 
 - [ ] **Step 8: Commit primary MiMo ASR**
 
 ```powershell
-git add lib/api.ts lib/voiceCapabilities.ts lib/jsbridge.ts lib/__tests__ stores/voiceStore.ts stores/__tests__/voiceStore.test.ts hooks/useVoiceRecognition.ts hooks/__tests__/useVoiceRecognition.test.ts
+git add lib/voiceCapabilities.ts lib/__tests__/voiceCapabilities.test.ts stores/voiceStore.ts stores/__tests__/voiceStore.test.ts hooks/useVoiceRecognition.ts hooks/__tests__/useVoiceRecognition.test.ts lib/jsbridge.ts lib/__tests__/jsbridge.test.ts
 git commit -m "feat(voice): make MiMo primary speech recognition"
-```
-
-## Task 5: Make MiMo TTS abortable and honor user voice speed
-
-**Files:**
-
-- Modify: `hooks/useTextToSpeech.ts`
-- Modify: `hooks/__tests__/useTextToSpeech.test.ts`
-- Modify: `stores/userStore.ts` — expose/use the persisted `voice_speed` selector.
-
-- [ ] **Step 1: Write failing TTS lifecycle tests**
-
-Cover MiMo-first selection, authenticated route call, `user.voice_speed`, playbackRate, stop aborting fetch, stop revoking object URL exactly once, new speak canceling old speak, 1000-character chunking at sentence boundaries, and clear error state.
-
-- [ ] **Step 2: Run and verify Web/native-first behavior fails**
-
-Run: `npx vitest run hooks/__tests__/useTextToSpeech.test.ts`
-
-Expected: FAIL because current hook prioritizes Web/Native, duplicates auth fetch logic, and cannot abort in-flight TTS.
-
-- [ ] **Step 3: Implement one MiMo audio player path**
-
-Use an AbortController per speak call, authenticated JSON fetch, Blob URL, and one cleanup function. Apply `audio.playbackRate = clamp(user.voice_speed ?? roleDefault, 0.5, 2)`.
-
-- [ ] **Step 4: Implement sentence-aware chunking**
-
-Split at `。！？；\n` before the 1000-character limit; play sequentially; stop prevents later chunks. Never send an empty chunk.
-
-- [ ] **Step 5: Verify tests and typecheck**
-
-Run: `npx vitest run hooks/__tests__/useTextToSpeech.test.ts && npm run tsc`
-
-Expected: PASS; all URL/abort cleanup assertions pass.
-
-- [ ] **Step 6: Commit MiMo TTS hook**
-
-```powershell
-git add hooks/useTextToSpeech.ts hooks/__tests__/useTextToSpeech.test.ts stores/userStore.ts
-git commit -m "feat(voice): play MiMo speech with user preferences"
 ```
 
 ## Task 6: Replace the `/voice` mock with a real conversation state machine
