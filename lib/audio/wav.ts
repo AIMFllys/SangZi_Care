@@ -1,10 +1,45 @@
 const WAV_HEADER_BYTES = 44;
 const PCM_BYTES_PER_SAMPLE = 2;
+const CANONICAL_SAMPLE_RATE = 16_000;
 
 function writeAscii(view: DataView, offset: number, value: string): void {
   for (let index = 0; index < value.length; index += 1) {
     view.setUint8(offset + index, value.charCodeAt(index));
   }
+}
+
+function hasAscii(bytes: Uint8Array, offset: number, value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    if (bytes[offset + index] !== value.charCodeAt(index)) return false;
+  }
+  return true;
+}
+
+/** Return duration for the exact PCM16LE mono 16kHz WAV layout produced here. */
+export function getCanonicalPcm16MonoWavDurationMs(bytes: Uint8Array): number | null {
+  if (bytes.byteLength <= WAV_HEADER_BYTES) return null;
+
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const dataByteLength = view.getUint32(40, true);
+
+  const isCanonical = hasAscii(bytes, 0, 'RIFF')
+    && view.getUint32(4, true) === bytes.byteLength - 8
+    && hasAscii(bytes, 8, 'WAVE')
+    && hasAscii(bytes, 12, 'fmt ')
+    && view.getUint32(16, true) === 16
+    && view.getUint16(20, true) === 1
+    && view.getUint16(22, true) === 1
+    && view.getUint32(24, true) === CANONICAL_SAMPLE_RATE
+    && view.getUint32(28, true) === CANONICAL_SAMPLE_RATE * PCM_BYTES_PER_SAMPLE
+    && view.getUint16(32, true) === PCM_BYTES_PER_SAMPLE
+    && view.getUint16(34, true) === 16
+    && hasAscii(bytes, 36, 'data')
+    && dataByteLength > 0
+    && dataByteLength % PCM_BYTES_PER_SAMPLE === 0
+    && dataByteLength === bytes.byteLength - WAV_HEADER_BYTES;
+
+  if (!isCanonical) return null;
+  return dataByteLength * 1_000 / (CANONICAL_SAMPLE_RATE * PCM_BYTES_PER_SAMPLE);
 }
 
 /**

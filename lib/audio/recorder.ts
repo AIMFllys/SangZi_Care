@@ -146,22 +146,31 @@ export async function startPcmWavRecording({
     if (!Number.isFinite(context.sampleRate) || context.sampleRate <= 0) {
       throw new RangeError('AudioContext returned an invalid sample rate');
     }
+    if (context.state === 'suspended') {
+      await context.resume();
+      if (externallyAborted || signal?.aborted) throw createAbortError();
+    }
 
     source = context.createMediaStreamSource(stream);
     processor = context.createScriptProcessor(4096, 2, 1);
 
     const inputSampleRate = context.sampleRate;
+    const maxInputFrames = Math.ceil(inputSampleRate * durationLimitMs / 1_000);
+    const maxOutputFrames = Math.floor(OUTPUT_SAMPLE_RATE * durationLimitMs / 1_000);
     const chunks: Float32Array[] = [];
     let inputLength = 0;
 
     processor.onaudioprocess = (event: AudioProcessingEvent): void => {
       const { inputBuffer } = event;
       if (inputBuffer.numberOfChannels <= 0 || inputBuffer.length <= 0) return;
+      const remainingFrames = maxInputFrames - inputLength;
+      if (remainingFrames <= 0) return;
+      const frameCount = Math.min(inputBuffer.length, remainingFrames);
 
-      const mono = new Float32Array(inputBuffer.length);
+      const mono = new Float32Array(frameCount);
       for (let channel = 0; channel < inputBuffer.numberOfChannels; channel += 1) {
         const channelSamples = inputBuffer.getChannelData(channel);
-        for (let frame = 0; frame < inputBuffer.length; frame += 1) {
+        for (let frame = 0; frame < frameCount; frame += 1) {
           mono[frame] += channelSamples[frame] / inputBuffer.numberOfChannels;
         }
       }
@@ -173,7 +182,6 @@ export async function startPcmWavRecording({
     source.connect(processor);
     processor.connect(context.destination);
 
-    const startedAt = Date.now();
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let stopPromise: Promise<RecordingResult> | null = null;
 
@@ -193,16 +201,16 @@ export async function startPcmWavRecording({
         return stopPromise;
       }
 
-      const durationMs = Math.min(
-        durationLimitMs,
-        Math.max(0, Date.now() - startedAt),
-      );
       const inputSamples = concatenate(chunks, inputLength);
-      const outputSamples = resampleMono(
+      const resampledSamples = resampleMono(
         inputSamples,
         inputSampleRate,
         OUTPUT_SAMPLE_RATE,
       );
+      const outputSamples = resampledSamples.length > maxOutputFrames
+        ? resampledSamples.slice(0, maxOutputFrames)
+        : resampledSamples;
+      const durationMs = outputSamples.length * 1_000 / OUTPUT_SAMPLE_RATE;
       const wav = encodePcm16Wav(outputSamples, OUTPUT_SAMPLE_RATE, 1);
 
       stopPromise = cleanup().then(() => {

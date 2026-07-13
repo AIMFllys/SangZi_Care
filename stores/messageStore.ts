@@ -3,7 +3,7 @@
 // ============================================================
 
 import { create } from 'zustand';
-import { fetchApi } from '@/lib/api';
+import { fetchApi, fetchFormData } from '@/lib/api';
 
 // ---------- 类型定义（对齐后端响应） ----------
 
@@ -40,15 +40,12 @@ export interface SendTextMessageRequest {
   is_ai_generated?: boolean;
 }
 
-/** 发送语音消息请求体 */
-export interface SendVoiceMessageRequest {
-  sender_id: string;
-  receiver_id: string;
-  type: 'voice';
-  content?: string;
-  audio_url?: string;
-  audio_duration?: number;
-  is_ai_generated?: boolean;
+/** 待上传的真实语音草稿。durationMs 来自 PCM 录音器，不使用 UI 计时器。 */
+export interface SendVoiceMessageData {
+  content: string;
+  audioBlob: Blob;
+  durationMs: number;
+  signal?: AbortSignal;
 }
 
 /** 未读计数响应 */
@@ -86,7 +83,7 @@ interface MessageState {
   sendVoiceMessage: (
     senderId: string,
     receiverId: string,
-    data: { content?: string; audio_url?: string; audio_duration?: number; is_ai_generated?: boolean },
+    data: SendVoiceMessageData,
   ) => Promise<MessageResponse>;
   /** 标记消息已读 */
   markAsRead: (messageId: string) => Promise<void>;
@@ -195,17 +192,31 @@ export const useMessageStore = create<MessageState>()((set, get) => ({
     return result;
   },
 
-  sendVoiceMessage: async (senderId, receiverId, data) => {
-    const body: SendVoiceMessageRequest = {
-      sender_id: senderId,
-      receiver_id: receiverId,
-      type: 'voice',
-      ...data,
-    };
-    const result = await fetchApi<MessageResponse>('/api/v1/messages/send-voice', {
-      method: 'POST',
-      body,
-    });
+  sendVoiceMessage: async (_senderId, receiverId, data) => {
+    const content = data.content.trim();
+    if (!content) throw new Error('语音转写不能为空');
+    if (data.audioBlob.type !== 'audio/wav' || data.audioBlob.size === 0) {
+      throw new Error('录音文件无效，请重新录制');
+    }
+    if (!Number.isFinite(data.durationMs) || data.durationMs <= 0 || data.durationMs > 60_000) {
+      throw new Error('录音时长无效，请重新录制');
+    }
+
+    const formData = new FormData();
+    formData.set('receiver_id', receiverId);
+    formData.set('content', content);
+    formData.set('duration_ms', String(Math.round(data.durationMs)));
+    formData.set('file', new File(
+      [data.audioBlob],
+      'recording.wav',
+      { type: 'audio/wav' },
+    ));
+
+    const result = await fetchFormData<MessageResponse>(
+      '/api/v1/messages/send-voice',
+      formData,
+      { signal: data.signal },
+    );
     set((state) => ({ messages: [...state.messages, result] }));
     return result;
   },

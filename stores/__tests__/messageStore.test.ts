@@ -1,15 +1,29 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { encodePcm16Wav } from '@/lib/audio/wav';
 import { useMessageStore } from '../messageStore';
 import type { MessageResponse } from '../messageStore';
 
 // Mock fetchApi
 vi.mock('@/lib/api', () => ({
   fetchApi: vi.fn(),
+  fetchFormData: vi.fn(),
 }));
 
-import { fetchApi } from '@/lib/api';
+import { fetchApi, fetchFormData } from '@/lib/api';
 
 const mockFetchApi = fetchApi as ReturnType<typeof vi.fn>;
+const mockFetchFormData = fetchFormData as ReturnType<typeof vi.fn>;
+
+function makeWavBlob(durationMs: number): Blob {
+  const bytes = encodePcm16Wav(
+    new Float32Array(Math.round(16_000 * durationMs / 1_000)),
+    16_000,
+    1,
+  );
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return new Blob([copy.buffer], { type: 'audio/wav' });
+}
 
 // ---------- 辅助工厂 ----------
 
@@ -53,6 +67,8 @@ function makeBind(overrides: Record<string, any> = {}) {
 describe('useMessageStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFetchApi.mockReset();
+    mockFetchFormData.mockReset();
     useMessageStore.getState().reset();
   });
 
@@ -207,31 +223,57 @@ describe('useMessageStore', () => {
   });
 
   describe('sendVoiceMessage', () => {
-    it('成功发送语音消息', async () => {
+    it('用 multipart 上传真实 WAV 并在成功后追加消息', async () => {
       const voiceMsg = makeMessage({
         id: 'voice-1',
         type: 'voice',
-        audio_url: 'https://example.com/audio.mp3',
-        audio_duration: 5.2,
+        audio_url: '/api/v1/voice/audio?message_id=voice-1',
+        audio_duration: 2.45,
       });
-      mockFetchApi.mockResolvedValue(voiceMsg);
+      mockFetchFormData.mockResolvedValue(voiceMsg);
+      const audioBlob = makeWavBlob(2_450);
+      const controller = new AbortController();
 
       const result = await useMessageStore.getState().sendVoiceMessage(
         'user-a',
         'user-b',
-        { audio_url: 'https://example.com/audio.mp3', audio_duration: 5.2 },
+        {
+          content: '今天记得吃药',
+          audioBlob,
+          durationMs: 2_450,
+          signal: controller.signal,
+        },
       );
 
       expect(result.type).toBe('voice');
-      expect(result.audio_url).toBe('https://example.com/audio.mp3');
-      expect(mockFetchApi).toHaveBeenCalledWith('/api/v1/messages/send-voice', {
-        method: 'POST',
-        body: expect.objectContaining({
-          sender_id: 'user-a',
-          receiver_id: 'user-b',
-          type: 'voice',
-        }),
-      });
+      expect(result.audio_url).toContain('message_id=voice-1');
+      expect(useMessageStore.getState().messages).toEqual([voiceMsg]);
+      expect(mockFetchFormData).toHaveBeenCalledOnce();
+      const [path, formData, options] = mockFetchFormData.mock.calls[0];
+      expect(path).toBe('/api/v1/messages/send-voice');
+      expect(formData).toBeInstanceOf(FormData);
+      expect(formData.get('receiver_id')).toBe('user-b');
+      expect(formData.get('content')).toBe('今天记得吃药');
+      expect(formData.get('duration_ms')).toBe('2450');
+      expect(formData.get('file')).toMatchObject({ type: 'audio/wav', name: 'recording.wav' });
+      expect(options).toEqual({ signal: controller.signal });
+      expect(mockFetchApi).not.toHaveBeenCalledWith('/api/v1/messages/send-voice', expect.anything());
+    });
+
+    it('上传失败时不追加假语音消息', async () => {
+      mockFetchFormData.mockRejectedValue(new Error('语音上传失败'));
+
+      await expect(useMessageStore.getState().sendVoiceMessage(
+        'user-a',
+        'user-b',
+        {
+          content: '不要追加',
+          audioBlob: makeWavBlob(1_000),
+          durationMs: 1_000,
+        },
+      )).rejects.toThrow('语音上传失败');
+
+      expect(useMessageStore.getState().messages).toEqual([]);
     });
   });
 

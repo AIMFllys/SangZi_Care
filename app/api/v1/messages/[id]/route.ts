@@ -19,7 +19,7 @@ import {
 } from '@/lib/server';
 import {
   resolveMessagePeer,
-  toMessageResponse,
+  toPlayableMessageResponse,
   type MessageResponse,
   type MessageRow,
 } from '../_lib';
@@ -73,13 +73,20 @@ export async function GET(
       .range(offset, offset + limit - 1);
 
     if (error) {
-      console.error('[GET /messages/:id] 查询失败:', error);
+      console.error('[GET /messages/:id] 查询失败');
       throw new ApiError(500, '获取消息列表失败');
     }
 
     const rows = (data ?? []) as MessageRow[];
     return NextResponse.json<MessageResponse[]>(
-      rows.map(toMessageResponse),
+      rows.map(toPlayableMessageResponse),
+      {
+        headers: {
+          'Cache-Control': 'private, no-store, max-age=0',
+          Pragma: 'no-cache',
+          Vary: 'Authorization',
+        },
+      },
     );
   } catch (err) {
     return toApiResponse(err);

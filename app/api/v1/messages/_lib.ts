@@ -50,6 +50,16 @@ export function toMessageResponse(row: MessageRow): MessageResponse {
   };
 }
 
+/** 客户端只看到同源鉴权播放地址，数据库中的私有对象路径绝不直接暴露。 */
+export function toPlayableMessageResponse(row: MessageRow): MessageResponse {
+  const response = toMessageResponse(row);
+  response.audio_url = null;
+  if (row.type === 'voice' && row.audio_url) {
+    response.audio_url = `/api/v1/voice/audio?message_id=${encodeURIComponent(row.id)}`;
+  }
+  return response;
+}
+
 const SAFE_ID_RE = /^[A-Za-z0-9_-]+$/;
 
 /** 校验 id 形态安全（防 PostgREST or-filter 字符串拼接注入）。 */
@@ -74,8 +84,7 @@ export async function resolveMessagePeer(
   peerId: string,
 ): Promise<void> {
   if (peerId === currentUserId) {
-    // 给自己发消息无实际意义，但对齐 Python 不拦截。
-    return;
+    throwApiError(400, '不能给自己发送消息');
   }
 
   assertSafeId(peerId, 'peer_id');

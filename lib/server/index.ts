@@ -48,3 +48,13 @@ export {
   type MimoVoice,
   type SynthesizedSpeech,
 } from './mimo';
+
+export {
+  assertVoiceObjectPath,
+  buildVoiceObjectPath,
+  createSignedVoiceUrl,
+  getVoiceBucketName,
+  removeVoiceObject,
+  uploadVoiceObject,
+  type VoiceObjectKind,
+} from './voice-storage';

@@ -9,10 +9,11 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useMessageStore } from '@/stores/messageStore';
 import { useUserStore } from '@/stores/userStore';
-import { useTextToSpeech } from '@/hooks/useTextToSpeech';
+import { fetchBlob } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
 import MessageList from '@/components/messages/MessageList';
 import VoiceRecorder from '@/components/messages/VoiceRecorder';
+import type { VoiceMessageDraft } from '@/components/messages/VoiceRecorder';
 import { ChevronLeft, Mic, Keyboard } from 'lucide-react';
 import type { MessageResponse } from '@/stores/messageStore';
 import styles from './page.module.css';
@@ -28,12 +29,17 @@ export default function ChatDetailPage() {
   const user = useUserStore((s) => s.user);
   const { messages, loading, fetchMessages, sendTextMessage, sendVoiceMessage, markAsRead } =
     useMessageStore();
-  const { speak } = useTextToSpeech();
 
   // 输入模式：text 或 voice
   const [inputMode, setInputMode] = useState<'text' | 'voice'>('text');
   const [textInput, setTextInput] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const playbackRef = useRef<{
+    controller: AbortController;
+    audio: HTMLAudioElement | null;
+    objectUrl: string | null;
+  } | null>(null);
 
   // 加载消息
   useEffect(() => {
@@ -76,16 +82,63 @@ export default function ChatDetailPage() {
     };
   }, []);
 
-  // 播放语音消息（使用 TTS 朗读转写文本）
-  const handlePlayVoice = useCallback(
-    (message: MessageResponse) => {
-      const text = message.content;
-      if (text) {
-        speak(text);
-      }
-    },
-    [speak],
-  );
+  const cleanupPlayback = useCallback((updateState = true): void => {
+    const operation = playbackRef.current;
+    if (!operation) return;
+    playbackRef.current = null;
+    operation.controller.abort();
+    if (operation.audio) {
+      operation.audio.onended = null;
+      operation.audio.onerror = null;
+      operation.audio.pause();
+    }
+    if (operation.objectUrl) URL.revokeObjectURL(operation.objectUrl);
+    if (updateState) setVoiceError(null);
+  }, []);
+
+  const handlePlayVoice = useCallback(async (message: MessageResponse): Promise<void> => {
+    cleanupPlayback();
+    if (!message.audio_url) {
+      setVoiceError('语音文件不可用，请让对方重新发送');
+      return;
+    }
+
+    const controller = new AbortController();
+    const operation = {
+      controller,
+      audio: null as HTMLAudioElement | null,
+      objectUrl: null as string | null,
+    };
+    playbackRef.current = operation;
+    setVoiceError(null);
+
+    try {
+      const blob = await fetchBlob(message.audio_url, { signal: controller.signal });
+      if (playbackRef.current !== operation || controller.signal.aborted) return;
+      if (blob.size === 0) throw new Error('语音文件为空');
+
+      const objectUrl = URL.createObjectURL(blob);
+      operation.objectUrl = objectUrl;
+      const audio = new Audio(objectUrl);
+      audio.preload = 'auto';
+      operation.audio = audio;
+      audio.onended = () => {
+        if (playbackRef.current === operation) cleanupPlayback(false);
+      };
+      audio.onerror = () => {
+        if (playbackRef.current !== operation) return;
+        cleanupPlayback(false);
+        setVoiceError('语音播放失败，请重试');
+      };
+      await audio.play();
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      if (playbackRef.current === operation) cleanupPlayback(false);
+      setVoiceError(error instanceof Error ? error.message : '语音播放失败，请重试');
+    }
+  }, [cleanupPlayback]);
+
+  useEffect(() => () => cleanupPlayback(false), [cleanupPlayback]);
 
   // 发送文字消息
   const handleSendText = useCallback(async () => {
@@ -105,23 +158,23 @@ export default function ChatDetailPage() {
 
   // 发送语音消息
   const handleSendVoice = useCallback(
-    async (data: { content: string; duration: number }) => {
-      if (!user?.id || !contactId) return;
+    async (data: VoiceMessageDraft) => {
+      if (!user?.id || !contactId) throw new Error('无法确认消息接收人');
+      if (isSending) throw new Error('语音正在发送，请稍候');
 
       setIsSending(true);
       try {
         await sendVoiceMessage(user.id, contactId, {
           content: data.content,
-          audio_duration: data.duration,
+          audioBlob: data.audioBlob,
+          durationMs: data.durationMs,
+          signal: data.signal,
         });
-        setInputMode('voice');
-      } catch {
-        // 静默处理
       } finally {
         setIsSending(false);
       }
     },
-    [user?.id, contactId, sendVoiceMessage],
+    [user?.id, contactId, isSending, sendVoiceMessage],
   );
 
   // 取消语音录制
@@ -131,8 +184,10 @@ export default function ChatDetailPage() {
 
   // 切换输入模式
   const toggleInputMode = useCallback(() => {
+    cleanupPlayback();
+    setVoiceError(null);
     setInputMode((prev) => (prev === 'text' ? 'voice' : 'text'));
-  }, []);
+  }, [cleanupPlayback]);
 
   // 回车发送
   const handleKeyDown = useCallback(
@@ -178,6 +233,9 @@ export default function ChatDetailPage() {
 
       {/* 底部输入区域 */}
       <footer className={styles.inputArea}>
+        {voiceError && (
+          <p className={styles.voiceError} role="alert">{voiceError}</p>
+        )}
         {/* 输入模式切换按钮 */}
         <button
           className={styles.modeToggle}

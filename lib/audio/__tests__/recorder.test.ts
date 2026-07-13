@@ -13,8 +13,10 @@ const state = {
   processorDisconnect: vi.fn(),
   trackStop: vi.fn(),
   close: vi.fn().mockResolvedValue(undefined),
+  resume: vi.fn().mockResolvedValue(undefined),
   getUserMedia: vi.fn(),
   contextSampleRate: 48_000,
+  contextState: 'running' as AudioContextState,
   throwOnSource: false,
   throwOnSourceConnect: false,
 };
@@ -28,7 +30,7 @@ function makeStream(): MediaStream {
 class FakeAudioContext {
   sampleRate = state.contextSampleRate;
   destination = {} as AudioDestinationNode;
-  state = 'running' as AudioContextState;
+  state = state.contextState;
 
   createMediaStreamSource() {
     if (state.throwOnSource) throw new Error('source failed');
@@ -51,9 +53,10 @@ class FakeAudioContext {
   }
 
   close = state.close;
+  resume = state.resume;
 }
 
-function emitAudio(channels: number[][]): void {
+function emitAudio(channels: ArrayLike<number>[]): void {
   const processor = state.processor;
   if (!processor?.onaudioprocess) throw new Error('recorder processor is not ready');
   const frames = channels[0]?.length ?? 0;
@@ -75,8 +78,10 @@ describe('startPcmWavRecording', () => {
     state.processorDisconnect = vi.fn();
     state.trackStop = vi.fn();
     state.close = vi.fn().mockResolvedValue(undefined);
+    state.resume = vi.fn().mockResolvedValue(undefined);
     state.getUserMedia = vi.fn().mockResolvedValue(makeStream());
     state.contextSampleRate = 48_000;
+    state.contextState = 'running';
     state.throwOnSource = false;
     state.throwOnSourceConnect = false;
 
@@ -94,7 +99,10 @@ describe('startPcmWavRecording', () => {
 
   it('申请单声道麦克风并输出 16kHz PCM WAV Blob', async () => {
     const session = await startPcmWavRecording({ maxDurationMs: 60_000 });
-    emitAudio([[0, 0.25, 0.5, 0.75, 1, 0.75], [0, -0.25, -0.5, -0.75, -1, -0.75]]);
+    emitAudio([
+      new Array(4_800).fill(0.5),
+      new Array(4_800).fill(-0.5),
+    ]);
     vi.advanceTimersByTime(1_000);
 
     const result = await session.stop();
@@ -107,7 +115,7 @@ describe('startPcmWavRecording', () => {
     });
     expect(result.blob.type).toBe('audio/wav');
     expect(result.sampleRate).toBe(16_000);
-    expect(result.durationMs).toBe(1_000);
+    expect(result.durationMs).toBe(100);
     expect(new TextDecoder().decode(bytes.slice(0, 4))).toBe('RIFF');
     expect(view.getUint32(24, true)).toBe(16_000);
     expect(view.getUint16(22, true)).toBe(1);
@@ -129,6 +137,16 @@ describe('startPcmWavRecording', () => {
     expect(view.getInt16(46, true)).toBe(0);
   });
 
+  it('AudioContext 初始 suspended 时先恢复再开始采集', async () => {
+    state.contextState = 'suspended';
+
+    const session = await startPcmWavRecording({ maxDurationMs: 60_000 });
+
+    expect(state.resume).toHaveBeenCalledOnce();
+    session.abort();
+    await expect(session.stop()).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
   it('并发 stop 复用同一个 Promise 且资源只清理一次', async () => {
     const session = await startPcmWavRecording({ maxDurationMs: 60_000 });
     const first = session.stop();
@@ -143,8 +161,9 @@ describe('startPcmWavRecording', () => {
   });
 
   it('达到硬时长后自动停止，之后 stop 返回缓存结果', async () => {
+    state.contextSampleRate = 16_000;
     const session = await startPcmWavRecording({ maxDurationMs: 1_500 });
-    emitAudio([[0, 0, 0]]);
+    emitAudio([new Float32Array(16_000 * 1.5)]);
 
     await vi.advanceTimersByTimeAsync(1_500);
     const result = await session.stop();
@@ -155,15 +174,29 @@ describe('startPcmWavRecording', () => {
   });
 
   it('调用方请求超过 60 秒时仍按应用硬上限自动停止', async () => {
+    state.contextSampleRate = 16_000;
     const session = await startPcmWavRecording({ maxDurationMs: 120_000 });
-    emitAudio([[0, 0, 0]]);
+    emitAudio([new Float32Array(16_000)]);
 
     await vi.advanceTimersByTimeAsync(60_000);
     const result = await session.stop();
 
-    expect(result.durationMs).toBe(60_000);
+    expect(result.durationMs).toBe(1_000);
     expect(state.trackStop).toHaveBeenCalledOnce();
     expect(state.close).toHaveBeenCalledOnce();
+  });
+
+  it('无论墙钟与回调节奏如何都按 PCM 帧硬截断 60 秒', async () => {
+    state.contextSampleRate = 16_000;
+    const session = await startPcmWavRecording({ maxDurationMs: 120_000 });
+    emitAudio([new Float32Array(16_000 * 61)]);
+
+    const result = await session.stop();
+    const bytes = new Uint8Array(await result.blob.arrayBuffer());
+    const view = new DataView(bytes.buffer);
+
+    expect(result.durationMs).toBe(60_000);
+    expect(view.getUint32(40, true)).toBe(16_000 * 60 * 2);
   });
 
   it('abort 立即释放资源，后续 stop 返回 AbortError', async () => {

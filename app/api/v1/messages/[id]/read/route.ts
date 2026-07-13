@@ -16,7 +16,7 @@ import {
 } from '@/lib/server';
 import {
   assertSafeId,
-  toMessageResponse,
+  toPlayableMessageResponse,
   type MessageResponse,
   type MessageRow,
 } from '../../_lib';
@@ -74,7 +74,7 @@ export async function PATCH(
     }
 
     return NextResponse.json<MessageResponse>(
-      toMessageResponse(data[0] as MessageRow),
+      toPlayableMessageResponse(data[0] as MessageRow),
     );
   } catch (err) {
     return toApiResponse(err);
