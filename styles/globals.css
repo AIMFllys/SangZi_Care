@@ -53,12 +53,14 @@ body {
   --bg-overlay-strong: rgba(0, 0, 0, 0.5);
   --bg-gradient-end: #fbe8d5;
 
-  /* --- 主色调 (暖橙) --- */
-  --accent: #f5923e;
+  /* --- 主色调：操作色保证文字对比度，装饰色保留温暖感 --- */
+  --accent-action: #a84b0b;
+  --accent-decoration: #f5923e;
+  --accent: var(--accent-action);
   --accent-light: #fbb97a;
   --accent-soft: rgba(245, 146, 62, 0.12);
   --accent-glow: rgba(245, 146, 62, 0.08);
-  --accent-hover: #e07c2a;
+  --accent-hover: #873804;
   --accent-text: #ffffff;
 
   /* --- 语义色 --- */
@@ -82,12 +84,13 @@ body {
   --text-secondary: #6b553f;
   --text-muted: #7d6147;
   --text-inverse: #ffffff;
-  --text-accent: var(--accent);
+  --text-accent: var(--accent-action);
 
   /* --- 边框 & 分割线 --- */
   --border-light: rgba(0, 0, 0, 0.05);
   --border-card: rgba(255, 255, 255, 0.3);
   --divider: rgba(0, 0, 0, 0.06);
+  --border-high-contrast: rgba(45, 32, 22, 0.42);
   --bg-hover: rgba(0, 0, 0, 0.04);
   --bg-hover-strong: rgba(0, 0, 0, 0.08);
 
@@ -135,6 +138,7 @@ body {
   --space-lg: 24px;
   --space-xl: 32px;
   --space-2xl: 48px;
+  --page-gutter: clamp(16px, 5vw, 24px);
 
   /* --- 动画 --- */
   --ease-out-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -146,7 +150,8 @@ body {
   /* --- 安全区域 --- */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --tabbar-height: 72px;
+  --tabbar-content-height: 64px;
+  --tabbar-height: var(--tabbar-content-height);
   --header-height: 64px;
   --min-touch-target: 48px;
 
@@ -203,15 +208,10 @@ body {
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
-  min-height: 100dvh;
+  height: 100dvh;
+  min-height: 0;
   position: relative;
-  overflow-x: hidden;
-}
-
-/* 页面内容区（给底部 TabBar 留空间） */
-.page-content {
-  min-height: 100dvh;
-  padding-bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 16px);
+  overflow: hidden;
 }
 
 /* ============================================================
@@ -442,7 +442,7 @@ body {
 
 /* 焦点环 */
 :focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--accent-action);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
@@ -462,6 +462,40 @@ body {
   background: linear-gradient(180deg,
       var(--accent-glow) 0%,
       var(--bg-base) 60%);
+}
+
+/* 用户减少透明度时，所有毛玻璃表面回退为不透明底色。 */
+@media (prefers-reduced-transparency: reduce) {
+
+  :root,
+  :root[data-theme='elder'],
+  :root[data-theme='family'] {
+    --bg-card: var(--bg-card-solid);
+    --bg-input: var(--bg-card-solid);
+    --glass-blur: none;
+    --glass-blur-heavy: none;
+  }
+
+  .glass-card,
+  .glass-bar {
+    background: var(--bg-card-solid);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* 高对比度偏好使用清晰边界，不依赖阴影区分层级。 */
+@media (prefers-contrast: more) {
+
+  :root,
+  :root[data-theme='elder'],
+  :root[data-theme='family'] {
+    --border-light: var(--border-high-contrast);
+    --border-card: var(--border-high-contrast);
+    --divider: var(--border-high-contrast);
+    --shadow-focus: 0 0 0 3px var(--bg-card-solid),
+      0 0 0 6px var(--accent-action);
+  }
 }
 
 /* ============================================================

@@ -1,16 +1,13 @@
 .tabBar {
   position: fixed;
-  bottom: 0;
-  left: 50%;
+  inset: auto 0 0 50%;
   transform: translateX(-50%);
-  width: 100%;
-  max-width: 480px;
-  height: var(--tabbar-height);
-  padding-bottom: var(--safe-bottom);
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-around;
-  gap: var(--space-xs);
+  width: min(100%, 480px);
+  height: calc(var(--tabbar-content-height) + var(--safe-bottom));
+  padding: 0 8px var(--safe-bottom);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: stretch;
   z-index: 100;
   background: var(--bg-card);
   backdrop-filter: var(--glass-blur);
@@ -20,15 +17,13 @@
 }
 
 .tabItem {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-xs);
-  min-width: var(--min-touch-target);
-  min-height: 56px;
-  padding: var(--space-xs) var(--space-sm);
+  min-width: 0;
+  min-height: var(--tabbar-content-height);
+  display: grid;
+  grid-template-rows: 28px 16px;
+  place-content: center;
+  gap: 3px;
+  padding: 6px 2px 5px;
   border-radius: var(--radius-lg);
   color: var(--text-muted);
   text-decoration: none;
@@ -45,16 +40,16 @@
 }
 
 .tabItem:focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--accent-action);
   outline-offset: -2px;
 }
 
 .tabIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--min-touch-target);
-  height: var(--min-touch-target);
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-inline: auto;
   border-radius: var(--radius-full);
   color: inherit;
   transition: color var(--duration-fast), background-color var(--duration-fast),
@@ -62,9 +57,10 @@
 }
 
 .tabLabel {
-  font-size: var(--font-caption);
+  min-width: 0;
+  font-size: var(--font-small);
   font-weight: 500;
-  line-height: 1;
+  line-height: 16px;
   color: inherit;
   transition: color var(--duration-fast);
   white-space: nowrap;
@@ -72,46 +68,15 @@
 
 .tabActive {
   background-color: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-action);
 }
 
 .tabActive .tabIcon {
   background-color: transparent;
 }
 
-/* 中央强调按钮 — 与 TabBar 融合的悬浮胶囊 */
-.tabCenter {
-  position: relative;
-  z-index: 2;
-  color: var(--text-muted);
-}
-
-.tabCenter .tabIcon {
-  width: 56px;
-  height: 56px;
-  background: var(--accent);
-  color: var(--accent-text);
-  box-shadow: 0 6px 20px var(--accent-soft), var(--shadow-md);
-  transform: translateY(-10px);
-}
-
-.tabCenter .tabLabel {
-  font-weight: 600;
-  color: var(--accent);
-  transform: translateY(-10px);
-}
-
-.tabCenter.tabActive .tabIcon,
-.tabCenter:active .tabIcon {
-  transform: translateY(-10px) scale(0.94);
-}
-
 @media (hover: hover) {
   .tabItem:not(.tabActive):hover {
     background-color: var(--accent-glow);
-  }
-
-  .tabCenter:not(.tabActive):hover .tabIcon {
-    box-shadow: 0 8px 24px var(--accent-soft), var(--shadow-lg);
   }
 }

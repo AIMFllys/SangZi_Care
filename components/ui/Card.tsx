@@ -1,6 +1,6 @@
 'use client';
 
-import { HTMLAttributes, ReactNode } from 'react';
+import { HTMLAttributes, KeyboardEvent, ReactNode } from 'react';
 import styles from './Card.module.css';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
@@ -14,6 +14,7 @@ export function Card({
   children,
   className,
   onClick,
+  onKeyDown,
   ...rest
 }: CardProps) {
   const cls = [
@@ -25,10 +26,25 @@ export function Card({
     .filter(Boolean)
     .join(' ');
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    onKeyDown?.(event);
+
+    if (
+      onClick &&
+      !event.defaultPrevented &&
+      !event.repeat &&
+      (event.key === 'Enter' || event.key === ' ')
+    ) {
+      event.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <div
       className={cls}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       {...rest}

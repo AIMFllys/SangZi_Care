@@ -5,7 +5,9 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
-  min-height: 48px;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 52px;
   padding: var(--space-sm) var(--space-lg);
   font-size: var(--font-body);
   font-weight: 700;
@@ -26,13 +28,13 @@
 }
 
 .button:focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--accent-action);
   outline-offset: 2px;
 }
 
 /* 主色按钮 */
 .primary {
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+  background: linear-gradient(135deg, var(--accent-action) 0%, var(--accent-hover) 100%);
   color: var(--accent-text);
   border-color: transparent;
   box-shadow: 0 6px 20px var(--accent-soft);
@@ -45,8 +47,8 @@
 /* 次色按钮 */
 .secondary {
   background: transparent;
-  color: var(--accent);
-  border-color: var(--accent);
+  color: var(--accent-action);
+  border-color: var(--accent-action);
 }
 
 .secondary:active:not(.disabled):not(.loading) {
@@ -91,7 +93,7 @@
 /* 柔和按钮 */
 .soft {
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-action);
   border-color: transparent;
 }
 
@@ -128,11 +130,18 @@
   cursor: wait;
 }
 
-.content {
+.content,
+.contentHidden {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   gap: var(--space-sm);
+  min-width: 0;
+  max-width: 100%;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .contentHidden {
@@ -157,5 +166,20 @@
 @media (prefers-reduced-motion: reduce) {
   .button {
     transition: none;
+  }
+}
+
+@media (max-width: 350px) {
+  .button {
+    padding-inline: var(--space-md);
+  }
+
+  .lg {
+    padding-inline: var(--space-lg);
+  }
+
+  .content,
+  .contentHidden {
+    gap: 6px;
   }
 }

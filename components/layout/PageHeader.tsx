@@ -7,6 +7,7 @@ import styles from './PageHeader.module.css';
 
 interface PageHeaderProps {
   title: string;
+  variant?: 'primary' | 'detail';
   backHref?: string;
   onBack?: () => void;
   backAriaLabel?: string;
@@ -17,6 +18,7 @@ interface PageHeaderProps {
 
 export default function PageHeader({
   title,
+  variant = 'primary',
   backHref,
   onBack,
   backAriaLabel = '返回',
@@ -33,10 +35,11 @@ export default function PageHeader({
   return (
     <header
       className={`${styles.header} ${transparent ? styles.transparent : ''} ${className}`}
+      data-variant={variant}
       role="banner"
     >
-      <div className={styles.inner}>
-        <div className={styles.left}>
+      <div className={`${styles.inner} ${styles[variant]}`}>
+        <div className={styles.left} data-header-slot="left">
           {onBack ? (
             <button
               type="button"
@@ -57,9 +60,11 @@ export default function PageHeader({
           ) : null}
         </div>
 
-        <h1 className={styles.title}>{title}</h1>
+        <div className={styles.center} data-header-slot="center">
+          <h1 className={styles.title}>{title}</h1>
+        </div>
 
-        <div className={styles.right}>
+        <div className={styles.right} data-header-slot="right">
           {rightAction ? (
             <div className={styles.actionSlot}>{rightAction}</div>
           ) : (

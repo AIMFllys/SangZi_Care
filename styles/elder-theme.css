@@ -11,22 +11,25 @@
   --bg-input: rgba(255, 255, 255, 0.6);
   --bg-gradient-end: #fbe8d5;
 
-  --accent: #f5923e;
+  --accent-action: #a84b0b;
+  --accent-decoration: #f5923e;
+  --accent: var(--accent-action);
   --accent-light: #fbb97a;
   --accent-soft: rgba(245, 146, 62, 0.12);
   --accent-glow: rgba(245, 146, 62, 0.08);
-  --accent-hover: #e07c2a;
+  --accent-hover: #873804;
   --accent-text: #ffffff;
 
   --text-primary: #2d2016;
   --text-secondary: #6b553f;
   --text-muted: #7d6147;
   --text-inverse: #ffffff;
-  --text-accent: var(--accent);
+  --text-accent: var(--accent-action);
 
   --border-light: rgba(139, 115, 85, 0.08);
   --border-card: rgba(255, 255, 255, 0.35);
   --divider: rgba(139, 115, 85, 0.08);
+  --border-high-contrast: rgba(45, 32, 22, 0.42);
 
   /* --- 遮罩 & 悬停 --- */
   --bg-overlay: rgba(0, 0, 0, 0.3);

@@ -3,6 +3,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
+  min-width: 0;
+  max-width: 100%;
   width: 100%;
 }
 
@@ -16,6 +18,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
   min-height: 48px;
   padding: var(--space-sm) var(--space-md);
   background: var(--bg-input);
@@ -27,7 +32,7 @@
 }
 
 .field:focus-within {
-  border-color: var(--accent);
+  border-color: var(--accent-action);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
@@ -45,7 +50,7 @@
 }
 
 .input {
-  flex: 1;
+  flex: 1 0 8ch;
   min-width: 0;
   height: 100%;
   padding: 0;
@@ -72,6 +77,14 @@
   flex-shrink: 0;
   color: var(--text-secondary);
   font-size: var(--font-body);
+}
+
+.field > .affix:last-child {
+  min-width: 0;
+  flex-shrink: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .error {

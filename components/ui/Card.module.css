@@ -1,10 +1,13 @@
 /* Card — 新设计系统 */
 .card {
+  min-width: 0;
+  max-width: 100%;
   padding: var(--space-lg);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   transition: transform var(--duration-fast) var(--ease-out-smooth),
     box-shadow var(--duration-fast) var(--ease-out-smooth);
+  overflow-wrap: anywhere;
 }
 
 .glass {

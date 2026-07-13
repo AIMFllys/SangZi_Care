@@ -22,11 +22,9 @@ interface TabItem {
   label: string;
   icon: ReactNode;
   href: string;
-  center?: boolean;
 }
 
 const ICON_SIZE = 24;
-const CENTER_ICON_SIZE = 24;
 
 const ELDER_TABS: TabItem[] = [
   { key: 'home', label: '语音', icon: <Mic size={ICON_SIZE} />, href: '/' },
@@ -34,9 +32,8 @@ const ELDER_TABS: TabItem[] = [
   {
     key: 'menu',
     label: '功能',
-    icon: <LayoutGrid size={CENTER_ICON_SIZE} />,
+    icon: <LayoutGrid size={ICON_SIZE} />,
     href: '/medicine',
-    center: true,
   },
   { key: 'health', label: '看板', icon: <Heart size={ICON_SIZE} />, href: '/health' },
   { key: 'profile', label: '我的', icon: <User size={ICON_SIZE} />, href: '/settings' },
@@ -48,26 +45,24 @@ const FAMILY_TABS: TabItem[] = [
   {
     key: 'voice',
     label: '语音',
-    icon: <Mic size={CENTER_ICON_SIZE} />,
+    icon: <Mic size={ICON_SIZE} />,
     href: '/voice',
-    center: true,
   },
   { key: 'health', label: '健康', icon: <Activity size={ICON_SIZE} />, href: '/health' },
   { key: 'settings', label: '设置', icon: <Settings size={ICON_SIZE} />, href: '/settings' },
 ];
 
-/** 需要隐藏 TabBar 的页面 */
-const HIDDEN_PATHS = ['/login', '/onboarding', '/voice'];
+export function TAB_ITEMS(role: 'elder' | 'family'): TabItem[] {
+  return role === 'elder' ? ELDER_TABS : FAMILY_TABS;
+}
 
 export default function TabBar() {
   const pathname = usePathname();
   const user = useUserStore((s) => s.user);
 
-  const shouldHide = HIDDEN_PATHS.some((p) => pathname.startsWith(p)) || !user;
-  if (shouldHide) return null;
+  if (!user) return null;
 
-  const isElder = user.role === 'elder';
-  const tabs = isElder ? ELDER_TABS : FAMILY_TABS;
+  const tabs = TAB_ITEMS(user.role === 'elder' ? 'elder' : 'family');
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -82,13 +77,11 @@ export default function TabBar() {
           <Link
             key={tab.key}
             href={tab.href}
-            className={`${styles.tabItem} interactive ${active ? styles.tabActive : ''} ${tab.center ? styles.tabCenter : ''}`}
+            className={`${styles.tabItem} ${active ? styles.tabActive : ''}`}
             aria-current={active ? 'page' : undefined}
           >
-            <span className={`${styles.tabIcon} ${tab.center ? styles.tabCenterIcon : ''}`} aria-hidden="true">
-              {tab.icon}
-            </span>
-            <span className={`${styles.tabLabel} ${tab.center ? styles.tabCenterLabel : ''}`}>{tab.label}</span>
+            <span className={styles.tabIcon} aria-hidden="true">{tab.icon}</span>
+            <span className={styles.tabLabel}>{tab.label}</span>
           </Link>
         );
       })}

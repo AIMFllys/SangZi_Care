@@ -1,9 +1,12 @@
 'use client';
 
 import { ReactNode, useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import TabBar from '@/components/layout/TabBar';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { ErrorBoundary } from '@/components/providers/ErrorBoundary';
+import { getShellMode } from '@/lib/shellMode';
+import styles from './ClientShell.module.css';
 
 export type UserRole = 'elder' | 'family';
 
@@ -13,6 +16,8 @@ export type UserRole = 'elder' | 'family';
  */
 export default function ClientShell({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<UserRole>('elder');
+  const pathname = usePathname();
+  const mode = getShellMode(pathname);
 
   useEffect(() => {
     try {
@@ -37,11 +42,13 @@ export default function ClientShell({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
       <ErrorBoundary>
-        <main className="page-content">
-          {children}
-        </main>
+        <div className={styles.shell} data-shell-mode={mode}>
+          <main className={styles.main} data-shell-mode={mode}>
+            {children}
+          </main>
+          {mode === 'tabbed' && <TabBar />}
+        </div>
       </ErrorBoundary>
-      <TabBar />
     </AuthProvider>
   );
 }

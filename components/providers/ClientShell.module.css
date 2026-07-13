@@ -1,0 +1,19 @@
+.shell {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.main {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.main[data-shell-mode='tabbed'] {
+  height: calc(100dvh - var(--tabbar-content-height) - var(--safe-bottom));
+}
+
+.main[data-shell-mode='detail'],
+.main[data-shell-mode='immersive'] {
+  height: 100dvh;
+}
