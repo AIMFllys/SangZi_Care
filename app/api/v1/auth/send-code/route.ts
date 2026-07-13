@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     const code = randCode();
     putOtp(normalizedEmail, code);
 
-    // --- 发送邮件（DEBUG 模式只打印日志） ---
+    // --- 发送邮件（SMTP 缺失或发送失败均安全失败） ---
     const ok = await sendVerificationEmail(
       normalizedEmail,
       code,

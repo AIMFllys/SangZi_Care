@@ -4,10 +4,8 @@
 // 对齐 backend/services/email_service.py：通过 SMTP 发送验证码邮件。
 // 使用 nodemailer（已安装）；从 SMTP_* 环境变量读取配置。
 //
-// DEBUG 模式（对照 Python 行为）：
-//   - 若 SMTP_USER 未配置，则只打印日志、不真正发邮件（便于本地开发）。
-//   - 与 Python 一致：Python email_service 在 SMTP 凭据缺失时会连接失败，
-//     这里改为显式的日志回退，避免本地开发依赖外部 SMTP。
+// SMTP 凭据缺失时安全失败，避免生产环境返回“已发送”却没有真实邮件。
+// 日志不得包含收件人或验证码。
 //
 // 仅服务端使用；严禁客户端 import（含 SMTP_PASS）。
 // ============================================================
@@ -25,7 +23,7 @@ interface SmtpConfig {
 function readSmtpConfig(): SmtpConfig | null {
   const user = process.env.SMTP_USER?.trim() ?? '';
   const pass = process.env.SMTP_PASS?.trim() ?? '';
-  // 凭据缺失 → 进入 DEBUG 日志模式
+  // 凭据缺失 → 安全失败
   if (!user || !pass) return null;
   return {
     host: process.env.SMTP_HOST?.trim() || 'smtpdm.aliyun.com',
@@ -82,7 +80,7 @@ function buildHtml(code: string, expiresMinutes: number, fromName: string): stri
  * @param toEmail 收件人
  * @param code 6 位验证码
  * @param expiresMinutes 有效分钟（用于邮件文案）
- * @returns 是否发送成功（DEBUG 日志模式恒为 true）
+ * @returns 是否发送成功
  */
 export async function sendVerificationEmail(
   toEmail: string,
@@ -91,13 +89,10 @@ export async function sendVerificationEmail(
 ): Promise<boolean> {
   const cfg = readSmtpConfig();
 
-  // DEBUG 日志模式：无 SMTP 凭据，仅打印
+  // 生产安全：无 SMTP 凭据时不得伪装成发送成功，也不得打印验证码。
   if (!cfg) {
-    console.warn(
-      '[email] SMTP_USER/SMTP_PASS 未配置，进入 DEBUG 日志模式（不真正发邮件）。',
-      `收件人=${toEmail} 验证码=${code} 有效期=${expiresMinutes}分钟`,
-    );
-    return true;
+    console.error('[email] SMTP_USER/SMTP_PASS 未配置，验证码邮件未发送。');
+    return false;
   }
 
   const subject = `【${cfg.fromName}】登录验证码`;
