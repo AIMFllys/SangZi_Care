@@ -2,11 +2,11 @@
 
 > 审计日期：2026-07-13
 > 当前实现：Next.js 16.2.10 全栈 App Router
-> 本地验证运行时：Node.js 24.15.0；EdgeOne 生产运行时固定为 Node.js 22.13.0
+> 本地验证运行时：Node.js 22.13.0；EdgeOne 生产版本仍待按官方预装版本确认
 
 ## 结论
 
-当前生产构建通过仓库内的静态资源与 EdgeOne 单文件预算。Tailwind 扫描范围收窄后，构建 CSS 从 `170,543 B` 降至 `118,395 B`，减少 `52,148 B`（约 `30.6%`）；最终静态 JavaScript 为 `935,152 B`。构建仍输出 `.next`，没有启用静态导出。
+当前生产构建通过仓库内的静态资源与 EdgeOne 单文件预算。Tailwind 扫描范围收窄并完成本轮布局修复后，构建 CSS 从 `170,543 B` 降至 `119,960 B`，减少 `50,583 B`（约 `29.7%`）；最终静态 JavaScript 为 `935,345 B`。构建仍输出 `.next`，没有启用静态导出。
 
 ## 可复现预算
 
@@ -15,11 +15,11 @@
 | 指标 | 预算 | 2026-07-13 实测 | 结果 |
 |---|---:|---:|---|
 | CSS 单文件 | ≤ 100 KiB | ≤ 预算 | 通过 |
-| CSS 总量 | ≤ 200 KiB | 118,395 B（6 个文件） | 通过 |
+| CSS 总量 | ≤ 200 KiB | 119,960 B（6 个文件） | 通过 |
 | JS 单文件 | ≤ 250 KiB | ≤ 预算 | 通过 |
-| JS 总量 | ≤ 1,100 KiB | 935,152 B（31 个文件） | 通过 |
+| JS 总量 | ≤ 1,100 KiB | 935,345 B（31 个文件） | 通过 |
 | EdgeOne 单文件 | ≤ 25 MiB | 最大 1,219,268 B | 通过 |
-| 静态文件合计 | 观察值 | 1,053,547 B（37 个文件） | 通过 |
+| 静态文件合计 | 观察值 | 1,055,305 B（37 个文件） | 通过 |
 | 部署文件数量 | 观察值 | 1,023 | 已检查 |
 
 最大部署文件是服务端 sourcemap，约 1.22 MB，距离 EdgeOne 25 MiB 单文件上限仍有充足余量。
@@ -37,12 +37,12 @@
 
 ## EdgeOne 生产契约
 
-[`edgeone.json`](../../edgeone.json) 当前固定：
+[`edgeone.json`](../../edgeone.json) 当前配置：
 
 - 安装：`npm ci`
 - 构建：`npm run build`
 - 输出：`.next`
-- Node.js：`22.13.0`
+- Node.js：`22.13.0`；EdgeOne 2026-07 [构建指南](https://pages.edgeone.ai/zh/document/build-guide)列出的预装 Node 22 为 `22.11.0` / `22.17.1`，[edgeone.json 文档](https://pages.edgeone.ai/zh/document/edgeone-json)也提示其他版本可能部署失败，因此推送前必须确认并切到控制台实际支持的版本
 - 函数区域：`ap-guangzhou`
 - 函数最大时长：60 秒
 - `/_next/static/*`：`public, max-age=31536000, immutable`
@@ -53,7 +53,7 @@
 
 在 UI、MiMo、广播、认证与性能提交组合后执行：
 
-- Vitest：69 个测试文件通过，772 项通过；1 个付费 MiMo 实时测试默认跳过。
+- Vitest：77 个测试文件通过，808 项通过；1 个付费 MiMo 实时测试默认跳过。
 - ESLint：退出码 0；保留 5 个既有 warning，无 error。
 - TypeScript：`tsc --noEmit` 退出码 0。
 - Next.js 16.2.10：生产构建退出码 0；`postbuild` 预算检查通过。
