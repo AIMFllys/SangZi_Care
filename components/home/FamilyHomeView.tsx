@@ -69,7 +69,12 @@ export default function FamilyHomeView() {
       <PageHeader
         title="家人看板"
         rightAction={
-          <IconButton aria-label="通知" variant="soft" size="md">
+          <IconButton
+            aria-label="查看消息通知"
+            variant="soft"
+            size="md"
+            onClick={() => router.push('/messages')}
+          >
             <Bell size={22} />
           </IconButton>
         }
@@ -102,6 +107,7 @@ export default function FamilyHomeView() {
       </div>
 
       <DataStateWrapper loading={bindsLoading} empty={binds.length === 0 ? { icon: <Users size={48} />, title: '还没有绑定家人', description: '去设置页面添加您的家人吧' } : false}>
+        <div className={styles.familyContent}>
         {/* 摘要卡片 */}
         <div className={styles.summaryGrid}>
           <Card variant="glass" className={styles.summaryCard} onClick={() => router.push('/medicine')}>
@@ -170,6 +176,7 @@ export default function FamilyHomeView() {
             </div>
           )}
         </Card>
+        </div>
       </DataStateWrapper>
     </div>
   );

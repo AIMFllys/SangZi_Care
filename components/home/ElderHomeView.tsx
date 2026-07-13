@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
-import { Sun, Mic, ChevronUp, Phone } from 'lucide-react';
+import { fetchApi } from '@/lib/api';
+import { Sun, Mic, Phone } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import styles from '../../app/page.module.css';
 
@@ -42,6 +43,25 @@ export default function ElderHomeView() {
   const user = useUserStore((s) => s.user);
   const { time, date, hour } = useCurrentTime();
   const name = user?.name || '您';
+  const [sosLoading, setSosLoading] = useState(false);
+  const [sosMessage, setSosMessage] = useState('');
+
+  async function handleEmergency() {
+    if (sosLoading) return;
+    setSosLoading(true);
+    setSosMessage('');
+    try {
+      await fetchApi('/api/v1/emergency/trigger', {
+        method: 'POST',
+        body: { trigger_method: 'button' },
+      });
+      setSosMessage('紧急求助已发出，已通知家属');
+    } catch (error) {
+      setSosMessage(error instanceof Error ? error.message : '求助发送失败，请立即拨打 120');
+    } finally {
+      setSosLoading(false);
+    }
+  }
 
   return (
     <div className={styles.page}>
@@ -70,10 +90,10 @@ export default function ElderHomeView() {
 
       {/* 语音球 */}
       <div className={styles.voiceSection}>
-        <div
+        <button
+          type="button"
           className={styles.voiceBallWrapper}
           onClick={() => router.push('/voice')}
-          role="button"
           aria-label="点我说话，开启语音助手"
         >
           <div className={styles.voiceBallRing} />
@@ -83,26 +103,20 @@ export default function ElderHomeView() {
               <Mic size={56} />
             </span>
           </div>
-        </div>
+        </button>
         <p className={styles.voiceLabel}>点我说话</p>
       </div>
 
-      {/* 上滑提示 */}
-      <div className={styles.swipeHint}>
-        <span className={styles.swipeArrow}>
-          <ChevronUp size={24} />
-        </span>
-        <span>上滑更多功能</span>
-      </div>
+      {sosMessage && <p className={styles.sosMessage} role="status">{sosMessage}</p>}
 
-      {/* 紧急呼叫 — TODO: T5.1 实装后指向 /emergency */}
       <Button
         variant="danger"
         size="lg"
         fullWidth
         leftIcon={<Phone size={24} />}
         className={styles.sosButton}
-        onClick={() => router.push('/settings')}
+        onClick={handleEmergency}
+        loading={sosLoading}
         aria-label="紧急呼叫 SOS"
       >
         紧急呼叫 (SOS)
