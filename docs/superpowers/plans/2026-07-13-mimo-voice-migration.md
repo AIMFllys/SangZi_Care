@@ -4,7 +4,7 @@
 
 **Goal:** Replace all placeholder/Web-first speech paths with authenticated Xiaomi MiMo V2.5 ASR/TTS and wire real voice behavior into the assistant, health input, chat, medicine, and radio flows.
 
-**Architecture:** A small server-only MiMo client owns protocol, timeouts, retries, response validation, and safe logging. Browsers capture mono PCM and encode WAV before uploading to same-origin authenticated routes. Hooks expose explicit recording/transcribing/speaking states and abortable async contracts; consumer pages never treat placeholders or unfinished uploads as success.
+**Architecture:** A small server-only MiMo client owns protocol, timeouts, retries, response validation, and safe logging. It follows the official MiMo contract with `api-key` authentication, non-streaming MP3 TTS, and the explicit Chinese `冰糖` preset voice. Browsers capture mono PCM and encode WAV before uploading to same-origin authenticated routes. Hooks expose explicit recording/transcribing/speaking states and abortable async contracts; consumer pages never treat placeholders or unfinished uploads as success.
 
 **Tech Stack:** Next.js Route Handlers, TypeScript, Web Audio API, Zustand, native `fetch`, Vitest/Testing Library, Xiaomi MiMo `/v1/chat/completions`.
 
@@ -51,25 +51,29 @@ Mock global `fetch`. Cover:
 it('sends TTS target text as an assistant message', async () => {
   process.env.MIMO_API_KEY = 'test-key';
   fetchMock.mockResolvedValue(jsonResponse({
-    choices: [{ message: { audio: { data: Buffer.from('mp3').toString('base64') } } }],
+    choices: [{ message: { audio: { data: Buffer.from([0xff, 0xfb, 0x90, 0x00]).toString('base64') } } }],
   }));
   await synthesizeSpeech('现在该吃药了。', { voice: '冰糖' });
   const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
   expect(body.model).toBe('mimo-v2.5-tts');
   expect(body.messages.at(-1)).toEqual({ role: 'assistant', content: '现在该吃药了。' });
   expect(body.audio).toEqual({ format: 'mp3', voice: '冰糖' });
+  expect(fetchMock.mock.calls[0][1].headers).toMatchObject({ 'api-key': 'test-key' });
 });
 
 it('sends WAV as an input_audio data URL', async () => {
   await transcribeSpeech(new Uint8Array([0x52, 0x49, 0x46, 0x46]), 'wav');
   const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
   expect(body.model).toBe('mimo-v2.5-asr');
+  expect(body.messages[0].role).toBe('user');
+  expect(body.messages[0].content).toHaveLength(1);
+  expect(body.messages[0].content[0].type).toBe('input_audio');
   expect(body.messages[0].content[0].input_audio.data).toMatch(/^data:audio\/wav;base64,/);
   expect(body.asr_options).toEqual({ language: 'zh' });
 });
 ```
 
-Also test missing key, malformed choices, invalid Base64, empty transcript, 401/403 no retry, 429/500/503 finite retry, and AbortError timeout.
+Also test missing key, malformed choices, invalid Base64, empty/no-speech transcript, 400/401/402/403/404/421 no retry, 429/500/503 finite retry, and AbortError timeout. Cover an MP3 ASR data URL with `data:audio/mpeg;base64,`.
 
 - [ ] **Step 2: Run and verify the missing module failure**
 
@@ -86,7 +90,7 @@ const DEFAULT_TIMEOUT_MS = 45_000;
 export class MimoError extends Error {
   constructor(
     message: string,
-    readonly kind: 'config' | 'auth' | 'rate_limit' | 'region' | 'upstream' | 'timeout' | 'schema',
+    readonly kind: 'config' | 'auth' | 'payment_required' | 'forbidden' | 'content_filter' | 'rate_limit' | 'upstream' | 'timeout' | 'schema' | 'no_speech',
     readonly status: number,
   ) { super(message); }
 }
@@ -106,13 +110,14 @@ function getConfig() {
 
 - [ ] **Step 4: Implement one request function with bounded retry**
 
-Use the `Authorization` value `Bearer ${apiKey}`, JSON body, a per-attempt AbortController, and no text/audio/key logging. Retry only network errors, 429, 500, and 503, at most two additional attempts with short jittered backoff. Map 421 and region-denied 403 responses to `kind: 'region'`.
+Use the official `api-key: ${apiKey}` header, JSON body, a per-attempt AbortController, and no text/audio/key logging. Retry only network errors, 429, 500, and 503, at most two additional attempts with short jittered backoff. Map 402 to `payment_required`, 403 to the deliberately generic `forbidden` (the same status covers region and risk-control failures), and 421 to `content_filter`; none of 400/401/402/403/404/421 may retry.
 
 - [ ] **Step 5: Implement strict TTS and ASR parsers**
 
-- TTS reads `choices[0].message.audio.data`, validates Base64 and non-empty bytes, returns `{ bytes, contentType: 'audio/mpeg' }`.
-- ASR reads `choices[0].message.content`, trims it, rejects empty text.
+- TTS reads `choices[0].message.audio.data`, validates Base64 plus an MP3 frame/ID3 header, and returns `{ bytes, contentType: 'audio/mpeg' }`.
+- ASR reads `choices[0].message.content`, trims it, and maps empty text to the retryable business result `no_speech` rather than a schema violation.
 - `transcribeSpeech` accepts only `'wav' | 'mp3'`.
+- Validate `MIMO_TTS_VOICE` against the official built-in list: `mimo_default`, `冰糖`, `茉莉`, `苏打`, `白桦`, `Mia`, `Chloe`, `Milo`, `Dean`.
 
 - [ ] **Step 6: Document env names without secrets**
 
@@ -127,7 +132,7 @@ MIMO_API_KEY=
 # MIMO_TTS_VOICE=冰糖
 ```
 
-Do not delete `VOLCANO_ARK_API_KEY`, `VOLCANO_ARK_BASE_URL`, or `VOLCANO_ARK_MODEL_ENDPOINT` because current AI chat still uses them.
+Do not delete `VOLCANO_ARK_API_KEY`, `VOLCANO_ARK_BASE_URL`, or `VOLCANO_ARK_MODEL_ENDPOINT` because current AI chat still uses them. Document that `MIMO_API_BASE_URL` and the API key must be copied as a region/billing pair from the same MiMo console; regional endpoints and keys are not interchangeable.
 
 - [ ] **Step 7: Run deterministic tests and typecheck**
 
@@ -154,7 +159,7 @@ git commit -m "feat(voice): add Xiaomi MiMo server client"
 
 - [ ] **Step 1: Write failing TTS route tests**
 
-Cover unauthenticated 401, non-JSON 400, empty text 400, 1001 Unicode characters 400, speed outside 0.5–2.0, missing key 503, and successful MP3 response with `Cache-Control: private, no-store`.
+Cover unauthenticated 401, non-JSON 400, empty text 400, 1001 Unicode characters 400, speed outside 0.5–2.0, missing key 503, and successful MP3 response with `Cache-Control: private, no-store`. Accept `speed` temporarily for compatibility but never send it to MiMo; Task 5 moves the preference entirely to `HTMLAudioElement.playbackRate` and stops sending it.
 
 ```ts
 expect(response.headers.get('content-type')).toBe('audio/mpeg');
@@ -186,9 +191,11 @@ function detectAudioFormat(bytes: Uint8Array): 'wav' | 'mp3' | null {
 
 Reject MIME/header mismatch. Do not trust the filename extension.
 
+The 5 MiB value is this application's raw-upload limit. MiMo's published limit applies to the Base64-encoded string (at most 10 MB); tests must prove a 5 MiB raw payload plus its data-URL prefix remains below that upstream bound. The 45-second upstream timeout and 60-second recording cap are also application/EdgeOne safeguards, not claimed MiMo service limits.
+
 - [ ] **Step 5: Map `MimoError` to safe HTTP responses**
 
-Map `config` to 503, `auth` to 502, `rate_limit` to 429, `region` to 502, `upstream` to 502, `timeout` to 504, and `schema` to 502. Add `X-Request-Id` generated per route. Logs contain request ID, status, elapsed milliseconds, input bytes or text length only.
+Map `config` to 503, `auth` to 502, `payment_required` to 503, `forbidden` to 502, `content_filter` to 422, `rate_limit` to 429, `upstream` to 502, `timeout` to 504, `schema` to 502, and `no_speech` to 422. Add `X-Request-Id` generated per route. Logs contain request ID, status, elapsed milliseconds, input bytes or text length only.
 
 - [ ] **Step 6: Remove placeholder audio/text**
 
@@ -265,7 +272,7 @@ export async function startPcmWavRecording(options: {
 }): Promise<VoiceRecorderSession>;
 ```
 
-Capture mono samples, downmix additional channels, stop at the hard duration limit, and always close AudioContext/stop tracks.
+Capture mono samples, downmix additional channels, stop at the hard application duration limit of 60 seconds, and always close AudioContext/stop tracks. This is an app UX/cost limit, not a published MiMo duration limit; at 16 kHz PCM16 mono it stays comfortably below the upload budget.
 
 - [ ] **Step 6: Verify encoder and recorder tests**
 
