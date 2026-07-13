@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- adb reverse tcp:7742 tcp:7742 后，WebView 可从可信 loopback 访问本机 Next。 -->
+    <string name="app_base_url" translatable="false">http://127.0.0.1:7742</string>
+</resources>
