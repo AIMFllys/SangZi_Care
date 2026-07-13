@@ -212,6 +212,7 @@ export function useVoiceRecognition(): UseVoiceRecognitionReturn {
   const mountedRef = useRef(true);
   const operationRef = useRef<RecognitionOperation | null>(null);
   const operationIdRef = useRef(0);
+  const lastResultRef = useRef<StopResult | null>(null);
 
   const updateOperation = useCallback((
     operation: RecognitionOperation,
@@ -287,6 +288,7 @@ export function useVoiceRecognition(): UseVoiceRecognitionReturn {
 
         const result = toStopResult(recording, finalText);
         updateOperation(operation, () => {
+          lastResultRef.current = result;
           setTranscript(finalText);
           setError(null);
           setPhase('success');
@@ -306,6 +308,7 @@ export function useVoiceRecognition(): UseVoiceRecognitionReturn {
         }
 
         updateOperation(operation, () => {
+          lastResultRef.current = null;
           setError(message);
           setPhase('error');
           operationRef.current = null;
@@ -320,6 +323,7 @@ export function useVoiceRecognition(): UseVoiceRecognitionReturn {
   const startListening = useCallback(async (): Promise<void> => {
     const previous = operationRef.current;
     if (previous) cancelOperation(previous);
+    lastResultRef.current = null;
 
     const operation: RecognitionOperation = {
       id: ++operationIdRef.current,
@@ -370,6 +374,7 @@ export function useVoiceRecognition(): UseVoiceRecognitionReturn {
           : '无法开始录音';
       cancelOperation(operation);
       updateOperation(operation, () => {
+        lastResultRef.current = null;
         setError(message);
         setPhase('error');
         operationRef.current = null;
@@ -379,13 +384,16 @@ export function useVoiceRecognition(): UseVoiceRecognitionReturn {
 
   const stopListening = useCallback((): Promise<StopResult | null> => {
     const operation = operationRef.current;
-    return operation ? finishOperation(operation) : Promise.resolve(null);
+    return operation
+      ? finishOperation(operation)
+      : Promise.resolve(lastResultRef.current);
   }, [finishOperation]);
 
   const cancelListening = useCallback((): void => {
     const operation = operationRef.current;
     if (operation) cancelOperation(operation);
     operationRef.current = null;
+    lastResultRef.current = null;
     if (mountedRef.current) {
       setTranscript('');
       setError(null);
@@ -394,6 +402,7 @@ export function useVoiceRecognition(): UseVoiceRecognitionReturn {
   }, [cancelOperation]);
 
   const resetTranscript = useCallback((): void => {
+    lastResultRef.current = null;
     setTranscript('');
     setError(null);
     setPhase((current) =>
@@ -407,6 +416,7 @@ export function useVoiceRecognition(): UseVoiceRecognitionReturn {
       const operation = operationRef.current;
       if (operation) cancelOperation(operation);
       operationRef.current = null;
+      lastResultRef.current = null;
     };
   }, [cancelOperation]);
 

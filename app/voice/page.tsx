@@ -1,106 +1,243 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAIChat } from '@/hooks/useAIChat';
-import { Mic, Bot, Square, Settings } from 'lucide-react';
+import { Bot, Mic, Settings, Square } from 'lucide-react';
 import { Button, Card, IconButton } from '@/components/ui';
 import PageHeader from '@/components/layout/PageHeader';
+import { useAIChat } from '@/hooks/useAIChat';
+import { useTextToSpeech } from '@/hooks/useTextToSpeech';
+import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { ROUTES } from '@/lib/constants';
 import styles from './page.module.css';
 
+type VoiceConversationPhase =
+  | 'idle'
+  | 'recording'
+  | 'transcribing'
+  | 'thinking'
+  | 'speaking'
+  | 'error';
+
+const STATUS_BY_PHASE: Record<VoiceConversationPhase, string> = {
+  idle: '点击麦克风开始下一轮对话',
+  recording: '正在听您说话，再点一次结束',
+  transcribing: '正在识别您刚才说的话...',
+  thinking: 'AI 正在思考...',
+  speaking: '正在为您播报...',
+  error: '对话遇到问题',
+};
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  return fallback;
+}
+
 export default function VoicePage() {
   const router = useRouter();
-  const { messages, sendMessage } = useAIChat();
-  const [isListening, setIsListening] = useState(false);
+  const { messages, sendMessage, cancelPending, error: aiError } = useAIChat();
+  const {
+    transcript,
+    phase: recognitionPhase,
+    error: recognitionError,
+    startListening,
+    stopListening,
+    cancelListening,
+    resetTranscript,
+  } = useVoiceRecognition();
+  const { speak, stop: stopSpeaking, error: ttsError } = useTextToSpeech();
+
+  const [phase, setPhase] = useState<VoiceConversationPhase>('idle');
   const [recognizedText, setRecognizedText] = useState('');
-  const [status, setStatus] = useState('点击麦克风开始对话');
+  const [assistantText, setAssistantText] = useState('');
+  const [conversationError, setConversationError] = useState<string | null>(null);
+  const runIdRef = useRef(0);
+  const mountedRef = useRef(true);
 
-  const lastAiMessage = [...messages].reverse().find((m) => m.role === 'assistant');
+  const lastAiMessage = [...messages].reverse().find((message) =>
+    message.role === 'assistant');
+  const visibleTranscript = recognizedText || transcript;
+  const visibleReply = assistantText || lastAiMessage?.content || '';
+  const isRecording = phase === 'recording';
+  const isBusy = phase === 'transcribing'
+    || phase === 'thinking'
+    || phase === 'speaking';
 
-  const handleMicClick = useCallback(() => {
-    if (isListening) {
-      setIsListening(false);
-      setStatus('处理中...');
-      if (recognizedText.trim()) {
-        sendMessage(recognizedText.trim());
-        setStatus('AI 正在思考...');
-      } else {
-        setStatus('点击麦克风开始对话');
-      }
-    } else {
-      setIsListening(true);
-      setRecognizedText('');
-      setStatus('正在听您说话...');
-      // 实际项目中这里会启动 ASR
-      setTimeout(() => {
-        setRecognizedText('"我想听京剧"');
-      }, 2000);
-    }
-  }, [isListening, recognizedText, sendMessage]);
+  const isCurrentRun = useCallback((runId: number): boolean =>
+    mountedRef.current && runIdRef.current === runId, []);
 
-  const handleEnd = () => {
-    setIsListening(false);
+  const showFailure = useCallback((message: string, runId?: number): void => {
+    if (runId !== undefined && !isCurrentRun(runId)) return;
+    if (!mountedRef.current) return;
+    setConversationError(message);
+    setPhase('error');
+  }, [isCurrentRun]);
+
+  const cancelAll = useCallback((): void => {
+    runIdRef.current += 1;
+    cancelListening();
+    cancelPending();
+    stopSpeaking();
+  }, [cancelListening, cancelPending, stopSpeaking]);
+
+  const startConversation = useCallback(async (): Promise<void> => {
+    const runId = ++runIdRef.current;
+    setConversationError(null);
     setRecognizedText('');
-    setStatus('点击麦克风开始对话');
+    resetTranscript();
+    setPhase('recording');
+
+    try {
+      await startListening();
+    } catch (error) {
+      showFailure(`无法开始录音：${getErrorMessage(error, '请检查麦克风权限')}`, runId);
+    }
+  }, [resetTranscript, showFailure, startListening]);
+
+  const finishConversation = useCallback(async (): Promise<void> => {
+    const runId = runIdRef.current;
+    setConversationError(null);
+    setPhase('transcribing');
+
+    try {
+      const result = await stopListening();
+      if (!isCurrentRun(runId)) return;
+      const userText = result?.transcript.trim() ?? '';
+      if (!userText) throw new Error('未识别到有效语音，请点击麦克风重试');
+
+      setRecognizedText(userText);
+      setPhase('thinking');
+      const reply = await sendMessage(userText);
+      if (!isCurrentRun(runId)) return;
+
+      setAssistantText(reply);
+      setPhase('speaking');
+      await speak(reply);
+      if (!isCurrentRun(runId)) return;
+      setPhase('idle');
+    } catch (error) {
+      showFailure(getErrorMessage(error, '本轮语音对话失败，请重试'), runId);
+    }
+  }, [isCurrentRun, sendMessage, showFailure, speak, stopListening]);
+
+  useEffect(() => {
+    if (phase === 'recording' && recognitionPhase === 'success') {
+      void finishConversation();
+    }
+  }, [finishConversation, phase, recognitionPhase]);
+
+  const handleMicClick = useCallback((): void => {
+    if (isRecording) {
+      void finishConversation();
+      return;
+    }
+    if (!isBusy) void startConversation();
+  }, [finishConversation, isBusy, isRecording, startConversation]);
+
+  const handleEnd = useCallback((): void => {
+    cancelAll();
+    setRecognizedText('');
+    setAssistantText('');
+    setConversationError(null);
+    setPhase('idle');
     router.back();
-  };
+  }, [cancelAll, router]);
+
+  const handleSettings = useCallback((): void => {
+    cancelAll();
+    router.push(ROUTES.SETTINGS_ACCESSIBILITY);
+  }, [cancelAll, router]);
+
+  useEffect(() => {
+    if (recognitionError) showFailure(recognitionError);
+  }, [recognitionError, showFailure]);
+
+  useEffect(() => {
+    if (aiError) showFailure(aiError);
+  }, [aiError, showFailure]);
+
+  useEffect(() => {
+    if (ttsError) showFailure(ttsError);
+  }, [showFailure, ttsError]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      runIdRef.current += 1;
+      cancelListening();
+      cancelPending();
+      stopSpeaking();
+    };
+  }, [cancelListening, cancelPending, stopSpeaking]);
+
+  const status = phase === 'idle' && !visibleReply
+    ? '点击麦克风开始对话'
+    : STATUS_BY_PHASE[phase];
 
   return (
     <div className={styles.page}>
       <PageHeader
         title="智能语音助手"
         variant="detail"
-        onBack={() => router.back()}
+        onBack={handleEnd}
         rightAction={
           <IconButton
             variant="ghost"
             aria-label="语音设置"
-            onClick={() => router.push(ROUTES.SETTINGS_ACCESSIBILITY)}
+            onClick={handleSettings}
           >
             <Settings size={24} />
           </IconButton>
         }
       />
 
-      {/* 状态 */}
-      <p className={styles.statusText}>{status}</p>
+      <p className={styles.statusText} aria-live="polite">{status}</p>
 
-      {/* 识别文字 */}
-      <p className={styles.recognizedText}>{recognizedText}</p>
+      {conversationError ? (
+        <div className={styles.errorPanel} role="alert">
+          <p>{conversationError}</p>
+          <span>点击麦克风重试</span>
+        </div>
+      ) : (
+        <p className={styles.recognizedText} aria-live="polite">
+          {visibleTranscript}
+        </p>
+      )}
 
-      {/* 麦克风球 */}
       <div className={styles.micSection}>
         <div className={styles.micWrapper}>
-          <div className={styles.micRing} />
-          <div className={`${styles.micRing} ${styles.micRingDelayed}`} />
+          <div className={styles.micRing} aria-hidden="true" />
+          <div
+            className={`${styles.micRing} ${styles.micRingDelayed}`}
+            aria-hidden="true"
+          />
           <button
             type="button"
-            className={`${styles.micBall} interactive ${isListening ? styles.micBallActive : ''}`}
+            className={`${styles.micBall} interactive ${isRecording ? styles.micBallActive : ''}`}
             onClick={handleMicClick}
-            aria-label={isListening ? '停止听取' : '开始说话'}
+            aria-label={isRecording ? '停止听取' : '开始说话'}
+            disabled={isBusy}
           >
-            <span className={styles.micIcon}>
-              <Mic size={56} />
+            <span className={styles.micIcon} aria-hidden="true">
+              {isRecording ? <Square size={48} /> : <Mic size={56} />}
             </span>
           </button>
         </div>
       </div>
 
-      {/* AI 回复 */}
-      {lastAiMessage && (
+      {visibleReply && (
         <Card variant="glass" className={styles.responseCard}>
           <div className={styles.responseLabel}>
-            <span className={styles.responseIcon}>
+            <span className={styles.responseIcon} aria-hidden="true">
               <Bot size={20} color="var(--accent)" />
             </span>
             AI 回复
           </div>
-          <p className={styles.responseText}>{lastAiMessage.content}</p>
+          <p className={styles.responseText}>{visibleReply}</p>
         </Card>
       )}
 
-      {/* 结束对话 */}
       <Button
         variant="ghost"
         size="lg"

@@ -485,6 +485,11 @@ describe('useVoiceRecognition MiMo state machine', () => {
     expect(mocks.fetchFormData).toHaveBeenCalledOnce();
     expect(hook.result.current.phase).toBe('success');
     expect(hook.result.current.transcript).toBe('今天记得吃药');
+    await expect(hook.result.current.stopListening()).resolves.toEqual({
+      transcript: '今天记得吃药',
+      audioBlob: recordingBlob,
+      durationMs: 1_250,
+    });
   });
 
   it('resetTranscript 清空文本和错误并回到 idle', async () => {

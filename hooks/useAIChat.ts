@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { fetchApi } from '@/lib/api';
 
 export interface ChatMessage {
@@ -21,7 +21,7 @@ export interface IntentResult {
   confidence: number;
 }
 
-interface UseAIChatReturn {
+export interface UseAIChatReturn {
   /** 对话历史 */
   messages: ChatMessage[];
   /** 是否正在等待AI回复 */
@@ -38,6 +38,21 @@ interface UseAIChatReturn {
   getSummary: (userId: string) => Promise<string>;
   /** 清空对话 */
   clearMessages: () => void;
+  /** 中止当前仍在等待的 AI 回复 */
+  cancelPending: () => void;
+}
+
+interface PendingChatRequest {
+  id: number;
+  controller: AbortController;
+}
+
+function createAbortError(): DOMException {
+  return new DOMException('AI request cancelled', 'AbortError');
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError';
 }
 
 export function useAIChat(): UseAIChatReturn {
@@ -45,8 +60,25 @@ export function useAIChat(): UseAIChatReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const sessionIdRef = useRef<string | null>(null);
+  const pendingRef = useRef<PendingChatRequest | null>(null);
+  const requestIdRef = useRef(0);
+  const mountedRef = useRef(true);
+
+  const cancelPending = useCallback((): void => {
+    const pending = pendingRef.current;
+    if (!pending) return;
+    pendingRef.current = null;
+    pending.controller.abort();
+    if (mountedRef.current) setIsLoading(false);
+  }, []);
 
   const sendMessage = useCallback(async (text: string): Promise<string> => {
+    cancelPending();
+    const request: PendingChatRequest = {
+      id: ++requestIdRef.current,
+      controller: new AbortController(),
+    };
+    pendingRef.current = request;
     const userMsg: ChatMessage = {
       role: 'user',
       content: text,
@@ -70,8 +102,13 @@ export function useAIChat(): UseAIChatReturn {
             messages: chatMessages,
             session_id: sessionIdRef.current,
           },
+          signal: request.controller.signal,
         },
       );
+
+      if (pendingRef.current?.id !== request.id || request.controller.signal.aborted) {
+        throw createAbortError();
+      }
 
       sessionIdRef.current = res.session_id;
 
@@ -83,13 +120,19 @@ export function useAIChat(): UseAIChatReturn {
       setMessages((prev) => [...prev, assistantMsg]);
       return res.reply;
     } catch (err) {
+      if (isAbortError(err)) throw err;
       const msg = err instanceof Error ? err.message : '对话失败';
-      setError(msg);
+      if (mountedRef.current && pendingRef.current?.id === request.id) {
+        setError(msg);
+      }
       throw err;
     } finally {
-      setIsLoading(false);
+      if (pendingRef.current?.id === request.id) {
+        pendingRef.current = null;
+        if (mountedRef.current) setIsLoading(false);
+      }
     }
-  }, [messages]);
+  }, [cancelPending, messages]);
 
   const recognizeIntent = useCallback(async (text: string): Promise<IntentResult> => {
     const res = await fetchApi<IntentResult>('/api/v1/ai/intent', {
@@ -107,9 +150,19 @@ export function useAIChat(): UseAIChatReturn {
   }, []);
 
   const clearMessages = useCallback(() => {
+    cancelPending();
     setMessages([]);
     sessionIdRef.current = null;
     setError(null);
+  }, [cancelPending]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      pendingRef.current?.controller.abort();
+      pendingRef.current = null;
+    };
   }, []);
 
   return {
@@ -121,5 +174,6 @@ export function useAIChat(): UseAIChatReturn {
     recognizeIntent,
     getSummary,
     clearMessages,
+    cancelPending,
   };
 }
