@@ -7,6 +7,9 @@
     "dev": "next dev -p 7742",
     "build": "next build",
     "start": "next start",
+    "test": "vitest run",
+    "test:voice": "vitest run lib/server/__tests__/mimo.test.ts lib/audio/__tests__/wav.test.ts lib/audio/__tests__/recorder.test.ts hooks/__tests__/useTextToSpeech.test.ts hooks/__tests__/useVoiceRecognition.test.ts app/api/v1/voice/__tests__",
+    "test:voice:live": "node --env-file=.env.local scripts/test-voice-live.mjs",
     "lint": "eslint .",
     "tsc": "tsc --noEmit"
   },
