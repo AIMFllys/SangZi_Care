@@ -1,12 +1,12 @@
 // ============================================================
 // 桑梓智护 — 语音能力检测
-// 检测 Web Speech API / Android Native / 豆包 API 三级可用性
+// MiMo 语音优先；浏览器语音仅作为显式后备
 // ============================================================
 
 import { jsBridge } from '@/lib/jsbridge';
 
 /** 语音能力级别 */
-export type VoiceLevel = 'web' | 'native' | 'doubao';
+export type VoiceLevel = 'mimo' | 'web' | 'native' | 'doubao';
 
 /** 检测结果：按优先级排序的可用级别数组 */
 export interface VoiceCapabilities {
@@ -27,14 +27,6 @@ function isWebASRAvailable(): boolean {
   );
 }
 
-async function isNativeTTSAvailable(): Promise<boolean> {
-  try {
-    return await jsBridge.nativeTTS.isAvailable();
-  } catch {
-    return false;
-  }
-}
-
 async function isNativeASRAvailable(): Promise<boolean> {
   try {
     return await jsBridge.nativeASR.isAvailable();
@@ -47,18 +39,13 @@ async function isNativeASRAvailable(): Promise<boolean> {
 
 /**
  * 检测当前环境可用的语音能力，返回按优先级排序的级别数组。
- * 优先级：web > native > doubao（doubao 作为服务端 API 始终可用）
+ * TTS 已迁移为 MiMo > Web；ASR 在下一阶段完成 MiMo 迁移。
  */
 export async function detect(): Promise<VoiceCapabilities> {
-  const [nativeTTS, nativeASR] = await Promise.all([
-    isNativeTTSAvailable(),
-    isNativeASRAvailable(),
-  ]);
+  const nativeASR = await isNativeASRAvailable();
 
-  const tts: VoiceLevel[] = [];
+  const tts: VoiceLevel[] = ['mimo'];
   if (isWebTTSAvailable()) tts.push('web');
-  if (nativeTTS) tts.push('native');
-  tts.push('doubao'); // 服务端 API，始终可用
 
   const asr: VoiceLevel[] = [];
   if (isWebASRAvailable()) asr.push('web');

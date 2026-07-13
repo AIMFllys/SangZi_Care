@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useVoiceStore } from '../voiceStore';
 
-// Mock voiceCapabilities.detect
 vi.mock('@/lib/voiceCapabilities', () => ({
   detect: vi.fn(),
 }));
@@ -10,156 +9,57 @@ import { detect } from '@/lib/voiceCapabilities';
 
 const mockDetect = detect as ReturnType<typeof vi.fn>;
 
-describe('voiceStore', () => {
+describe('voiceStore transitional MiMo migration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset store to initial state
+    useVoiceStore.setState(useVoiceStore.getInitialState(), true);
+  });
+
+  it('默认从 MiMo TTS 与旧 ASR 服务端级别开始', () => {
+    const state = useVoiceStore.getState();
+    expect(state.ttsLevels).toEqual(['mimo']);
+    expect(state.currentTTSLevel).toBe('mimo');
+    expect(state.asrLevels).toEqual(['doubao']);
+    expect(state.currentASRLevel).toBe('doubao');
+  });
+
+  it('检测后分别选择 TTS/ASR 的首个能力并缓存', async () => {
+    mockDetect.mockResolvedValue({
+      tts: ['mimo', 'web'],
+      asr: ['web', 'native', 'doubao'],
+    });
+
+    await useVoiceStore.getState().detect();
+    await useVoiceStore.getState().detect();
+
+    const state = useVoiceStore.getState();
+    expect(state.currentTTSLevel).toBe('mimo');
+    expect(state.currentASRLevel).toBe('web');
+    expect(state.isDetected).toBe(true);
+    expect(mockDetect).toHaveBeenCalledOnce();
+  });
+
+  it('TTS 只在显式失败后从 MiMo 降级到 Web', () => {
     useVoiceStore.setState({
-      ttsLevels: ['doubao'],
-      asrLevels: ['doubao'],
-      currentTTSLevel: 'doubao',
-      currentASRLevel: 'doubao',
-      isDetected: false,
+      ttsLevels: ['mimo', 'web'] as never,
+      currentTTSLevel: 'mimo' as never,
     });
+
+    expect(useVoiceStore.getState().fallbackTTS()).toBe(true);
+    expect(useVoiceStore.getState().currentTTSLevel).toBe('web');
+    expect(useVoiceStore.getState().fallbackTTS()).toBe(false);
   });
 
-  describe('initial state', () => {
-    it('defaults to doubao for all levels', () => {
-      const state = useVoiceStore.getState();
-      expect(state.ttsLevels).toEqual(['doubao']);
-      expect(state.asrLevels).toEqual(['doubao']);
-      expect(state.currentTTSLevel).toBe('doubao');
-      expect(state.currentASRLevel).toBe('doubao');
-      expect(state.isDetected).toBe(false);
-    });
-  });
-
-  describe('detect()', () => {
-    it('runs detection and caches results', async () => {
-      mockDetect.mockResolvedValue({
-        tts: ['web', 'native', 'doubao'],
-        asr: ['native', 'doubao'],
-      });
-
-      await useVoiceStore.getState().detect();
-
-      const state = useVoiceStore.getState();
-      expect(state.ttsLevels).toEqual(['web', 'native', 'doubao']);
-      expect(state.asrLevels).toEqual(['native', 'doubao']);
-      expect(state.currentTTSLevel).toBe('web');
-      expect(state.currentASRLevel).toBe('native');
-      expect(state.isDetected).toBe(true);
+  it('Task 5 前旧 ASR 仍可按既有顺序降级', () => {
+    useVoiceStore.setState({
+      asrLevels: ['web', 'native', 'doubao'],
+      currentASRLevel: 'web',
     });
 
-    it('sets currentLevel to first available level', async () => {
-      mockDetect.mockResolvedValue({
-        tts: ['doubao'],
-        asr: ['web', 'doubao'],
-      });
-
-      await useVoiceStore.getState().detect();
-
-      const state = useVoiceStore.getState();
-      expect(state.currentTTSLevel).toBe('doubao');
-      expect(state.currentASRLevel).toBe('web');
-    });
-
-    it('skips detection if already detected', async () => {
-      mockDetect.mockResolvedValue({
-        tts: ['web', 'doubao'],
-        asr: ['doubao'],
-      });
-
-      await useVoiceStore.getState().detect();
-      expect(mockDetect).toHaveBeenCalledTimes(1);
-
-      // Second call should be skipped
-      await useVoiceStore.getState().detect();
-      expect(mockDetect).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('fallbackTTS()', () => {
-    beforeEach(async () => {
-      mockDetect.mockResolvedValue({
-        tts: ['web', 'native', 'doubao'],
-        asr: ['doubao'],
-      });
-      await useVoiceStore.getState().detect();
-    });
-
-    it('moves to next TTS level and returns true', () => {
-      const result = useVoiceStore.getState().fallbackTTS();
-      expect(result).toBe(true);
-      expect(useVoiceStore.getState().currentTTSLevel).toBe('native');
-    });
-
-    it('can fallback through all levels', () => {
-      useVoiceStore.getState().fallbackTTS(); // web → native
-      expect(useVoiceStore.getState().currentTTSLevel).toBe('native');
-
-      useVoiceStore.getState().fallbackTTS(); // native → doubao
-      expect(useVoiceStore.getState().currentTTSLevel).toBe('doubao');
-    });
-
-    it('returns false when no more levels available', () => {
-      useVoiceStore.getState().fallbackTTS(); // web → native
-      useVoiceStore.getState().fallbackTTS(); // native → doubao
-
-      const result = useVoiceStore.getState().fallbackTTS(); // no more
-      expect(result).toBe(false);
-      expect(useVoiceStore.getState().currentTTSLevel).toBe('doubao');
-    });
-  });
-
-  describe('fallbackASR()', () => {
-    beforeEach(async () => {
-      mockDetect.mockResolvedValue({
-        tts: ['doubao'],
-        asr: ['web', 'native', 'doubao'],
-      });
-      await useVoiceStore.getState().detect();
-    });
-
-    it('moves to next ASR level and returns true', () => {
-      const result = useVoiceStore.getState().fallbackASR();
-      expect(result).toBe(true);
-      expect(useVoiceStore.getState().currentASRLevel).toBe('native');
-    });
-
-    it('can fallback through all levels', () => {
-      useVoiceStore.getState().fallbackASR(); // web → native
-      useVoiceStore.getState().fallbackASR(); // native → doubao
-      expect(useVoiceStore.getState().currentASRLevel).toBe('doubao');
-    });
-
-    it('returns false when no more levels available', () => {
-      useVoiceStore.getState().fallbackASR(); // web → native
-      useVoiceStore.getState().fallbackASR(); // native → doubao
-
-      const result = useVoiceStore.getState().fallbackASR();
-      expect(result).toBe(false);
-      expect(useVoiceStore.getState().currentASRLevel).toBe('doubao');
-    });
-  });
-
-  describe('fallback with only doubao', () => {
-    beforeEach(async () => {
-      mockDetect.mockResolvedValue({
-        tts: ['doubao'],
-        asr: ['doubao'],
-      });
-      await useVoiceStore.getState().detect();
-    });
-
-    it('fallbackTTS returns false immediately when only doubao available', () => {
-      expect(useVoiceStore.getState().fallbackTTS()).toBe(false);
-      expect(useVoiceStore.getState().currentTTSLevel).toBe('doubao');
-    });
-
-    it('fallbackASR returns false immediately when only doubao available', () => {
-      expect(useVoiceStore.getState().fallbackASR()).toBe(false);
-      expect(useVoiceStore.getState().currentASRLevel).toBe('doubao');
-    });
+    expect(useVoiceStore.getState().fallbackASR()).toBe(true);
+    expect(useVoiceStore.getState().currentASRLevel).toBe('native');
+    expect(useVoiceStore.getState().fallbackASR()).toBe(true);
+    expect(useVoiceStore.getState().currentASRLevel).toBe('doubao');
+    expect(useVoiceStore.getState().fallbackASR()).toBe(false);
   });
 });

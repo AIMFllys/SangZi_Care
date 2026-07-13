@@ -1,416 +1,325 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { useVoiceStore } from '@/stores/voiceStore';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useTextToSpeech } from '../useTextToSpeech';
 import { useUserStore } from '@/stores/userStore';
+import { useVoiceStore } from '@/stores/voiceStore';
 
-// ------ Mocks ------
-
-const mockNativeTTSSpeak = vi.fn().mockResolvedValue(undefined);
-const mockNativeTTSStop = vi.fn();
-const mockNativeTTSIsAvailable = vi.fn().mockResolvedValue(false);
-
-vi.mock('@/lib/jsbridge', () => ({
-  jsBridge: {
-    nativeTTS: {
-      speak: (...args: unknown[]) => mockNativeTTSSpeak(...args),
-      stop: (...args: unknown[]) => mockNativeTTSStop(...args),
-      isAvailable: (...args: unknown[]) => mockNativeTTSIsAvailable(...args),
-    },
-    nativeASR: {
-      isAvailable: vi.fn().mockResolvedValue(false),
-    },
-  },
-}));
-
-vi.mock('@/lib/voiceCapabilities', () => ({
-  detect: vi.fn().mockResolvedValue({
-    tts: ['web', 'native', 'doubao'],
-    asr: ['doubao'],
-  }),
+const mocks = vi.hoisted(() => ({
+  fetchBlob: vi.fn(),
 }));
 
 vi.mock('@/lib/api', () => ({
-  fetchApi: vi.fn(),
   API_BASE_URL: '',
+  fetchBlob: mocks.fetchBlob,
 }));
 
-import { useTextToSpeech } from '../useTextToSpeech';
+class FakeAudio {
+  static instances: FakeAudio[] = [];
+  static autoEnd = false;
 
-// ------ Helpers ------
-
-function resetVoiceStore(
-  overrides?: Partial<ReturnType<typeof useVoiceStore.getState>>,
-) {
-  useVoiceStore.setState({
-    ttsLevels: ['web', 'native', 'doubao'],
-    asrLevels: ['doubao'],
-    currentTTSLevel: 'web',
-    currentASRLevel: 'doubao',
-    isDetected: true,
-    ...overrides,
+  src: string;
+  playbackRate = 1;
+  onended: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+  pause = vi.fn();
+  play = vi.fn().mockImplementation(() => {
+    if (FakeAudio.autoEnd) queueMicrotask(() => this.onended?.());
+    return Promise.resolve();
   });
-}
 
-function resetUserStore(overrides?: { isElder?: boolean }) {
-  useUserStore.setState({
-    user: {
-      id: 'test-user',
-      name: '测试用户',
-      phone: '13800138000',
-      role: overrides?.isElder !== false ? 'elder' : 'family',
-      avatar_url: null,
-      birth_date: null,
-      gender: null,
-      chronic_diseases: null,
-      font_size: 'medium',
-      voice_speed: null,
-      wake_word: null,
-      last_active_at: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    } as ReturnType<typeof useUserStore.getState>['user'],
-    isElder: overrides?.isElder !== false,
-    token: 'test-token',
-  });
-}
-
-// Mock SpeechSynthesisUtterance
-class MockUtterance {
-  lang = '';
-  rate = 1;
-  text = '';
-  onend: (() => void) | null = null;
-  onerror: ((event: { error: string }) => void) | null = null;
-
-  constructor(text: string) {
-    this.text = text;
+  constructor(src: string) {
+    this.src = src;
+    FakeAudio.instances.push(this);
   }
 }
 
-// Mock speechSynthesis
-function setupWebSpeechMock(options?: { shouldFail?: boolean }) {
-  const mockSpeak = vi.fn().mockImplementation((utterance: MockUtterance) => {
-    // Simulate async completion
-    setTimeout(() => {
-      if (options?.shouldFail) {
-        utterance.onerror?.({ error: 'synthesis-failed' });
-      } else {
-        utterance.onend?.();
-      }
-    }, 0);
-  });
+class FakeUtterance {
+  lang = '';
+  rate = 1;
+  onend: (() => void) | null = null;
+  onerror: ((event: { error: string }) => void) | null = null;
 
-  const mockCancel = vi.fn();
-
-  Object.defineProperty(window, 'speechSynthesis', {
-    value: { speak: mockSpeak, cancel: mockCancel },
-    writable: true,
-    configurable: true,
-  });
-
-  (window as unknown as Record<string, unknown>)['SpeechSynthesisUtterance'] =
-    MockUtterance;
-
-  return { mockSpeak, mockCancel };
+  constructor(readonly text: string) { }
 }
 
-function cleanupWebSpeechMock() {
-  delete (window as unknown as Record<string, unknown>)['speechSynthesis'];
-  delete (window as unknown as Record<string, unknown>)[
-    'SpeechSynthesisUtterance'
-  ];
+const createObjectURL = vi.fn(() => `blob:voice-${createObjectURL.mock.calls.length + 1}`);
+const revokeObjectURL = vi.fn();
+
+function setUser(options: {
+  role?: 'elder' | 'family';
+  voiceSpeed?: number | null;
+} = {}): void {
+  const role = options.role ?? 'elder';
+  useUserStore.setState({
+    user: {
+      id: 'user-1',
+      role,
+      voice_speed: options.voiceSpeed ?? null,
+    } as never,
+    isElder: role === 'elder',
+  });
+}
+
+function setVoiceLevels(levels: Array<'mimo' | 'web'> = ['mimo', 'web']): void {
+  useVoiceStore.setState({
+    ttsLevels: levels as never,
+    currentTTSLevel: levels[0] as never,
+    isDetected: true,
+  });
+}
+
+function enableWebSpeech(): {
+  speak: ReturnType<typeof vi.fn>;
+  cancel: ReturnType<typeof vi.fn>;
+} {
+  const speak = vi.fn().mockImplementation((utterance: FakeUtterance) => {
+    queueMicrotask(() => utterance.onend?.());
+  });
+  const cancel = vi.fn();
+  Object.defineProperty(window, 'speechSynthesis', {
+    configurable: true,
+    value: { speak, cancel },
+  });
+  vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance);
+  return { speak, cancel };
+}
+
+async function beginSpeech(
+  hook: ReturnType<typeof renderHook<ReturnType<typeof useTextToSpeech>, unknown>>,
+  text: string,
+): Promise<{ pending: Promise<void> }> {
+  let pending!: Promise<void>;
+  await act(async () => {
+    pending = hook.result.current.speak(text);
+    await Promise.resolve();
+  });
+  await waitFor(() => expect(mocks.fetchBlob).toHaveBeenCalled());
+  return { pending };
 }
 
 describe('useTextToSpeech', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    resetVoiceStore();
-    resetUserStore();
+    FakeAudio.instances = [];
+    FakeAudio.autoEnd = false;
+    mocks.fetchBlob.mockResolvedValue(new Blob(['mp3'], { type: 'audio/mpeg' }));
+    setUser();
+    setVoiceLevels();
+    vi.stubGlobal('Audio', FakeAudio);
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
   });
 
   afterEach(() => {
-    cleanupWebSpeechMock();
+    delete (window as unknown as Record<string, unknown>).speechSynthesis;
+    vi.unstubAllGlobals();
   });
 
-  describe('initial state', () => {
-    it('returns correct initial values', () => {
-      const { result } = renderHook(() => useTextToSpeech());
+  it('即使 Web Speech 可用也先请求 MiMo，且正文不携带 speed', async () => {
+    const web = enableWebSpeech();
+    setUser({ voiceSpeed: 1.25 });
+    const hook = renderHook(() => useTextToSpeech());
+    const { pending } = await beginSpeech(hook, '现在该吃药了');
+    await waitFor(() => expect(FakeAudio.instances).toHaveLength(1));
+    const audio = FakeAudio.instances[0];
 
-      expect(result.current.isSpeaking).toBe(false);
-      expect(result.current.error).toBeNull();
-      expect(result.current.currentLevel).toBe('web');
+    expect(mocks.fetchBlob).toHaveBeenCalledWith('/api/v1/voice/tts', {
+      method: 'POST',
+      body: { text: '现在该吃药了' },
+      signal: expect.any(AbortSignal),
     });
+    expect(audio.playbackRate).toBe(1.25);
+    expect(audio.play).toHaveBeenCalledOnce();
+    expect(web.speak).not.toHaveBeenCalled();
+
+    await act(async () => {
+      audio.onended?.();
+      await pending;
+    });
+    expect(hook.result.current.isSpeaking).toBe(false);
+    expect(hook.result.current.currentLevel).toBe('mimo');
   });
 
-  describe('Web SpeechSynthesis API (level 1)', () => {
-    it('speaks using Web SpeechSynthesis when available', async () => {
-      const { mockSpeak } = setupWebSpeechMock();
+  it.each([
+    ['长辈默认', 'elder', null, 0.8],
+    ['家属默认', 'family', null, 1],
+    ['用户偏好', 'elder', 1.4, 1.4],
+    ['下限钳制', 'elder', -3, 0.5],
+    ['上限钳制', 'family', 9, 2],
+    ['非有限回退', 'elder', Number.NaN, 0.8],
+  ] as const)('%s语速为 %s', async (_label, role, voiceSpeed, expected) => {
+    setUser({ role, voiceSpeed });
+    FakeAudio.autoEnd = true;
+    const hook = renderHook(() => useTextToSpeech());
 
-      const { result } = renderHook(() => useTextToSpeech());
-
-      await act(async () => {
-        await result.current.speak('你好');
-      });
-
-      expect(mockSpeak).toHaveBeenCalled();
-      const utterance = mockSpeak.mock.calls[0][0] as MockUtterance;
-      expect(utterance.text).toBe('你好');
-      expect(utterance.lang).toBe('zh-CN');
-      expect(result.current.isSpeaking).toBe(false); // finished
+    await act(async () => {
+      await hook.result.current.speak('语速测试');
     });
 
-    it('sets lang to zh-CN and rate to elder speed 0.8', async () => {
-      resetUserStore({ isElder: true });
-      const { mockSpeak } = setupWebSpeechMock();
-
-      const { result } = renderHook(() => useTextToSpeech());
-
-      await act(async () => {
-        await result.current.speak('测试语速');
-      });
-
-      const utterance = mockSpeak.mock.calls[0][0] as MockUtterance;
-      expect(utterance.lang).toBe('zh-CN');
-      expect(utterance.rate).toBe(0.8);
-    });
-
-    it('uses standard speed 1.0 for family mode', async () => {
-      resetUserStore({ isElder: false });
-      const { mockSpeak } = setupWebSpeechMock();
-
-      const { result } = renderHook(() => useTextToSpeech());
-
-      await act(async () => {
-        await result.current.speak('家属端测试');
-      });
-
-      const utterance = mockSpeak.mock.calls[0][0] as MockUtterance;
-      expect(utterance.rate).toBe(1.0);
-    });
+    expect(FakeAudio.instances[0].playbackRate).toBe(expected);
   });
 
-  describe('Native TTS (level 2)', () => {
-    it('uses native TTS when currentLevel is native', async () => {
-      resetVoiceStore({
-        ttsLevels: ['native', 'doubao'],
-        currentTTSLevel: 'native',
-      });
+  it('stop 在请求期间中止 fetch，且不会显示错误或创建 Audio', async () => {
+    let receivedSignal: AbortSignal | undefined;
+    mocks.fetchBlob.mockImplementation((_path, options) => new Promise<Blob>((_resolve, reject) => {
+      receivedSignal = options.signal;
+      options.signal.addEventListener('abort', () => {
+        reject(new DOMException('aborted', 'AbortError'));
+      }, { once: true });
+    }));
+    const hook = renderHook(() => useTextToSpeech());
+    const { pending } = await beginSpeech(hook, '中止请求');
 
-      const { result } = renderHook(() => useTextToSpeech());
+    act(() => hook.result.current.stop());
+    await act(async () => pending);
 
-      await act(async () => {
-        await result.current.speak('原生TTS测试');
-      });
-
-      expect(mockNativeTTSSpeak).toHaveBeenCalledWith('原生TTS测试', {
-        speed: 0.8,
-      });
-    });
+    expect(receivedSignal?.aborted).toBe(true);
+    expect(FakeAudio.instances).toHaveLength(0);
+    expect(hook.result.current.error).toBeNull();
+    expect(hook.result.current.isSpeaking).toBe(false);
   });
 
-  describe('Doubao TTS (level 3)', () => {
-    it('calls backend API and plays audio when level is doubao', async () => {
-      resetVoiceStore({
-        ttsLevels: ['doubao'],
-        currentTTSLevel: 'doubao',
-      });
+  it('stop 在播放期间只清理一次并结算 speak Promise', async () => {
+    const hook = renderHook(() => useTextToSpeech());
+    const { pending } = await beginSpeech(hook, '停止播放');
+    await waitFor(() => expect(FakeAudio.instances).toHaveLength(1));
+    const audio = FakeAudio.instances[0];
+    const url = audio.src;
 
-      // Mock fetch for doubao TTS
-      const mockBlob = new Blob(['fake-audio'], { type: 'audio/mp3' });
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        blob: () => Promise.resolve(mockBlob),
-      });
-      vi.stubGlobal('fetch', mockFetch);
+    act(() => hook.result.current.stop());
+    await act(async () => pending);
+    act(() => hook.result.current.stop());
 
-      // Mock Audio — auto-fire onended after play()
-      const mockPlay = vi.fn().mockImplementation(function (this: { onended?: (() => void) | null }) {
-        // Simulate audio finishing immediately
-        setTimeout(() => this.onended?.(), 0);
-        return Promise.resolve();
-      });
-      vi.stubGlobal(
-        'Audio',
-        class {
-          src = '';
-          onended: (() => void) | null = null;
-          onerror: (() => void) | null = null;
-          play = mockPlay;
-          pause = vi.fn();
-        },
-      );
-
-      // Mock URL.createObjectURL / revokeObjectURL
-      vi.stubGlobal('URL', {
-        ...URL,
-        createObjectURL: vi.fn().mockReturnValue('blob:fake-url'),
-        revokeObjectURL: vi.fn(),
-      });
-
-      const { result } = renderHook(() => useTextToSpeech());
-
-      await act(async () => {
-        await result.current.speak('豆包测试');
-      });
-
-      // Verify fetch was called with correct params
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/v1/voice/tts',
-        expect.objectContaining({
-          method: 'POST',
-          body: JSON.stringify({ text: '豆包测试', speed: 0.8 }),
-        }),
-      );
-
-      expect(mockPlay).toHaveBeenCalled();
-      expect(result.current.isSpeaking).toBe(false);
-
-      vi.unstubAllGlobals();
-    });
+    expect(audio.pause).toHaveBeenCalledOnce();
+    expect(audio.onended).toBeNull();
+    expect(audio.onerror).toBeNull();
+    expect(revokeObjectURL).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenCalledWith(url);
   });
 
-  describe('auto-fallback', () => {
-    it('falls back from web to native when web fails', async () => {
-      // Web Speech API fails
-      setupWebSpeechMock({ shouldFail: true });
+  it('新 speak 取消旧播放，旧操作完成不会覆盖新状态', async () => {
+    const hook = renderHook(() => useTextToSpeech());
+    const { pending: first } = await beginSpeech(hook, '第一段');
+    await waitFor(() => expect(FakeAudio.instances).toHaveLength(1));
+    const oldAudio = FakeAudio.instances[0];
+    let second!: Promise<void>;
 
-      resetVoiceStore({
-        ttsLevels: ['web', 'native', 'doubao'],
-        currentTTSLevel: 'web',
-      });
-
-      mockNativeTTSSpeak.mockResolvedValue(undefined);
-
-      const { result } = renderHook(() => useTextToSpeech());
-
-      await act(async () => {
-        await result.current.speak('降级测试');
-      });
-
-      // Should have fallen back to native
-      expect(mockNativeTTSSpeak).toHaveBeenCalled();
+    await act(async () => {
+      second = hook.result.current.speak('第二段');
+      await Promise.resolve();
     });
+    await waitFor(() => expect(FakeAudio.instances).toHaveLength(2));
+    const newAudio = FakeAudio.instances[1];
 
-    it('logs fallback events with console.warn', async () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await act(async () => first);
+    expect(oldAudio.pause).toHaveBeenCalledOnce();
+    expect(hook.result.current.isSpeaking).toBe(true);
 
-      // No Web Speech API available
-      resetVoiceStore({
-        ttsLevels: ['web', 'native', 'doubao'],
-        currentTTSLevel: 'web',
-      });
-
-      mockNativeTTSSpeak.mockResolvedValue(undefined);
-
-      const { result } = renderHook(() => useTextToSpeech());
-
-      await act(async () => {
-        await result.current.speak('日志测试');
-      });
-
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[useTextToSpeech]'),
-      );
-
-      warnSpy.mockRestore();
+    await act(async () => {
+      newAudio.onended?.();
+      await second;
     });
+    expect(hook.result.current.isSpeaking).toBe(false);
+    expect(revokeObjectURL).toHaveBeenCalledTimes(2);
+  });
 
-    it('sets error when all levels fail', async () => {
-      resetVoiceStore({
-        ttsLevels: ['doubao'],
-        currentTTSLevel: 'doubao',
-      });
+  it('卸载时中止播放并回收 Blob URL', async () => {
+    const hook = renderHook(() => useTextToSpeech());
+    const { pending } = await beginSpeech(hook, '卸载清理');
+    await waitFor(() => expect(FakeAudio.instances).toHaveLength(1));
+    const audio = FakeAudio.instances[0];
 
-      // Mock fetch to fail
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: false, status: 500 }),
-      );
+    hook.unmount();
+    await pending;
 
-      const { result } = renderHook(() => useTextToSpeech());
+    expect(audio.pause).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledOnce();
+  });
 
-      await act(async () => {
-        await result.current.speak('全部失败');
-      });
+  it('优先在中文句末分块并严格串行播放', async () => {
+    const hook = renderHook(() => useTextToSpeech());
+    const text = `${'好'.repeat(990)}。${'再'.repeat(20)}`;
+    const { pending } = await beginSpeech(hook, text);
+    await waitFor(() => expect(FakeAudio.instances).toHaveLength(1));
 
-      expect(result.current.isSpeaking).toBe(false);
-      expect(result.current.error).toBeTruthy();
+    expect(mocks.fetchBlob).toHaveBeenCalledTimes(1);
+    const firstText = mocks.fetchBlob.mock.calls[0][1].body.text as string;
+    expect(firstText.endsWith('。')).toBe(true);
+    expect(Array.from(firstText)).toHaveLength(991);
 
-      vi.unstubAllGlobals();
+    act(() => FakeAudio.instances[0].onended?.());
+    await waitFor(() => expect(mocks.fetchBlob).toHaveBeenCalledTimes(2));
+    expect(FakeAudio.instances).toHaveLength(2);
+    expect(mocks.fetchBlob.mock.calls[1][1].body).toEqual({ text: '再'.repeat(20) });
+
+    await act(async () => {
+      FakeAudio.instances[1].onended?.();
+      await pending;
     });
   });
 
-  describe('stop', () => {
-    it('calls speechSynthesis.cancel and sets isSpeaking false', () => {
-      const { mockCancel } = setupWebSpeechMock();
+  it('按 Unicode code point 对无标点长句硬切 1000 字', async () => {
+    FakeAudio.autoEnd = true;
+    const hook = renderHook(() => useTextToSpeech());
 
-      const { result } = renderHook(() => useTextToSpeech());
-
-      act(() => {
-        result.current.stop();
-      });
-
-      expect(mockCancel).toHaveBeenCalled();
-      expect(mockNativeTTSStop).toHaveBeenCalled();
-      expect(result.current.isSpeaking).toBe(false);
+    await act(async () => {
+      await hook.result.current.speak('😀'.repeat(1001));
     });
+
+    expect(mocks.fetchBlob).toHaveBeenCalledTimes(2);
+    expect(Array.from(mocks.fetchBlob.mock.calls[0][1].body.text)).toHaveLength(1000);
+    expect(Array.from(mocks.fetchBlob.mock.calls[1][1].body.text)).toHaveLength(1);
   });
 
-  describe('setSpeed', () => {
-    it('allows adjusting speech speed', async () => {
-      setupWebSpeechMock();
+  it('恰好 1000 字只请求一次，空白不请求', async () => {
+    FakeAudio.autoEnd = true;
+    const hook = renderHook(() => useTextToSpeech());
 
-      const { result } = renderHook(() => useTextToSpeech());
-
-      act(() => {
-        result.current.setSpeed(1.5);
-      });
-
-      const { mockSpeak } = setupWebSpeechMock();
-
-      await act(async () => {
-        await result.current.speak('自定义语速');
-      });
-
-      const utterance = mockSpeak.mock.calls[0][0] as MockUtterance;
-      expect(utterance.rate).toBe(1.5);
+    await act(async () => {
+      await hook.result.current.speak('字'.repeat(1000));
+      await hook.result.current.speak('   \n  ');
     });
+
+    expect(mocks.fetchBlob).toHaveBeenCalledTimes(1);
   });
 
-  describe('currentLevel reflects voiceStore', () => {
-    it('returns the current TTS level from voiceStore', () => {
-      resetVoiceStore({ currentTTSLevel: 'native' });
+  it('分块播放中 stop 不再请求后续块', async () => {
+    const hook = renderHook(() => useTextToSpeech());
+    const { pending } = await beginSpeech(hook, '甲'.repeat(1001));
+    await waitFor(() => expect(FakeAudio.instances).toHaveLength(1));
 
-      const { result } = renderHook(() => useTextToSpeech());
-      expect(result.current.currentLevel).toBe('native');
-    });
+    act(() => hook.result.current.stop());
+    await act(async () => pending);
 
-    it('returns doubao when only doubao is available', () => {
-      resetVoiceStore({
-        ttsLevels: ['doubao'],
-        currentTTSLevel: 'doubao',
-      });
-
-      const { result } = renderHook(() => useTextToSpeech());
-      expect(result.current.currentLevel).toBe('doubao');
-    });
+    expect(mocks.fetchBlob).toHaveBeenCalledTimes(1);
   });
 
-  describe('elder mode default speed', () => {
-    it('defaults to 0.8 speed for elder users', () => {
-      resetUserStore({ isElder: true });
+  it('MiMo 失败后才显式降级到 Web Speech', async () => {
+    const web = enableWebSpeech();
+    mocks.fetchBlob.mockRejectedValue(new Error('MiMo 暂时不可用'));
+    const hook = renderHook(() => useTextToSpeech());
 
-      // The hook internally uses 0.8 — we verify via speak call
-      const { result } = renderHook(() => useTextToSpeech());
-      // Speed is internal state, verified through speak behavior
-      expect(result.current.currentLevel).toBeDefined();
+    await act(async () => {
+      await hook.result.current.speak('降级测试');
     });
 
-    it('defaults to 1.0 speed for family users', () => {
-      resetUserStore({ isElder: false });
+    expect(mocks.fetchBlob).toHaveBeenCalledOnce();
+    expect(web.speak).toHaveBeenCalledOnce();
+    expect((web.speak.mock.calls[0][0] as FakeUtterance).text).toBe('降级测试');
+    expect(hook.result.current.error).toBeNull();
+    expect(useVoiceStore.getState().currentTTSLevel).toBe('web');
+  });
 
-      const { result } = renderHook(() => useTextToSpeech());
-      expect(result.current.currentLevel).toBeDefined();
+  it('MiMo 且 Web 都不可用时显示可理解的中文错误', async () => {
+    setVoiceLevels(['mimo']);
+    mocks.fetchBlob.mockRejectedValue(new Error('上游失败'));
+    const hook = renderHook(() => useTextToSpeech());
+
+    await act(async () => {
+      await hook.result.current.speak('失败测试');
     });
+
+    expect(hook.result.current.isSpeaking).toBe(false);
+    expect(hook.result.current.error).toContain('语音播放失败');
+    expect(hook.result.current.error).toContain('上游失败');
   });
 });
