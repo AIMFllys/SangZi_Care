@@ -53,6 +53,7 @@ next-env.d.ts
 
 # AI IDEs & Agents
 .agent/
+.worktrees/
 .kiro/
 .gemini/
 .cursor/
