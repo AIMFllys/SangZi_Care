@@ -12,32 +12,99 @@ interface FetchApiOptions {
   headers?: Record<string, string>;
   /** 跳过 token 注入（用于 refresh 等无需认证的请求） */
   skipAuth?: boolean;
+  signal?: AbortSignal;
+}
+
+interface FetchFormDataOptions {
+  method?: 'POST' | 'PATCH';
+  signal?: AbortSignal;
+}
+
+interface FetchBlobOptions {
+  method?: 'GET' | 'POST';
+  body?: unknown;
+  headers?: Record<string, string>;
+  signal?: AbortSignal;
+}
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number | null,
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = 'ApiError';
+  }
+}
+
+let refreshPromise: Promise<boolean> | null = null;
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError';
+}
+
+function createAbortError(): DOMException {
+  return new DOMException('The operation was aborted', 'AbortError');
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw createAbortError();
 }
 
 /**
- * 是否正在刷新 Token（防并发）
+ * 只中止当前调用方对共享任务的等待，不取消共享任务本身。
  */
-let _isRefreshing = false;
-let _refreshPromise: Promise<boolean> | null = null;
+function waitWithAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) return Promise.reject(createAbortError());
 
-/**
- * 用 refresh_token 换取新的 access + refresh token
- */
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = (): void => {
+      cleanup();
+      reject(createAbortError());
+    };
+    const cleanup = (): void => signal.removeEventListener('abort', onAbort);
+
+    signal.addEventListener('abort', onAbort, { once: true });
+    promise.then(
+      (value) => {
+        cleanup();
+        resolve(value);
+      },
+      (error: unknown) => {
+        cleanup();
+        reject(error);
+      },
+    );
+  });
+}
+
+/** 用 refresh_token 换取新的 access + refresh token。 */
 async function refreshTokens(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
   const refreshToken = localStorage.getItem('refresh_token');
   if (!refreshToken) return false;
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: refreshToken }),
     });
 
-    if (!res.ok) return false;
+    if (!response.ok) return false;
+    const data = await response.json() as {
+      access_token?: unknown;
+      refresh_token?: unknown;
+    };
+    if (
+      typeof data.access_token !== 'string'
+      || typeof data.refresh_token !== 'string'
+    ) {
+      return false;
+    }
 
-    const data = await res.json();
     localStorage.setItem('token', data.access_token);
     localStorage.setItem('refresh_token', data.refresh_token);
     return true;
@@ -46,83 +113,158 @@ async function refreshTokens(): Promise<boolean> {
   }
 }
 
+function getRefreshPromise(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = refreshTokens().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
+function buildAttemptHeaders(
+  baseHeaders: Headers,
+  skipAuth: boolean,
+): Headers {
+  const headers = new Headers(baseHeaders);
+  if (typeof window !== 'undefined' && !skipAuth) {
+    const token = localStorage.getItem('token');
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+    else headers.delete('Authorization');
+  }
+  return headers;
+}
+
+async function parseApiError(response: Response): Promise<ApiError> {
+  let message = `请求失败 (${response.status})`;
+  const contentType = response.headers.get('content-type') ?? '';
+
+  if (contentType.toLowerCase().includes('application/json')) {
+    try {
+      const body = await response.json() as {
+        detail?: unknown;
+        message?: unknown;
+      };
+      if (typeof body.detail === 'string' && body.detail.trim()) {
+        message = body.detail;
+      } else if (typeof body.message === 'string' && body.message.trim()) {
+        message = body.message;
+      }
+    } catch {
+      // 保留不包含上游响应正文的安全默认信息。
+    }
+  }
+
+  return new ApiError(message, response.status);
+}
+
+async function performFetch(
+  url: string,
+  init: RequestInit,
+  baseHeaders: Headers,
+  skipAuth: boolean,
+): Promise<Response> {
+  try {
+    return await fetch(url, {
+      ...init,
+      headers: buildAttemptHeaders(baseHeaders, skipAuth),
+    });
+  } catch (error) {
+    if (isAbortError(error)) throw error;
+    throw new ApiError('网络连接失败，请稍后重试', null, {
+      cause: error,
+    });
+  }
+}
+
+async function fetchAuthenticatedResponse(
+  path: string,
+  init: RequestInit,
+  options: { skipAuth?: boolean } = {},
+): Promise<Response> {
+  const skipAuth = options.skipAuth ?? false;
+  const signal = init.signal ?? undefined;
+  const baseHeaders = new Headers(init.headers);
+  const url = `${API_BASE_URL}${path}`;
+
+  throwIfAborted(signal);
+  let response = await performFetch(url, init, baseHeaders, skipAuth);
+
+  if (response.status === 401 && !skipAuth && typeof window !== 'undefined') {
+    const refreshed = await waitWithAbort(getRefreshPromise(), signal);
+    throwIfAborted(signal);
+    if (refreshed) {
+      response = await performFetch(url, init, baseHeaders, skipAuth);
+    }
+  }
+
+  if (!response.ok) throw await parseApiError(response);
+  return response;
+}
+
 /**
- * 轻量 fetch 封装
- * - 自动拼接 baseURL
- * - 自动注入 Bearer Token（从 localStorage 读取）
- * - 自动设置 Content-Type: application/json
- * - Token 过期时自动用 refresh_token 续期并重试
- * - 非 2xx 响应抛出包含服务端 message 的 Error
+ * JSON API 封装：自动鉴权、401 单次续期、错误标准化。
  */
 export async function fetchApi<T = unknown>(
   path: string,
   options: FetchApiOptions = {},
 ): Promise<T> {
-  const { method = 'GET', body, headers: extraHeaders, skipAuth } = options;
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...extraHeaders,
-  };
-
-  // 注入 Token（仅在浏览器环境）
-  if (typeof window !== 'undefined' && !skipAuth) {
-    const token = localStorage.getItem('token');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+  const {
+    method = 'GET',
+    body,
+    headers: extraHeaders,
+    skipAuth = false,
+    signal,
+  } = options;
+  const headers = new Headers(extraHeaders);
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
   }
 
-  const url = `${API_BASE_URL}${path}`;
-
-  const fetchOptions: RequestInit = {
+  const response = await fetchAuthenticatedResponse(path, {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
-  };
+    signal,
+  }, { skipAuth });
 
-  let res = await fetch(url, fetchOptions);
+  if (response.status === 204) return undefined as T;
+  return response.json() as Promise<T>;
+}
 
-  // Token 过期 → 自动续期并重试一次
-  if (res.status === 401 && !skipAuth && typeof window !== 'undefined') {
-    // 防止并发多次 refresh
-    if (!_isRefreshing) {
-      _isRefreshing = true;
-      _refreshPromise = refreshTokens().finally(() => {
-        _isRefreshing = false;
-        _refreshPromise = null;
-      });
-    }
+/** 上传 FormData；不得手工设置 Content-Type，以保留浏览器生成的 boundary。 */
+export async function fetchFormData<T = unknown>(
+  path: string,
+  formData: FormData,
+  options: FetchFormDataOptions = {},
+): Promise<T> {
+  const response = await fetchAuthenticatedResponse(path, {
+    method: options.method ?? 'POST',
+    body: formData,
+    signal: options.signal,
+  });
 
-    const refreshed = await (_refreshPromise ?? refreshTokens());
+  if (response.status === 204) return undefined as T;
+  return response.json() as Promise<T>;
+}
 
-    if (refreshed) {
-      // 用新 token 重试
-      const newToken = localStorage.getItem('token');
-      if (newToken) {
-        (fetchOptions.headers as Record<string, string>)['Authorization'] =
-          `Bearer ${newToken}`;
-      }
-      res = await fetch(url, fetchOptions);
-    }
+/** 请求 JSON 接口并保留二进制响应。 */
+export async function fetchBlob(
+  path: string,
+  options: FetchBlobOptions = {},
+): Promise<Blob> {
+  const headers = new Headers(options.headers);
+  if (options.body !== undefined && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
   }
 
-  if (!res.ok) {
-    let message = `请求失败 (${res.status})`;
-    try {
-      const err = await res.json();
-      if (err.detail) message = err.detail;
-      else if (err.message) message = err.message;
-    } catch {
-      // 无法解析 JSON，使用默认消息
-    }
-    throw new Error(message);
-  }
-
-  // 204 No Content 等无 body 的响应
-  if (res.status === 204) return undefined as T;
-
-  return res.json() as Promise<T>;
+  const response = await fetchAuthenticatedResponse(path, {
+    method: options.method ?? 'GET',
+    headers,
+    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    signal: options.signal,
+  });
+  return response.blob();
 }
 
 export { API_BASE_URL };
