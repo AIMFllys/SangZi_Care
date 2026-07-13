@@ -35,10 +35,10 @@
   min-height: 72px;
   margin-top: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
-  border: 1px solid color-mix(in srgb, var(--danger) 32%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 32%, transparent);
   border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--danger) 9%, var(--bg-card));
-  color: var(--danger);
+  background: color-mix(in srgb, var(--color-danger) 9%, var(--bg-card));
+  color: var(--color-danger);
   text-align: center;
 }
 
