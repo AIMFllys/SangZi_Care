@@ -40,42 +40,46 @@ export function useAuth(): UseAuthReturn {
   useEffect(() => {
     let cancelled = false;
 
-    async function check() {
+    async function initializeSession() {
       const authed = await initialize();
 
       if (cancelled) return;
 
       setIsAuthenticated(authed);
       setIsReady(true);
-
-      const isPublic = PUBLIC_ROUTES.includes(pathname);
-
-      if (!authed && !isPublic) {
-        router.replace(ROUTES.LOGIN);
-        return;
-      }
-
-      if (authed && isPublic) {
-        // 已登录用户访问登录页 → 跳转首页
-        router.replace(ROUTES.HOME);
-        return;
-      }
-
-      if (authed) {
-        // 获取最新的 user（initialize 已经 set 过了）
-        const currentUser = useUserStore.getState().user;
-        if (currentUser && !currentUser.role && pathname !== ROUTES.ONBOARDING) {
-          router.replace(ROUTES.ONBOARDING);
-        }
-      }
     }
 
-    check();
+    initializeSession();
 
     return () => {
       cancelled = true;
     };
-  }, [initialize, pathname, router]);
+  }, [initialize]);
+
+  useEffect(() => {
+    if (!isReady) return;
+
+    const isPublic = PUBLIC_ROUTES.includes(pathname);
+
+    if (!isAuthenticated && !isPublic) {
+      router.replace(ROUTES.LOGIN);
+      return;
+    }
+
+    if (isAuthenticated && isPublic) {
+      // 已登录用户访问登录页 → 跳转首页
+      router.replace(ROUTES.HOME);
+      return;
+    }
+
+    if (isAuthenticated) {
+      // 获取最新的 user（initialize 已经 set 过了）
+      const currentUser = useUserStore.getState().user;
+      if (currentUser && !currentUser.role && pathname !== ROUTES.ONBOARDING) {
+        router.replace(ROUTES.ONBOARDING);
+      }
+    }
+  }, [isAuthenticated, isReady, pathname, router]);
 
   return { isReady, isAuthenticated };
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/components/providers/AuthProvider';
 import { fetchApi } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
 import { User, X, Plus } from 'lucide-react';
@@ -24,7 +24,7 @@ interface ProfileForm {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { isReady } = useAuth();
+  const { isReady } = useAuthContext();
   const user = useUserStore((s) => s.user);
   const setUser = useUserStore((s) => s.setUser);
 

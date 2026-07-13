@@ -42,8 +42,8 @@ vi.mock('@/stores/userStore', () => ({
   },
 }));
 
-vi.mock('@/hooks/useAuth', () => ({
-  useAuth: () => ({ isReady: true, isAuthenticated: true }),
+vi.mock('@/components/providers/AuthProvider', () => ({
+  useAuthContext: () => ({ isReady: true, isAuthenticated: true }),
 }));
 
 let mockFetchApi = vi.fn();

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUserStore } from '@/stores/userStore';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/components/providers/AuthProvider';
 import { fetchApi } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
 import { Button } from '@/components/ui/Button';
@@ -51,7 +51,7 @@ export function applyFontSize(size: string) {
 }
 
 export default function AccessibilityPage() {
-  const { isReady } = useAuth();
+  const { isReady } = useAuthContext();
   const user = useUserStore((s) => s.user);
   const setUser = useUserStore((s) => s.setUser);
 

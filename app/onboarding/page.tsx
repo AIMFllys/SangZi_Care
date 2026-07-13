@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/components/providers/AuthProvider';
 import { ROUTES } from '@/lib/constants';
 import { Card } from '@/components/ui';
 import { User, Users } from 'lucide-react';
@@ -13,7 +13,7 @@ type Role = 'elder' | 'family';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { isReady } = useAuth();
+  const { isReady } = useAuthContext();
   const setRole = useUserStore((s) => s.setRole);
   const [selecting, setSelecting] = useState<Role | null>(null);
 

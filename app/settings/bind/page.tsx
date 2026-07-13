@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useUserStore } from '@/stores/userStore';
 import { useFamilyStore } from '@/stores/familyStore';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/components/providers/AuthProvider';
 import { fetchApi } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
 import { Button } from '@/components/ui/Button';
@@ -45,7 +45,7 @@ interface GenerateCodeResponse {
 }
 
 export default function BindManagementPage() {
-  const { isReady } = useAuth();
+  const { isReady } = useAuthContext();
   const user = useUserStore((s) => s.user);
   const isElder = useUserStore((s) => s.isElder);
   const { fetchBinds } = useFamilyStore();
