@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   extractNumbersFromTranscript,
@@ -19,10 +20,14 @@ describe('extractNumbersFromTranscript', () => {
     expect(extractNumbersFromTranscript('体温36.5度')).toEqual([36.5]);
   });
 
-  it('处理中文数字"一百二十"', () => {
-    const result = extractNumbersFromTranscript('血压一百二十八十');
-    expect(result).toContain(120);
-    expect(result).toContain(80);
+  it('处理真实中文血压表达', () => {
+    expect(extractNumbersFromTranscript('高压一百三十五，低压八十八'))
+      .toEqual([135, 88]);
+  });
+
+  it('处理中文整数和小数', () => {
+    expect(extractNumbersFromTranscript('心率七十二')).toEqual([72]);
+    expect(extractNumbersFromTranscript('体温三十六点五')).toEqual([36.5]);
   });
 
   it('空字符串返回空数组', () => {
@@ -210,19 +215,24 @@ vi.mock('@/stores/userStore', () => ({
 
 const mockStartListening = vi.fn();
 const mockStopListening = vi.fn();
+const mockCancelListening = vi.fn();
 const mockResetTranscript = vi.fn();
 let mockIsListening = false;
 let mockTranscript = '';
+let mockRecognitionPhase = 'idle';
+let mockRecognitionError: string | null = null;
 
 vi.mock('@/hooks/useVoiceRecognition', () => ({
   useVoiceRecognition: () => ({
     isListening: mockIsListening,
     transcript: mockTranscript,
+    phase: mockRecognitionPhase,
     startListening: mockStartListening,
     stopListening: mockStopListening,
+    cancelListening: mockCancelListening,
     resetTranscript: mockResetTranscript,
-    error: null,
-    currentLevel: 'web',
+    error: mockRecognitionError,
+    currentLevel: 'mimo',
   }),
 }));
 
@@ -231,7 +241,23 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+
+interface Deferred<T> {
+  promise: Promise<T>;
+  resolve(value: T): void;
+  reject(reason: unknown): void;
+}
+
+function deferred<T>(): Deferred<T> {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((onResolve, onReject) => {
+    resolve = onResolve;
+    reject = onReject;
+  });
+  return { promise, resolve, reject };
+}
 
 // 动态导入组件（在 mock 之后）
 const { default: HealthInputPage } = await import('../page');
@@ -241,6 +267,14 @@ describe('HealthInputPage 组件', () => {
     vi.clearAllMocks();
     mockIsListening = false;
     mockTranscript = '';
+    mockRecognitionPhase = 'idle';
+    mockRecognitionError = null;
+    mockStartListening.mockResolvedValue(undefined);
+    mockStopListening.mockResolvedValue({
+      transcript: '高压一百三十五，低压八十八',
+      audioBlob: new Blob(['wav'], { type: 'audio/wav' }),
+      durationMs: 1_500,
+    });
   });
 
   it('渲染页面标题', () => {
@@ -349,6 +383,133 @@ describe('HealthInputPage 组件', () => {
 
     expect(mockResetTranscript).toHaveBeenCalled();
     expect(mockStartListening).toHaveBeenCalled();
+  });
+
+  it('停止后等待最终转写，确认解析结果前不能保存', async () => {
+    const result = deferred<{
+      transcript: string;
+      audioBlob: Blob;
+      durationMs: number;
+    } | null>();
+    mockStopListening.mockReturnValue(result.promise);
+    mockCreateRecord.mockResolvedValue({ id: 'record-voice' });
+    render(<HealthInputPage />);
+    fireEvent.click(screen.getByText('语音录入'));
+
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('开始录音'));
+    });
+    fireEvent.click(screen.getByLabelText('停止录音'));
+
+    expect(screen.getByText('正在识别，请稍候...')).toBeDefined();
+    expect(screen.getByRole('button', { name: /保存记录/ })).toBeDisabled();
+
+    await act(async () => {
+      result.resolve({
+        transcript: '高压一百三十五，低压八十八',
+        audioBlob: new Blob(['wav'], { type: 'audio/wav' }),
+        durationMs: 1_800,
+      });
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText('高压一百三十五，低压八十八')).toBeDefined();
+    expect(screen.getByDisplayValue('135')).toBeDefined();
+    expect(screen.getByDisplayValue('88')).toBeDefined();
+
+    fireEvent.click(screen.getByRole('button', { name: /保存记录/ }));
+    expect(mockCreateRecord).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent('请先确认语音解析结果');
+
+    fireEvent.click(screen.getByRole('button', { name: '确认解析结果' }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /保存记录/ }));
+    });
+
+    expect(mockCreateRecord).toHaveBeenCalledOnce();
+    expect(mockCreateRecord.mock.calls[0][0]).toMatchObject({
+      input_method: 'voice',
+      values: { systolic: 135, diastolic: 88 },
+    });
+  });
+
+  it('编辑语音解析值后要求重新确认', async () => {
+    render(<HealthInputPage />);
+    fireEvent.click(screen.getByText('语音录入'));
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('开始录音'));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('停止录音'));
+    });
+    fireEvent.click(screen.getByRole('button', { name: '确认解析结果' }));
+
+    fireEvent.change(screen.getByLabelText('收缩压'), { target: { value: '136' } });
+    fireEvent.click(screen.getByRole('button', { name: /保存记录/ }));
+
+    expect(mockCreateRecord).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent('请先确认语音解析结果');
+  });
+
+  it('切换手动模式会取消识别，迟到结果不会覆盖手动值', async () => {
+    const result = deferred<{
+      transcript: string;
+      audioBlob: Blob;
+      durationMs: number;
+    } | null>();
+    mockStopListening.mockReturnValue(result.promise);
+    render(<HealthInputPage />);
+    fireEvent.click(screen.getByText('语音录入'));
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('开始录音'));
+    });
+    fireEvent.click(screen.getByLabelText('停止录音'));
+    fireEvent.click(screen.getByText('手动录入'));
+    fireEvent.change(screen.getByLabelText('收缩压'), { target: { value: '120' } });
+    fireEvent.change(screen.getByLabelText('舒张压'), { target: { value: '80' } });
+
+    expect(mockCancelListening).toHaveBeenCalled();
+    await act(async () => {
+      result.resolve({
+        transcript: '高压一百五十，低压九十五',
+        audioBlob: new Blob(['wav'], { type: 'audio/wav' }),
+        durationMs: 1_000,
+      });
+      await Promise.resolve();
+    });
+
+    expect(screen.getByLabelText('收缩压')).toHaveValue(120);
+    expect(screen.getByLabelText('舒张压')).toHaveValue(80);
+  });
+
+  it('切换记录类型和离开页面都会取消当前识别', async () => {
+    const view = render(<HealthInputPage />);
+    fireEvent.click(screen.getByText('语音录入'));
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('开始录音'));
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: '心率' }));
+    expect(mockCancelListening).toHaveBeenCalledOnce();
+
+    view.unmount();
+    expect(mockCancelListening).toHaveBeenCalledTimes(2);
+  });
+
+  it('识别失败显示可重试中文错误', async () => {
+    mockStopListening.mockRejectedValueOnce(new Error('未识别到有效语音'));
+    render(<HealthInputPage />);
+    fireEvent.click(screen.getByText('语音录入'));
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('开始录音'));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('停止录音'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('未识别到有效语音');
+    });
   });
 
   it('返回按钮指向健康记录页', () => {

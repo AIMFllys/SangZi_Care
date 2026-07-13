@@ -30,6 +30,13 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 type RecordType = 'blood_pressure' | 'blood_sugar' | 'heart_rate' | 'weight' | 'temperature';
 type InputMethod = 'manual' | 'voice';
 type SugarMeasurementType = 'fasting' | 'postprandial';
+type VoiceInputStage =
+  | 'idle'
+  | 'recording'
+  | 'transcribing'
+  | 'review'
+  | 'confirmed'
+  | 'error';
 
 interface FormValues {
   // 血压
@@ -64,47 +71,69 @@ interface FormErrors {
 export function extractNumbersFromTranscript(text: string): number[] {
   if (!text) return [];
 
-  // 中文数字映射
-  const cnMap: Record<string, string> = {
-    '零': '0', '一': '1', '二': '2', '三': '3', '四': '4',
-    '五': '5', '六': '6', '七': '7', '八': '8', '九': '9',
-    '十': '10', '百': '00', '千': '000',
-  };
-
-  // 先替换中文数字为阿拉伯数字
-  let normalized = text;
-
-  // 处理"一百二十"这类中文数字表达
-  // 先处理完整的"X百Y十Z"模式
-  normalized = normalized
-    .replace(/一百二十/g, '120 ')
-    .replace(/一百三十/g, '130 ')
-    .replace(/一百四十/g, '140 ')
-    .replace(/一百五十/g, '150 ')
-    .replace(/一百六十/g, '160 ')
-    .replace(/一百七十/g, '170 ')
-    .replace(/一百八十/g, '180 ')
-    .replace(/一百九十/g, '190 ')
-    .replace(/一百/g, '100 ')
-    .replace(/二百/g, '200 ')
-    .replace(/八十/g, '80 ')
-    .replace(/七十/g, '70 ')
-    .replace(/六十/g, '60 ')
-    .replace(/九十/g, '90 ')
-    .replace(/五十/g, '50 ')
-    .replace(/四十/g, '40 ')
-    .replace(/三十/g, '30 ');
-
-  // 替换剩余的单个中文数字
-  for (const [cn, num] of Object.entries(cnMap)) {
-    normalized = normalized.replace(new RegExp(cn, 'g'), num);
-  }
-
-  // 提取所有数字（包括小数）
-  const matches = normalized.match(/\d+\.?\d*/g);
+  const matches = text.match(/-?\d+(?:\.\d+)?|[零〇一二两三四五六七八九十百千万点]+/g);
   if (!matches) return [];
 
-  return matches.map(Number).filter((n) => !isNaN(n) && n > 0);
+  return matches
+    .map((token) => (/^-?\d/.test(token) ? Number(token) : parseChineseNumber(token)))
+    .filter((value) => Number.isFinite(value) && value > 0);
+}
+
+const CHINESE_DIGITS: Record<string, number> = {
+  零: 0, 〇: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4,
+  五: 5, 六: 6, 七: 7, 八: 8, 九: 9,
+};
+
+const CHINESE_UNITS: Record<string, number> = {
+  十: 10, 百: 100, 千: 1_000, 万: 10_000,
+};
+
+function parseChineseInteger(text: string): number {
+  if (!/[十百千万]/.test(text)) {
+    const digits = Array.from(text, (char) => CHINESE_DIGITS[char]);
+    return digits.some((digit) => digit === undefined)
+      ? Number.NaN
+      : Number(digits.join(''));
+  }
+
+  let total = 0;
+  let section = 0;
+  let current = 0;
+
+  for (const char of text) {
+    const digit = CHINESE_DIGITS[char];
+    if (digit !== undefined) {
+      current = digit;
+      continue;
+    }
+
+    const unit = CHINESE_UNITS[char];
+    if (!unit) return Number.NaN;
+    if (unit === 10_000) {
+      section += current;
+      total += (section || 1) * unit;
+      section = 0;
+    } else {
+      section += (current || 1) * unit;
+    }
+    current = 0;
+  }
+
+  return total + section + current;
+}
+
+function parseChineseNumber(text: string): number {
+  const parts = text.split('点');
+  if (parts.length > 2) return Number.NaN;
+
+  const integer = parseChineseInteger(parts[0] || '零');
+  if (parts.length === 1) return integer;
+
+  const decimalDigits = Array.from(parts[1], (char) => CHINESE_DIGITS[char]);
+  if (decimalDigits.length === 0 || decimalDigits.some((digit) => digit === undefined)) {
+    return Number.NaN;
+  }
+  return integer + Number(`0.${decimalDigits.join('')}`);
 }
 
 /** 根据记录类型从语音文本解析数值 */
@@ -241,8 +270,14 @@ export default function HealthInputPage() {
   const router = useRouter();
   const createRecord = useHealthStore((s) => s.createRecord);
   const currentUser = useUserStore((s) => s.user);
-  const { isListening, transcript, startListening, stopListening, resetTranscript } =
-    useVoiceRecognition();
+  const {
+    phase: recognitionPhase,
+    error: recognitionError,
+    startListening,
+    stopListening,
+    cancelListening,
+    resetTranscript,
+  } = useVoiceRecognition();
 
   // 状态
   const [selectedType, setSelectedType] = useState<RecordType>('blood_pressure');
@@ -251,35 +286,19 @@ export default function HealthInputPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
-  // 上一次处理过的 transcript 长度，避免重复解析
-  const lastTranscriptRef = useRef('');
-
-  // ------ 语音文本变化时自动解析 ------
-
-  useEffect(() => {
-    if (!transcript || transcript === lastTranscriptRef.current) return;
-    lastTranscriptRef.current = transcript;
-
-    const parsed = parseVoiceForType(transcript, selectedType);
-    if (Object.keys(parsed).length > 0) {
-      setFormValues((prev) => ({ ...prev, ...parsed }));
-      // 清除已解析字段的错误
-      setErrors((prev) => {
-        const next = { ...prev };
-        for (const key of Object.keys(parsed)) {
-          delete next[key as keyof FormErrors];
-        }
-        return next;
-      });
-    }
-  }, [transcript, selectedType]);
+  const [voiceStage, setVoiceStage] = useState<VoiceInputStage>('idle');
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const voiceRunIdRef = useRef(0);
 
   // ------ 字段更新 ------
 
   const updateField = useCallback(
     <K extends keyof FormValues>(key: K, value: FormValues[K]) => {
       setFormValues((prev) => ({ ...prev, [key]: value }));
+      if (inputMethod === 'voice' && voiceStage === 'confirmed') {
+        setVoiceStage('review');
+      }
       setErrors((prev) => {
         if (key in prev) {
           const next = { ...prev };
@@ -289,43 +308,113 @@ export default function HealthInputPage() {
         return prev;
       });
     },
-    [],
+    [inputMethod, voiceStage],
   );
+
+  const cancelVoiceSession = useCallback(() => {
+    voiceRunIdRef.current += 1;
+    cancelListening();
+    setVoiceStage('idle');
+    setVoiceTranscript('');
+    setVoiceError(null);
+  }, [cancelListening]);
 
   // ------ 切换记录类型 ------
 
   const handleTypeChange = useCallback((type: RecordType) => {
+    if (type === selectedType) return;
+    cancelVoiceSession();
     setSelectedType(type);
     setErrors({});
-  }, []);
+  }, [cancelVoiceSession, selectedType]);
 
   // ------ 切换录入方式 ------
 
   const handleMethodChange = useCallback(
     (method: InputMethod) => {
+      if (method === inputMethod) return;
+      if (inputMethod === 'voice') cancelVoiceSession();
       setInputMethod(method);
-      if (method === 'manual' && isListening) {
-        stopListening();
-      }
     },
-    [isListening, stopListening],
+    [cancelVoiceSession, inputMethod],
   );
 
   // ------ 语音按钮 ------
 
-  const handleMicToggle = useCallback(async () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      resetTranscript();
-      lastTranscriptRef.current = '';
-      await startListening();
+  const finishVoiceInput = useCallback(async (): Promise<void> => {
+    const runId = voiceRunIdRef.current;
+    setVoiceStage('transcribing');
+    setVoiceError(null);
+
+    try {
+      const result = await stopListening();
+      if (voiceRunIdRef.current !== runId) return;
+      const finalTranscript = result?.transcript.trim() ?? '';
+      if (!finalTranscript) throw new Error('未识别到有效语音，请重试');
+
+      const parsed = parseVoiceForType(finalTranscript, selectedType);
+      if (Object.keys(parsed).length === 0) {
+        throw new Error('没有听清健康数值，请重试');
+      }
+
+      setFormValues((previous) => ({ ...previous, ...parsed }));
+      setErrors({});
+      setVoiceTranscript(finalTranscript);
+      setVoiceStage('review');
+    } catch (error) {
+      if (voiceRunIdRef.current !== runId) return;
+      setVoiceError(error instanceof Error ? error.message : '语音识别失败，请重试');
+      setVoiceStage('error');
     }
-  }, [isListening, startListening, stopListening, resetTranscript]);
+  }, [selectedType, stopListening]);
+
+  const handleMicToggle = useCallback(async (): Promise<void> => {
+    if (voiceStage === 'recording') {
+      await finishVoiceInput();
+      return;
+    }
+    if (voiceStage === 'transcribing') return;
+
+    const runId = ++voiceRunIdRef.current;
+    setVoiceTranscript('');
+    setVoiceError(null);
+    setVoiceStage('recording');
+    resetTranscript();
+
+    try {
+      await startListening();
+    } catch (error) {
+      if (voiceRunIdRef.current !== runId) return;
+      setVoiceError(error instanceof Error ? error.message : '无法开始录音，请检查麦克风权限');
+      setVoiceStage('error');
+    }
+  }, [finishVoiceInput, resetTranscript, startListening, voiceStage]);
+
+  useEffect(() => {
+    if (voiceStage === 'recording' && recognitionPhase === 'success') {
+      void finishVoiceInput();
+    }
+  }, [finishVoiceInput, recognitionPhase, voiceStage]);
+
+  useEffect(() => {
+    if (inputMethod !== 'voice' || !recognitionError || voiceStage === 'idle') return;
+    setVoiceError(recognitionError);
+    setVoiceStage('error');
+  }, [inputMethod, recognitionError, voiceStage]);
+
+  useEffect(() => () => {
+    voiceRunIdRef.current += 1;
+    cancelListening();
+  }, [cancelListening]);
 
   // ------ 提交 ------
 
   const handleSubmit = useCallback(async () => {
+    if (inputMethod === 'voice' && voiceStage !== 'confirmed') {
+      setVoiceError('请先确认语音解析结果');
+      return;
+    }
+
     const validationErrors = validateFormValues(selectedType, formValues);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -357,13 +446,14 @@ export default function HealthInputPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedType, formValues, inputMethod, currentUser, createRecord, router]);
+  }, [selectedType, formValues, inputMethod, voiceStage, currentUser, createRecord, router]);
 
   // ------ 取消 ------
 
   const handleCancel = useCallback(() => {
+    cancelVoiceSession();
     router.push(ROUTES.HEALTH);
-  }, [router]);
+  }, [cancelVoiceSession, router]);
 
   // ------ 渲染表单字段 ------
 
@@ -562,19 +652,28 @@ export default function HealthInputPage() {
           <div className={styles.voiceSection}>
             <button
               type="button"
-              className={`${styles.micBtn} ${isListening ? styles.micBtnListening : ''}`}
-              onClick={handleMicToggle}
-              aria-label={isListening ? '停止录音' : '开始录音'}
+              className={`${styles.micBtn} ${voiceStage === 'recording' ? styles.micBtnListening : ''}`}
+              onClick={() => void handleMicToggle()}
+              aria-label={voiceStage === 'recording' ? '停止录音' : '开始录音'}
+              disabled={voiceStage === 'transcribing'}
             >
-              {isListening ? <Square size={32} /> : <Mic size={32} />}
+              {voiceStage === 'recording' ? <Square size={32} /> : <Mic size={32} />}
             </button>
-            <span className={styles.voiceHint}>
-              {isListening ? '正在聆听，请说出数值...' : '点击麦克风开始语音录入'}
+            <span className={styles.voiceHint} aria-live="polite">
+              {voiceStage === 'recording' && '正在聆听，请说出数值...'}
+              {voiceStage === 'transcribing' && '正在识别，请稍候...'}
+              {voiceStage === 'review' && '请核对下方数值，确认后再保存'}
+              {voiceStage === 'confirmed' && '解析结果已确认，可以保存'}
+              {(voiceStage === 'idle' || voiceStage === 'error') && '点击麦克风开始语音录入'}
             </span>
-            {transcript && (
+            {voiceTranscript && (
               <div className={styles.voiceTranscript} aria-live="polite">
-                {transcript}
+                <strong>识别内容</strong>
+                <span>{voiceTranscript}</span>
               </div>
+            )}
+            {voiceError && (
+              <p className={styles.voiceError} role="alert">{voiceError}</p>
             )}
           </div>
         )}
@@ -583,6 +682,23 @@ export default function HealthInputPage() {
         <div className={styles.fields}>
           {renderFormFields()}
         </div>
+        {inputMethod === 'voice' && (voiceStage === 'review' || voiceStage === 'confirmed') && (
+          <div className={styles.voiceActions}>
+            <Button
+              type="button"
+              variant={voiceStage === 'confirmed' ? 'secondary' : 'success'}
+              size="md"
+              fullWidth
+              onClick={() => {
+                setVoiceError(null);
+                setVoiceStage('confirmed');
+              }}
+              disabled={voiceStage === 'confirmed'}
+            >
+              {voiceStage === 'confirmed' ? '已确认' : '确认解析结果'}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* 可选字段 */}
@@ -633,6 +749,7 @@ export default function HealthInputPage() {
           leftIcon={<CheckCircle size={20} />}
           onClick={handleSubmit}
           loading={isSubmitting}
+          disabled={voiceStage === 'recording' || voiceStage === 'transcribing'}
         >
           保存记录
         </Button>

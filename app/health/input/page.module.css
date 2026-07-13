@@ -128,6 +128,11 @@
   animation: mic-pulse 1.2s ease-in-out infinite;
 }
 
+.micBtn:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .voiceHint {
   min-width: 0;
   color: var(--text-secondary);
@@ -137,6 +142,8 @@
 
 .voiceTranscript {
   grid-column: 1 / -1;
+  display: grid;
+  gap: 4px;
   min-width: 0;
   padding: var(--space-sm);
   border-radius: var(--radius-sm);
@@ -144,6 +151,31 @@
   color: var(--text-primary);
   font-size: var(--font-caption);
   overflow-wrap: anywhere;
+}
+
+.voiceTranscript strong {
+  color: var(--text-secondary);
+  font-size: var(--font-small);
+}
+
+.voiceError {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: var(--space-sm);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--bg-card-solid));
+  color: var(--color-danger);
+  font-size: var(--font-small);
+  font-weight: 700;
+}
+
+.voiceActions {
+  margin-top: var(--space-md);
+}
+
+.voiceActions button {
+  min-height: 48px;
 }
 
 .fields {
