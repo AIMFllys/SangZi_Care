@@ -161,7 +161,7 @@
 - 客户端通过 Web Audio 采集单声道 PCM 并编码 WAV；不把 WebM/Opus直接发给 MiMo。
 - 路由接受 WAV/MP3，校验 MIME、扩展名、文件头、空文件与最大 5MB。
 - 服务端以 data URL/Base64 放入 `input_audio`，`asr_options.language = 'zh'`。
-- 上游超时 45 秒；用户取消或导航离开时使用 AbortController。
+- 首次请求、有限重试与退避共享 45 秒总截止时间；用户取消或导航离开时使用 AbortController。
 - `stopListening()` 返回最终 `{ transcript, audioBlob, durationMs }`，调用方必须等待转写完成。
 
 ### 7.3 TTS
@@ -171,7 +171,7 @@
 - 默认中文音色显式设置为“冰糖”，允许通过服务端白名单更换。
 - 个性化精确语速由客户端 `audio.playbackRate` 应用用户的 `voice_speed`。
 - 单次文本限制 1000 个 Unicode 字符；超长内容按句切分、顺序播放。
-- 上游超时 45 秒；音频响应 `Cache-Control: no-store`。
+- 首次请求、有限重试与退避共享 45 秒总截止时间；音频响应 `Cache-Control: no-store`。
 
 ### 7.4 错误与隐私
 

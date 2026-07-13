@@ -233,6 +233,23 @@ describe('server/mimo', () => {
     expect(fetch).toHaveBeenCalledOnce();
   });
 
+  it('所有重试共享单一截止时间，退避也不能把总耗时推过配置', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    process.env.MIMO_TIMEOUT_MS = '25';
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ error: {} }, 429));
+    let outcome: 'pending' | 'resolved' | 'rejected' = 'pending';
+
+    void synthesizeSpeech('您好').then(
+      () => { outcome = 'resolved'; },
+      () => { outcome = 'rejected'; },
+    );
+    await vi.advanceTimersByTimeAsync(25);
+
+    expect(outcome).toBe('rejected');
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+
   it('公开错误类型不携带密钥、输入文本或上游响应体', async () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({
       error: { message: 'upstream-private-body' },

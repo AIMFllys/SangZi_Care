@@ -125,17 +125,30 @@ function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === 'AbortError';
 }
 
-function retryDelay(attempt: number): Promise<void> {
-  const delayMs = 100 * 2 ** attempt + Math.floor(Math.random() * 50);
-  return new Promise((resolve) => setTimeout(resolve, delayMs));
+function timeoutError(): MimoError {
+  return new MimoError('MiMo 语音服务响应超时', 'timeout', 504);
+}
+
+async function retryDelay(attempt: number, deadline: number): Promise<void> {
+  const remainingMs = deadline - Date.now();
+  if (remainingMs <= 0) throw timeoutError();
+
+  const preferredDelayMs = 100 * 2 ** attempt + Math.floor(Math.random() * 50);
+  await new Promise((resolve) => {
+    setTimeout(resolve, Math.min(preferredDelayMs, remainingMs));
+  });
+  if (Date.now() >= deadline) throw timeoutError();
 }
 
 async function requestMimo(body: unknown, config: MimoConfig): Promise<unknown> {
   const url = `${config.baseUrl}/chat/completions`;
+  const deadline = Date.now() + config.timeoutMs;
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+    const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) throw timeoutError();
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
+    const timeout = setTimeout(() => controller.abort(), remainingMs);
 
     let response: Response;
     try {
@@ -151,10 +164,10 @@ async function requestMimo(body: unknown, config: MimoConfig): Promise<unknown> 
     } catch (error) {
       clearTimeout(timeout);
       if (controller.signal.aborted || isAbortError(error)) {
-        throw new MimoError('MiMo 语音服务响应超时', 'timeout', 504);
+        throw timeoutError();
       }
       if (attempt < MAX_ATTEMPTS - 1) {
-        await retryDelay(attempt);
+        await retryDelay(attempt, deadline);
         continue;
       }
       throw new MimoError('无法连接 MiMo 语音服务', 'upstream', 502);
@@ -163,8 +176,8 @@ async function requestMimo(body: unknown, config: MimoConfig): Promise<unknown> 
     if (!response.ok) {
       if (RETRYABLE_STATUS.has(response.status) && attempt < MAX_ATTEMPTS - 1) {
         clearTimeout(timeout);
-        await response.body?.cancel().catch(() => undefined);
-        await retryDelay(attempt);
+        void response.body?.cancel().catch(() => undefined);
+        await retryDelay(attempt, deadline);
         continue;
       }
       clearTimeout(timeout);
@@ -174,12 +187,14 @@ async function requestMimo(body: unknown, config: MimoConfig): Promise<unknown> 
     try {
       const payload = await response.json();
       clearTimeout(timeout);
+      if (Date.now() >= deadline) throw timeoutError();
       return payload;
     } catch (error) {
       clearTimeout(timeout);
       if (controller.signal.aborted || isAbortError(error)) {
-        throw new MimoError('MiMo 语音服务响应超时', 'timeout', 504);
+        throw timeoutError();
       }
+      if (error instanceof MimoError) throw error;
       throw new MimoError('MiMo 返回了无法解析的响应', 'schema', 502);
     }
   }
