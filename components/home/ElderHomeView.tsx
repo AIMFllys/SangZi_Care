@@ -12,8 +12,36 @@ import styles from '../../app/page.module.css';
 function useCurrentTime() {
   const [now, setNow] = useState(new Date());
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 30000);
-    return () => clearInterval(timer);
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const stopTimer = () => {
+      if (timer !== null) {
+        clearInterval(timer);
+        timer = null;
+      }
+    };
+
+    const startTimer = () => {
+      stopTimer();
+      setNow(new Date());
+      timer = setInterval(() => setNow(new Date()), 30_000);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        stopTimer();
+      } else {
+        startTimer();
+      }
+    };
+
+    if (document.visibilityState !== 'hidden') startTimer();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      stopTimer();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const hours = now.getHours().toString().padStart(2, '0');

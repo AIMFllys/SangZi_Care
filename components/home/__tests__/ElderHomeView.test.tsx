@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ElderHomeView from '../ElderHomeView';
 
 const push = vi.fn();
@@ -18,9 +18,20 @@ vi.mock('@/stores/userStore', () => ({
 vi.mock('@/lib/api', () => ({ fetchApi: (...args: unknown[]) => fetchApi(...args) }));
 
 describe('ElderHomeView', () => {
+  let visibilityState: DocumentVisibilityState;
+
   beforeEach(() => {
     vi.clearAllMocks();
     fetchApi.mockResolvedValue({ id: 'emergency-1' });
+    visibilityState = 'visible';
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => visibilityState,
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('语音入口是原生按钮且不显示无效上滑提示', () => {
@@ -46,5 +57,25 @@ describe('ElderHomeView', () => {
     });
     expect(screen.getByRole('status')).toHaveTextContent('已通知家属');
     expect(push).not.toHaveBeenCalledWith('/settings');
+  });
+
+  it('退到后台时暂停时钟，返回前台后立即校时', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 13, 10, 0, 0));
+    render(<ElderHomeView />);
+    expect(screen.getByText('10:00')).toBeInTheDocument();
+
+    act(() => {
+      visibilityState = 'hidden';
+      document.dispatchEvent(new Event('visibilitychange'));
+      vi.advanceTimersByTime(90_000);
+    });
+    expect(screen.getByText('10:00')).toBeInTheDocument();
+
+    act(() => {
+      visibilityState = 'visible';
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(screen.getByText('10:01')).toBeInTheDocument();
   });
 });
