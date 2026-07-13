@@ -257,6 +257,24 @@
   }
 }
 
+@media (orientation: landscape) and (max-height: 500px) {
+  .page {
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  .topBar,
+  .heroSection,
+  .medicineCard,
+  .actions {
+    flex: 0 0 auto;
+  }
+
+  .actions {
+    margin-top: var(--space-sm);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bar {
     animation: none;

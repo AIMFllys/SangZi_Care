@@ -8,6 +8,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 
 const mockPush = vi.fn();
 const mockBack = vi.fn();
+const mockFetchBinds = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, back: mockBack }),
@@ -50,6 +51,8 @@ vi.mock('@/stores/familyStore', () => ({
     selector({
       binds: mockState.currentBinds,
       healthSummaries: {},
+      isLoading: false,
+      fetchBinds: mockFetchBinds,
       fetchElderHealthSummary: vi.fn(),
     }),
 }));
@@ -71,7 +74,8 @@ vi.mock('@/stores/medicineStore', () => ({
 }));
 
 vi.mock('@/lib/api', () => ({
-  fetchApi: vi.fn().mockResolvedValue([]),
+  // AI 对话不是本测试的目标；保持请求挂起，避免异步状态更新泄漏到断言之后。
+  fetchApi: vi.fn(() => new Promise(() => {})),
 }));
 
 // 在 mock 之后导入
@@ -129,6 +133,12 @@ describe('FamilyDetailClient — 老年人端', () => {
   it('未找到用户时显示提示', () => {
     render(<FamilyDetailClient userId="unknown-id" />);
     expect(screen.getByText('未找到该用户信息')).toBeTruthy();
+  });
+
+  it('直达详情且绑定状态为空时主动加载当前用户的绑定关系', () => {
+    mockState.currentBinds = [];
+    render(<FamilyDetailClient userId="family-1" />);
+    expect(mockFetchBinds).toHaveBeenCalledWith('elder-1');
   });
 
   it('last_active_at 为 null 时显示"未知"', () => {

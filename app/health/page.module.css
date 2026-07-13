@@ -162,6 +162,7 @@
 }
 
 .addBtn {
+  width: auto;
   margin: var(--space-sm) var(--page-gutter) calc(var(--space-sm) + var(--safe-bottom));
 }
 

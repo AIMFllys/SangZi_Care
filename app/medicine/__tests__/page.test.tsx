@@ -1,4 +1,6 @@
 import '@testing-library/jest-dom/vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MedicinePage from '../page';
@@ -67,5 +69,17 @@ describe('MedicinePage', () => {
         body: { trigger_method: 'button' },
       });
     });
+  });
+
+  it('横屏短视口允许提醒内容纵向滚动以露出底部操作', () => {
+    const css = readFileSync(
+      resolve(process.cwd(), 'app/medicine/page.module.css'),
+      'utf8',
+    );
+    const landscapeRule = css.slice(
+      css.indexOf('@media (orientation: landscape) and (max-height: 500px)'),
+    );
+
+    expect(landscapeRule).toMatch(/\.page\s*\{[\s\S]*?overflow-y:\s*auto/);
   });
 });

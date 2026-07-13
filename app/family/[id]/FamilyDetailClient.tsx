@@ -59,7 +59,7 @@ export default function FamilyDetailClient({ userId }: Props) {
   const currentUser = useUserStore((s) => s.user);
   const isElder = useUserStore((s) => s.isElder);
   const binds = useFamilyStore((s) => s.binds);
-  const healthSummaries = useFamilyStore((s) => s.healthSummaries);
+  const fetchBinds = useFamilyStore((s) => s.fetchBinds);
   const fetchElderHealthSummary = useFamilyStore((s) => s.fetchElderHealthSummary);
   const { latestRecords, fetchLatest } = useHealthStore();
   const { todayTimeline, todayProgress, fetchTodayTimeline } = useMedicineStore();
@@ -74,6 +74,12 @@ export default function FamilyDetailClient({ userId }: Props) {
 
   const targetUser = bind?.user;
   const relation = bind?.bind.relation ?? '';
+
+  useEffect(() => {
+    if (currentUser?.id && binds.length === 0) {
+      fetchBinds(currentUser.id);
+    }
+  }, [binds.length, currentUser?.id, fetchBinds]);
 
   // 家属端：加载老人健康数据
   useEffect(() => {

@@ -209,6 +209,7 @@
 }
 
 .relationChip {
+  min-height: 48px;
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-full);
   border: 1.5px solid var(--divider);

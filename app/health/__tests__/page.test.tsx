@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import type { HealthRecordResponse } from '@/stores/healthStore';
@@ -154,5 +156,15 @@ describe('HealthPage', () => {
 
     fireEvent.click(screen.getByText('添加新记录'));
     expect(mockPush).toHaveBeenCalledWith('/health/input');
+  });
+
+  it('添加按钮用网格可用宽度抵消 fullWidth 与页边距叠加', () => {
+    const css = readFileSync(
+      resolve(process.cwd(), 'app/health/page.module.css'),
+      'utf8',
+    );
+    const addButtonRule = css.match(/\.addBtn\s*\{([^}]*)\}/)?.[1] ?? '';
+
+    expect(addButtonRule).toMatch(/width:\s*auto/);
   });
 });
