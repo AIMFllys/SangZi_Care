@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { afterEach, describe, it, expect, beforeEach, vi } from 'vitest';
 import { useRadioStore, formatTime } from '../radioStore';
 import type { BroadcastResponse } from '../radioStore';
 
@@ -92,6 +92,16 @@ function makeBroadcast(
   };
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
+
 // ---------- 纯函数测试 ----------
 
 describe('formatTime', () => {
@@ -131,8 +141,13 @@ describe('useRadioStore', () => {
     vi.stubGlobal('Audio', FakeAudio as unknown as typeof Audio);
     useRadioStore.getState().reset();
     vi.clearAllMocks();
+    mockFetchApi.mockReset();
     FakeAudio.instances = [];
     FakeAudio.playBehavior = null;
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe('初始状态', () => {
@@ -160,7 +175,10 @@ describe('useRadioStore', () => {
       expect(state.broadcasts).toEqual(broadcasts);
       expect(state.loading).toBe(false);
       expect(state.error).toBeNull();
-      expect(mockFetchApi).toHaveBeenCalledWith('/api/v1/radio/recommend');
+      expect(mockFetchApi).toHaveBeenCalledWith(
+        '/api/v1/radio/recommend',
+        { signal: expect.any(AbortSignal) },
+      );
     });
 
     it('拉取失败设置错误信息', async () => {
@@ -171,6 +189,287 @@ describe('useRadioStore', () => {
       const state = useRadioStore.getState();
       expect(state.error).toBe('网络错误');
       expect(state.loading).toBe(false);
+    });
+
+    it('签名 URL 到期后重取推荐再播放，不复用过期 Audio', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-07-13T00:00:00.000Z'));
+      const stale = makeBroadcast({
+        audio_url: 'https://storage.test/stale.mp3?token=stale',
+      });
+      const refreshed = makeBroadcast({
+        audio_url: 'https://storage.test/fresh.mp3?token=fresh',
+      });
+      mockFetchApi
+        .mockResolvedValueOnce([stale])
+        .mockResolvedValueOnce([refreshed]);
+
+      await useRadioStore.getState().fetchRecommendations();
+      useRadioStore.getState().play(0);
+      const staleAudio = FakeAudio.instances[0];
+      useRadioStore.getState().pause();
+
+      vi.advanceTimersByTime(600_000);
+      useRadioStore.getState().play(0);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(mockFetchApi).toHaveBeenCalledTimes(2);
+      expect(staleAudio.removeAttribute).toHaveBeenCalledWith('src');
+      expect(FakeAudio.instances).toHaveLength(2);
+      expect(FakeAudio.instances[1].src).toBe(refreshed.audio_url);
+    });
+
+    it('签名 URL 到期且重取失败时不再播放旧 URL', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-07-13T00:00:00.000Z'));
+      const stale = makeBroadcast({
+        audio_url: 'https://storage.test/stale.mp3?token=stale',
+      });
+      mockFetchApi
+        .mockResolvedValueOnce([stale])
+        .mockRejectedValueOnce(new Error('刷新失败'));
+
+      await useRadioStore.getState().fetchRecommendations();
+      useRadioStore.getState().play(0);
+      const staleAudio = FakeAudio.instances[0];
+      useRadioStore.getState().pause();
+
+      vi.advanceTimersByTime(600_000);
+      useRadioStore.getState().play(0);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(mockFetchApi).toHaveBeenCalledTimes(2);
+      expect(staleAudio.play).toHaveBeenCalledOnce();
+      expect(staleAudio.removeAttribute).toHaveBeenCalledWith('src');
+      expect(FakeAudio.instances).toHaveLength(1);
+      expect(useRadioStore.getState()).toMatchObject({
+        isPlaying: false,
+        error: '刷新失败',
+      });
+    });
+
+    it('播放中发现签名到期时立即退出播放态，重取失败也不回弹', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-07-13T00:00:00.000Z'));
+      const initial = makeBroadcast({
+        audio_url: 'https://storage.test/initial.mp3?token=initial',
+      });
+      mockFetchApi
+        .mockResolvedValueOnce([initial])
+        .mockRejectedValueOnce(new Error('刷新失败'));
+
+      await useRadioStore.getState().fetchRecommendations();
+      useRadioStore.getState().play(0);
+      vi.advanceTimersByTime(600_000);
+
+      useRadioStore.getState().play(0);
+      expect(useRadioStore.getState().isPlaying).toBe(false);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(useRadioStore.getState()).toMatchObject({
+        isPlaying: false,
+        error: '刷新失败',
+      });
+    });
+
+    it('推荐请求耗时计入签名 URL 的安全复用窗口', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-07-13T00:00:00.000Z'));
+      const initialRequest = deferred<BroadcastResponse[]>();
+      const initial = makeBroadcast({
+        audio_url: 'https://storage.test/initial.mp3?token=initial',
+      });
+      const refreshed = makeBroadcast({
+        audio_url: 'https://storage.test/refreshed.mp3?token=refreshed',
+      });
+      mockFetchApi
+        .mockReturnValueOnce(initialRequest.promise)
+        .mockResolvedValueOnce([refreshed]);
+
+      const pending = useRadioStore.getState().fetchRecommendations();
+      vi.advanceTimersByTime(45_000);
+      initialRequest.resolve([initial]);
+      await pending;
+      useRadioStore.getState().play(0);
+      useRadioStore.getState().pause();
+
+      vi.advanceTimersByTime(525_000);
+      useRadioStore.getState().play(0);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(mockFetchApi).toHaveBeenCalledTimes(2);
+      expect(FakeAudio.instances).toHaveLength(2);
+      expect(FakeAudio.instances[1].src).toBe(refreshed.audio_url);
+    });
+
+    it('pause 会取消到期重取完成后的自动播放意图', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-07-13T00:00:00.000Z'));
+      const refreshRequest = deferred<BroadcastResponse[]>();
+      const initial = makeBroadcast({
+        audio_url: 'https://storage.test/initial.mp3?token=initial',
+      });
+      const refreshed = makeBroadcast({
+        audio_url: 'https://storage.test/refreshed.mp3?token=refreshed',
+      });
+      mockFetchApi
+        .mockResolvedValueOnce([initial])
+        .mockReturnValueOnce(refreshRequest.promise);
+
+      await useRadioStore.getState().fetchRecommendations();
+      useRadioStore.getState().play(0);
+      useRadioStore.getState().pause();
+      vi.advanceTimersByTime(600_000);
+      useRadioStore.getState().play(0);
+
+      useRadioStore.getState().pause();
+      refreshRequest.resolve([refreshed]);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(useRadioStore.getState().broadcasts).toEqual([refreshed]);
+      expect(FakeAudio.instances).toHaveLength(1);
+      expect(useRadioStore.getState().isPlaying).toBe(false);
+    });
+
+    it('选择无音频项会取消旧广播到期重取后的自动播放意图', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-07-13T00:00:00.000Z'));
+      const refreshRequest = deferred<BroadcastResponse[]>();
+      const initial = makeBroadcast({
+        audio_url: 'https://storage.test/initial.mp3?token=initial',
+      });
+      const unavailable = makeBroadcast({ id: 'without-audio', audio_url: null });
+      const refreshed = makeBroadcast({
+        audio_url: 'https://storage.test/refreshed.mp3?token=refreshed',
+      });
+      mockFetchApi
+        .mockResolvedValueOnce([initial, unavailable])
+        .mockReturnValueOnce(refreshRequest.promise);
+
+      await useRadioStore.getState().fetchRecommendations();
+      useRadioStore.getState().play(0);
+      useRadioStore.getState().pause();
+      vi.advanceTimersByTime(600_000);
+      useRadioStore.getState().play(0);
+
+      useRadioStore.getState().play(1);
+      refreshRequest.resolve([refreshed, unavailable]);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(FakeAudio.instances).toHaveLength(1);
+      expect(useRadioStore.getState().isPlaying).toBe(false);
+    });
+
+    it('reset 中止在途请求并忽略其迟到响应', async () => {
+      const request = deferred<BroadcastResponse[]>();
+      mockFetchApi.mockReturnValueOnce(request.promise);
+
+      const pending = useRadioStore.getState().fetchRecommendations();
+      const signal = mockFetchApi.mock.calls[0]?.[1]?.signal as AbortSignal | undefined;
+      useRadioStore.getState().reset();
+      request.resolve([makeBroadcast({ id: 'stale-after-reset' })]);
+      await pending;
+
+      expect.soft(signal).toBeInstanceOf(AbortSignal);
+      expect.soft(signal?.aborted).toBe(true);
+      expect(useRadioStore.getState()).toMatchObject({
+        broadcasts: [],
+        loading: false,
+        error: null,
+      });
+    });
+
+    it('用户切换后的新请求完成后，旧用户响应不能回填', async () => {
+      const oldUserRequest = deferred<BroadcastResponse[]>();
+      const newUserRequest = deferred<BroadcastResponse[]>();
+      mockFetchApi
+        .mockReturnValueOnce(oldUserRequest.promise)
+        .mockReturnValueOnce(newUserRequest.promise);
+
+      const oldPending = useRadioStore.getState().fetchRecommendations();
+      const oldSignal = mockFetchApi.mock.calls[0]?.[1]?.signal as AbortSignal | undefined;
+      useRadioStore.getState().reset();
+      const newPending = useRadioStore.getState().fetchRecommendations();
+      const newSignal = mockFetchApi.mock.calls[1]?.[1]?.signal as AbortSignal | undefined;
+
+      const current = makeBroadcast({ id: 'new-user' });
+      newUserRequest.resolve([current]);
+      await newPending;
+      oldUserRequest.resolve([makeBroadcast({ id: 'old-user' })]);
+      await oldPending;
+
+      expect.soft(oldSignal?.aborted).toBe(true);
+      expect.soft(newSignal?.aborted).toBe(false);
+      expect(useRadioStore.getState()).toMatchObject({
+        broadcasts: [current],
+        loading: false,
+        error: null,
+      });
+    });
+
+    it('用户切换会取消旧的到期重取播放意图', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-07-13T00:00:00.000Z'));
+      const expiredRefresh = deferred<BroadcastResponse[]>();
+      const newUserRequest = deferred<BroadcastResponse[]>();
+      const initial = makeBroadcast({
+        audio_url: 'https://storage.test/initial.mp3?token=initial',
+      });
+      const current = makeBroadcast({
+        audio_url: 'https://storage.test/new-user.mp3?token=current',
+      });
+      mockFetchApi
+        .mockResolvedValueOnce([initial])
+        .mockReturnValueOnce(expiredRefresh.promise)
+        .mockReturnValueOnce(newUserRequest.promise);
+
+      await useRadioStore.getState().fetchRecommendations();
+      useRadioStore.getState().play(0);
+      useRadioStore.getState().pause();
+      vi.advanceTimersByTime(600_000);
+      useRadioStore.getState().play(0);
+
+      useRadioStore.getState().reset();
+      const newPending = useRadioStore.getState().fetchRecommendations();
+      newUserRequest.resolve([current]);
+      await newPending;
+      expiredRefresh.resolve([initial]);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(useRadioStore.getState().broadcasts).toEqual([current]);
+      expect(FakeAudio.instances).toHaveLength(1);
+    });
+
+    it('后发请求会中止前一请求，且前一请求迟到完成不覆盖结果', async () => {
+      const firstRequest = deferred<BroadcastResponse[]>();
+      const secondRequest = deferred<BroadcastResponse[]>();
+      mockFetchApi
+        .mockReturnValueOnce(firstRequest.promise)
+        .mockReturnValueOnce(secondRequest.promise);
+
+      const firstPending = useRadioStore.getState().fetchRecommendations();
+      const firstSignal = mockFetchApi.mock.calls[0]?.[1]?.signal as AbortSignal | undefined;
+      const secondPending = useRadioStore.getState().fetchRecommendations();
+
+      const current = makeBroadcast({ id: 'second-request' });
+      secondRequest.resolve([current]);
+      await secondPending;
+      firstRequest.resolve([makeBroadcast({ id: 'first-request' })]);
+      await firstPending;
+
+      expect.soft(firstSignal?.aborted).toBe(true);
+      expect(useRadioStore.getState()).toMatchObject({
+        broadcasts: [current],
+        loading: false,
+        error: null,
+      });
     });
   });
 

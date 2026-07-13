@@ -14,28 +14,71 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import {
   ApiError,
-  createSignedVoiceUrl,
   getSupabaseServerClient,
+  getVoiceBucketName,
   requireUser,
   toApiResponse,
 } from '@/lib/server';
 import { buildRecommendFilters } from '@/lib/server/broadcast';
 import { toBroadcastResponse } from '../_lib';
 import type { BroadcastResponse, BroadcastRow, UsersRow } from '../_lib';
+import { withPrivateNoStore } from '../../_http';
 
 export const runtime = 'nodejs';
 
-const PRIVATE_HEADERS = {
-  'Cache-Control': 'private, no-store, max-age=0',
-  Pragma: 'no-cache',
-  Vary: 'Authorization',
-};
+const SIGNED_URL_TTL_SECONDS = 600;
+const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const BROADCAST_OBJECT_PATH = new RegExp(
+  `^[A-Za-z0-9_-]+/broadcasts/${UUID}\\.mp3$`,
+  'i',
+);
+const SIGNING_ERROR = '广播音频暂时无法播放';
 
-function withPrivateHeaders(response: NextResponse): NextResponse {
-  for (const [key, value] of Object.entries(PRIVATE_HEADERS)) {
-    response.headers.set(key, value);
+async function createBroadcastSignedUrlMap(
+  supabase: ReturnType<typeof getSupabaseServerClient>,
+  paths: string[],
+): Promise<Map<string, string>> {
+  const uniquePaths = [...new Set(paths)];
+  if (uniquePaths.some((path) => !BROADCAST_OBJECT_PATH.test(path))) {
+    throw new ApiError(400, '广播音频对象路径非法');
   }
-  return response;
+
+  const bucket = getVoiceBucketName();
+  const { data: bucketData, error: bucketError } = await supabase.storage
+    .getBucket(bucket);
+  if (bucketError || !bucketData || bucketData.public !== false) {
+    throw new ApiError(503, '私有语音存储不可用');
+  }
+
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrls(uniquePaths, SIGNED_URL_TTL_SECONDS);
+  if (error || !data) {
+    throw new ApiError(503, '语音文件暂时无法播放');
+  }
+
+  const expectedPaths = new Set(uniquePaths);
+  const signedUrlByPath = new Map<string, string>();
+  for (const item of data) {
+    const path = item.path;
+    const signedUrl = item.signedUrl;
+    if (
+      item.error
+      || typeof path !== 'string'
+      || !expectedPaths.has(path)
+      || signedUrlByPath.has(path)
+      || typeof signedUrl !== 'string'
+      || !signedUrl.trim()
+    ) {
+      throw new ApiError(503, '语音文件暂时无法播放');
+    }
+    signedUrlByPath.set(path, signedUrl);
+  }
+
+  if (signedUrlByPath.size !== expectedPaths.size) {
+    throw new ApiError(503, '语音文件暂时无法播放');
+  }
+  return signedUrlByPath;
 }
 
 export async function GET(request: NextRequest) {
@@ -99,29 +142,34 @@ export async function GET(request: NextRequest) {
     }
 
     const rows = (data ?? []) as BroadcastRow[];
-    const playableRows = await Promise.all(rows.map(async (row) => {
+    const audioPaths = rows.flatMap((row) => (
+      row.audio_url ? [row.audio_url] : []
+    ));
+    let signedUrlByPath = new Map<string, string>();
+    if (audioPaths.length > 0) {
+      try {
+        signedUrlByPath = await createBroadcastSignedUrlMap(
+          supabase,
+          audioPaths,
+        );
+      } catch {
+        // 数据库存的是内部对象路径；任一验证或签名失败都不能回退泄露路径。
+        throw new ApiError(503, SIGNING_ERROR);
+      }
+    }
+
+    const playableRows = rows.map((row) => {
       const response = toBroadcastResponse(row);
       if (!row.audio_url) return response;
 
-      try {
-        return {
-          ...response,
-          audio_url: await createSignedVoiceUrl(
-            supabase,
-            row.audio_url,
-            'broadcasts',
-          ),
-        };
-      } catch {
-        // 数据库存的是内部对象路径；签名失败时只返回安全错误，绝不回退泄露路径。
-        throw new ApiError(503, '广播音频暂时无法播放');
-      }
-    }));
-    return NextResponse.json<BroadcastResponse[]>(
-      playableRows,
-      { headers: PRIVATE_HEADERS },
+      const signedUrl = signedUrlByPath.get(row.audio_url);
+      if (!signedUrl) throw new ApiError(503, SIGNING_ERROR);
+      return { ...response, audio_url: signedUrl };
+    });
+    return withPrivateNoStore(
+      NextResponse.json<BroadcastResponse[]>(playableRows),
     );
   } catch (err) {
-    return withPrivateHeaders(toApiResponse(err));
+    return withPrivateNoStore(toApiResponse(err));
   }
 }

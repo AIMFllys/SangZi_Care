@@ -43,6 +43,8 @@ export function formatTime(seconds: number): string {
 }
 
 const PLAYBACK_ERROR = '广播音频播放失败，请稍后重试';
+const SIGNED_URL_LIFETIME_MS = 600_000;
+const SIGNED_URL_REFRESH_MARGIN_MS = 30_000;
 
 let activeAudio: HTMLAudioElement | null = null;
 let activeBroadcastId: string | null = null;
@@ -52,6 +54,10 @@ let activeWantsToPlay = false;
 let playbackGeneration = 0;
 let playAttemptGeneration = 0;
 let detachActiveListeners: (() => void) | null = null;
+let recommendationsFreshUntil = 0;
+let recommendationRequestGeneration = 0;
+let recommendationAbortController: AbortController | null = null;
+let playbackIntentGeneration = 0;
 
 function releaseActiveAudio(): void {
   playbackGeneration += 1;
@@ -163,11 +169,28 @@ export const useRadioStore = create<RadioState>()((set, get) => {
   error: null,
 
   fetchRecommendations: async () => {
+    const requestStartedAt = Date.now();
+    recommendationRequestGeneration += 1;
+    const requestGeneration = recommendationRequestGeneration;
+    recommendationAbortController?.abort();
+    const controller = new AbortController();
+    recommendationAbortController = controller;
+    const isCurrentRequest = () => (
+      recommendationRequestGeneration === requestGeneration
+      && recommendationAbortController === controller
+      && !controller.signal.aborted
+    );
+
     set({ loading: true, error: null });
     try {
       const data = await fetchApi<BroadcastResponse[]>(
         '/api/v1/radio/recommend',
+        { signal: controller.signal },
       );
+      if (!isCurrentRequest()) return;
+      recommendationsFreshUntil = requestStartedAt
+        + SIGNED_URL_LIFETIME_MS
+        - SIGNED_URL_REFRESH_MARGIN_MS;
       releaseActiveAudio();
       set({
         broadcasts: data,
@@ -178,10 +201,15 @@ export const useRadioStore = create<RadioState>()((set, get) => {
         loading: false,
       });
     } catch (err) {
+      if (!isCurrentRequest()) return;
       set({
         error: err instanceof Error ? err.message : '加载推荐广播失败',
         loading: false,
       });
+    } finally {
+      if (recommendationAbortController === controller) {
+        recommendationAbortController = null;
+      }
     }
   },
 
@@ -199,10 +227,34 @@ export const useRadioStore = create<RadioState>()((set, get) => {
   },
 
   play: (index: number) => {
+    playbackIntentGeneration += 1;
+    const intentGeneration = playbackIntentGeneration;
     const { broadcasts } = get();
     if (index < 0 || index >= broadcasts.length) return;
     const broadcast = broadcasts[index];
     const audioUrl = broadcast.audio_url?.trim() ?? '';
+
+    if (
+      audioUrl
+      && recommendationsFreshUntil > 0
+      && Date.now() >= recommendationsFreshUntil
+    ) {
+      const broadcastId = broadcast.id;
+      releaseActiveAudio();
+      set({ isPlaying: false });
+      const refresh = get().fetchRecommendations();
+      const refreshGeneration = recommendationRequestGeneration;
+      void refresh.then(() => {
+        if (recommendationRequestGeneration !== refreshGeneration) return;
+        if (playbackIntentGeneration !== intentGeneration) return;
+        if (Date.now() >= recommendationsFreshUntil) return;
+        const refreshedIndex = get().broadcasts.findIndex(
+          (item) => item.id === broadcastId,
+        );
+        if (refreshedIndex >= 0) get().play(refreshedIndex);
+      });
+      return;
+    }
 
     if (!audioUrl) {
       releaseActiveAudio();
@@ -343,6 +395,7 @@ export const useRadioStore = create<RadioState>()((set, get) => {
   },
 
   pause: () => {
+    playbackIntentGeneration += 1;
     activeWantsToPlay = false;
     playAttemptGeneration += 1;
     try {
@@ -410,6 +463,11 @@ export const useRadioStore = create<RadioState>()((set, get) => {
   },
 
   reset: () => {
+    playbackIntentGeneration += 1;
+    recommendationRequestGeneration += 1;
+    recommendationAbortController?.abort();
+    recommendationAbortController = null;
+    recommendationsFreshUntil = 0;
     releaseActiveAudio();
     set({
       broadcasts: [],
