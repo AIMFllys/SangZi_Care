@@ -218,6 +218,12 @@ body {
   overflow: hidden;
 }
 
+@media (orientation: landscape) and (min-width: 640px) and (max-height: 600px) {
+  .device-wrapper {
+    max-width: none;
+  }
+}
+
 /* ============================================================
  * 4. 毛玻璃 & 卡片系统
  * ============================================================ */

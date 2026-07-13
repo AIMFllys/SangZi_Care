@@ -101,7 +101,7 @@ export default function MedicinePage() {
   // 提醒视图：单屏 ≤ 2 核心操作
   if (showReminder && currentMed) {
     return (
-      <div className={styles.page}>
+      <div className={`${styles.page} ${styles.reminderPage}`}>
         {/* 顶部状态栏 */}
         <div className={styles.topBar}>
           <Card variant="glass" className={styles.voiceIndicator}>
@@ -133,8 +133,9 @@ export default function MedicinePage() {
           <p className={styles.heroSubtitle}>请服用您的晨间药物</p>
         </div>
 
-        {/* 药品列表 */}
-        <Card variant="solid" className={styles.medicineCard}>
+        <div className={styles.reminderBody}>
+          {/* 药品列表 */}
+          <Card variant="solid" className={styles.medicineCard}>
             <div className={styles.medicineItem}>
               <div className={`${styles.medicineIcon} ${PILL_COLORS[0]}`}>
                 {PILL_ICONS[0]}
@@ -145,30 +146,31 @@ export default function MedicinePage() {
               </div>
               <time className={styles.currentTime}>{currentMed.scheduled_time}</time>
             </div>
-        </Card>
+          </Card>
 
-        {sosMessage && <p className={styles.sosMessage} role="status">{sosMessage}</p>}
+          {sosMessage && <p className={styles.sosMessage} role="status">{sosMessage}</p>}
 
-        {/* 操作按钮 */}
-        <div className={styles.actions}>
-          <Button
-            variant="success"
-            size="lg"
-            fullWidth
-            leftIcon={<CheckCircle size={20} />}
-            onClick={handleConfirm}
-          >
-            我已吃药
-          </Button>
-          <Button
-            variant="secondary"
-            size="lg"
-            fullWidth
-            leftIcon={<Clock size={20} />}
-            onClick={handleDefer}
-          >
-            15分钟后再提醒
-          </Button>
+          {/* 操作按钮 */}
+          <div className={styles.actions}>
+            <Button
+              variant="success"
+              size="lg"
+              fullWidth
+              leftIcon={<CheckCircle size={20} />}
+              onClick={handleConfirm}
+            >
+              我已吃药
+            </Button>
+            <Button
+              variant="secondary"
+              size="lg"
+              fullWidth
+              leftIcon={<Clock size={20} />}
+              onClick={handleDefer}
+            >
+              15分钟后再提醒
+            </Button>
+          </div>
         </div>
       </div>
     );

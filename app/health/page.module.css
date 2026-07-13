@@ -130,7 +130,7 @@
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.03em;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
 .healthUnit {
@@ -166,7 +166,7 @@
   margin: var(--space-sm) var(--page-gutter) calc(var(--space-sm) + var(--safe-bottom));
 }
 
-@media (max-width: 339px) {
+@media (max-width: 430px) {
   .cards {
     grid-template-columns: minmax(0, 1fr);
   }

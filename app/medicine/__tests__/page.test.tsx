@@ -131,15 +131,35 @@ describe('MedicinePage', () => {
     });
   });
 
-  it('横屏短视口允许提醒内容纵向滚动以露出底部操作', () => {
+  it('药品全名最多显示两行，不以省略号隐藏关键信息', () => {
+    const css = readFileSync(
+      resolve(process.cwd(), 'app/medicine/page.module.css'),
+      'utf8',
+    );
+    const medicineNameRule = css.match(/\.medicineName\s*\{([^}]*)\}/)?.[1] ?? '';
+
+    expect(medicineNameRule).toMatch(/white-space:\s*normal/);
+    expect(medicineNameRule).toMatch(/-webkit-line-clamp:\s*2/);
+    expect(medicineNameRule).not.toMatch(/text-overflow:\s*ellipsis/);
+  });
+
+  it('横屏短视口使用双栏提醒布局并完整展示两个主操作', () => {
     const css = readFileSync(
       resolve(process.cwd(), 'app/medicine/page.module.css'),
       'utf8',
     );
     const landscapeRule = css.slice(
-      css.indexOf('@media (orientation: landscape) and (max-height: 500px)'),
+      css.indexOf('@media (orientation: landscape) and (min-width: 640px) and (max-height: 600px)'),
     );
 
-    expect(landscapeRule).toMatch(/\.page\s*\{[\s\S]*?overflow-y:\s*auto/);
+    expect(landscapeRule).toMatch(
+      /\.reminderPage\s*\{[\s\S]*?grid-template-columns:\s*minmax\(/,
+    );
+    expect(landscapeRule).toMatch(
+      /\.actions\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2,/,
+    );
+    expect(landscapeRule).not.toMatch(
+      /\.reminderPage\s*\{[\s\S]*?overflow-y:\s*auto/,
+    );
   });
 });

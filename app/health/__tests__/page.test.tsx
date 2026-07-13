@@ -167,4 +167,19 @@ describe('HealthPage', () => {
 
     expect(addButtonRule).toMatch(/width:\s*auto/);
   });
+
+  it('手机窄屏改为单列，并保持健康数值不可从数字中间断行', () => {
+    const css = readFileSync(
+      resolve(process.cwd(), 'app/health/page.module.css'),
+      'utf8',
+    );
+    const narrowRule = css.slice(css.indexOf('@media (max-width: 430px)'));
+    const valueRule = css.match(/\.healthValue\s*\{([^}]*)\}/)?.[1] ?? '';
+
+    expect(narrowRule).toMatch(
+      /\.cards\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)/,
+    );
+    expect(valueRule).toMatch(/white-space:\s*nowrap/);
+    expect(valueRule).not.toMatch(/overflow-wrap:\s*anywhere/);
+  });
 });
