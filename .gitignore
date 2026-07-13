@@ -36,11 +36,8 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # local env files
-.env
-.env*.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env*
+!.env.example
 *.backup
 *.bak
 
@@ -86,6 +83,11 @@ android/app/release/
 android/.gradle/
 android/local.properties
 android/app/src/main/assets/web/
+*.jks
+*.keystore
+keystore.properties
+*.apk
+*.aab
 
 # Python virtual environments (历史 backend/ 已删除，规则保留以防误建)
 venv/
