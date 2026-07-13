@@ -10,10 +10,12 @@ import {
   finishVoiceResponse,
   voiceErrorResponse,
 } from '../_shared';
+import { readBoundedFormData } from '../../_http';
 
 export const runtime = 'nodejs';
 
 const MAX_AUDIO_BYTES = 5 * 1024 * 1024;
+const MAX_MULTIPART_BYTES = 6 * 1024 * 1024;
 const MIME_FORMATS = new Map<string, MimoAudioFormat>([
   ['audio/wav', 'wav'],
   ['audio/x-wav', 'wav'],
@@ -48,17 +50,7 @@ export async function POST(request: NextRequest) {
   try {
     await requireUser(request);
 
-    const contentType = request.headers.get('content-type')?.toLowerCase() ?? '';
-    if (!contentType.startsWith('multipart/form-data')) {
-      throw new ApiError(400, '请求体必须为 multipart/form-data');
-    }
-
-    let formData: FormData;
-    try {
-      formData = await request.formData();
-    } catch {
-      throw new ApiError(400, '请求体必须为 multipart/form-data');
-    }
+    const formData = await readBoundedFormData(request, MAX_MULTIPART_BYTES);
 
     const file = formData.get('file');
     if (!(file instanceof File)) {

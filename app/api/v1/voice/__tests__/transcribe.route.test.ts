@@ -62,6 +62,60 @@ describe('POST /api/v1/voice/transcribe', () => {
     });
   });
 
+  it('Content-Length 明示超过 6 MiB 时在读取 multipart 前返回 413', async () => {
+    const oversized = formRequest(
+      new File([WAV], 'recording.wav', { type: 'audio/wav' }),
+    );
+    oversized.headers.set('Content-Length', String(6 * 1024 * 1024 + 1));
+
+    const response = await POST(oversized);
+
+    expect(response.status).toBe(413);
+    expect(oversized.bodyUsed).toBe(false);
+    expect(mocks.transcribeSpeech).not.toHaveBeenCalled();
+  });
+
+  it('Content-Length 不可信时仍按实际 multipart 总字节数返回 413', async () => {
+    const boundary = 'test-boundary';
+    const multipart = new Blob([
+      `--${boundary}\r\nContent-Disposition: form-data; name="padding"\r\n\r\n`,
+      'x'.repeat(6 * 1024 * 1024),
+      `\r\n--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="recording.wav"\r\nContent-Type: audio/wav\r\n\r\n`,
+      WAV,
+      `\r\n--${boundary}--\r\n`,
+    ]);
+    const oversized = rawRequest(
+      multipart,
+      `multipart/form-data; boundary=${boundary}`,
+    );
+    oversized.headers.set('Content-Length', '1');
+
+    const response = await POST(oversized);
+
+    expect(response.status).toBe(413);
+    expect(mocks.transcribeSpeech).not.toHaveBeenCalled();
+  });
+
+  it('保留 multipart boundary 大小写并接受合法音频', async () => {
+    const boundary = 'AaB03x';
+    const multipart = new Blob([
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="recording.wav"\r\nContent-Type: audio/wav\r\n\r\n`,
+      WAV,
+      `\r\n--${boundary}--\r\n`,
+    ]);
+
+    const response = await POST(rawRequest(
+      multipart,
+      `multipart/form-data; boundary=${boundary}`,
+    ));
+
+    expect(response.status).toBe(200);
+    expect(mocks.transcribeSpeech).toHaveBeenCalledWith(
+      expect.any(Uint8Array),
+      'wav',
+    );
+  });
+
   it('缺失 file 字段返回 400', async () => {
     const response = await POST(formRequest());
     expect(response.status).toBe(400);

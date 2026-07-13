@@ -19,6 +19,7 @@ import {
   toApiResponse,
 } from '@/lib/server';
 import { chat, type LlmMessage } from '@/lib/server/doubao';
+import { readBoundedJson, withPrivateNoStore } from '../../_http';
 import type {
   AiConversationInsert,
   ChatMessage,
@@ -28,13 +29,19 @@ import type {
 
 export const runtime = 'nodejs';
 
+const MAX_JSON_BYTES = 64 * 1024;
+const MAX_MESSAGES = 50;
+const MAX_MESSAGE_CHARACTERS = 4_000;
+const ALLOWED_ROLES = new Set(['system', 'user', 'assistant']);
+
 export async function POST(request: NextRequest) {
   try {
     const { user_id: currentUserId } = await requireUser(request);
 
-    const body = (await request
-      .json()
-      .catch(() => null)) as ChatRequest | null;
+    const body = await readBoundedJson<ChatRequest | null>(
+      request,
+      MAX_JSON_BYTES,
+    );
     if (!body) {
       throw new ApiError(400, '请求体必须为 JSON');
     }
@@ -47,9 +54,22 @@ export async function POST(request: NextRequest) {
     if (messages.length === 0) {
       throw new ApiError(400, 'messages 不能为空');
     }
+    if (messages.length > MAX_MESSAGES) {
+      throw new ApiError(400, 'messages 不能超过 50 条');
+    }
     for (const m of messages) {
-      if (typeof m.role !== 'string' || typeof m.content !== 'string') {
+      if (
+        typeof m !== 'object' ||
+        m === null ||
+        Array.isArray(m) ||
+        typeof m.role !== 'string' ||
+        !ALLOWED_ROLES.has(m.role) ||
+        typeof m.content !== 'string'
+      ) {
         throw new ApiError(400, 'messages 每项需含 role 与 content 字符串');
+      }
+      if (Array.from(m.content).length > MAX_MESSAGE_CHARACTERS) {
+        throw new ApiError(400, '单条消息不能超过 4000 个字符');
       }
     }
 
@@ -92,11 +112,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json<ChatResponse>({
+    return withPrivateNoStore(NextResponse.json<ChatResponse>({
       reply,
       session_id: sessionId,
-    });
+    }));
   } catch (err) {
-    return toApiResponse(err);
+    return withPrivateNoStore(toApiResponse(err));
   }
 }

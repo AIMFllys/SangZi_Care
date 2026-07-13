@@ -11,6 +11,8 @@
 //   VOLCANO_ARK_API_KEY 不加 NEXT_PUBLIC_ 前缀，绝不进客户端产物。
 // ============================================================
 
+import { ApiError } from './errors';
+
 /** OpenAI 兼容的单条消息。 */
 export interface LlmMessage {
   role: 'system' | 'user' | 'assistant';
@@ -22,6 +24,10 @@ export interface IntentResult {
   intent: string;
   entities: Record<string, unknown>;
   confidence: number;
+}
+
+export class DoubaoError extends ApiError {
+  override readonly name = 'DoubaoError';
 }
 
 // 老年人医养助手默认 system prompt（对齐 Python _SYSTEM_PROMPT）
@@ -66,6 +72,8 @@ const SUMMARY_PROMPT =
   '4. 突出老人与家属之间的情感连接\n' +
   '5. 控制在200字以内\n\n' +
   '对话记录：\n{conversations}';
+
+const DOUBAO_TIMEOUT_MS = 45_000;
 
 interface DoubaoConfig {
   apiKey: string;
@@ -137,6 +145,9 @@ async function callLlm(
     max_tokens: maxTokens,
   };
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DOUBAO_TIMEOUT_MS);
+
   try {
     const resp = await fetch(url, {
       method: 'POST',
@@ -145,25 +156,38 @@ async function callLlm(
         Authorization: `Bearer ${cfg.apiKey}`,
       },
       body: JSON.stringify(payload),
+      signal: controller.signal,
     });
     if (!resp.ok) {
-      const text = await resp.text().catch(() => '');
-      console.error('[doubao] LLM HTTP 错误: %s %s', resp.status, text);
-      throw new Error(`豆包LLM服务请求失败: ${resp.status}`);
+      console.error('[doubao] LLM HTTP 错误: %s', resp.status);
+      throw new DoubaoError(
+        resp.status === 429 ? 429 : 502,
+        '豆包LLM服务请求失败',
+      );
     }
-    const data = (await resp.json()) as ArkResponse;
+    let data: ArkResponse;
+    try {
+      data = (await resp.json()) as ArkResponse;
+    } catch {
+      throw new DoubaoError(502, '豆包LLM响应格式异常');
+    }
     const content = data.choices?.[0]?.message?.content;
     if (typeof content !== 'string') {
-      throw new Error('豆包LLM响应格式异常');
+      throw new DoubaoError(502, '豆包LLM响应格式异常');
     }
     return content;
   } catch (err) {
-    // 已是本模块抛出的业务错误，原样上抛
-    if (err instanceof Error && err.message.startsWith('豆包LLM')) {
+    if (err instanceof DoubaoError) {
       throw err;
     }
-    console.error('[doubao] LLM 请求异常:', err);
-    throw new Error('豆包LLM服务不可用');
+    if (controller.signal.aborted) {
+      console.error('[doubao] LLM 请求超时');
+      throw new DoubaoError(504, '豆包LLM服务响应超时');
+    }
+    console.error('[doubao] LLM 请求失败');
+    throw new DoubaoError(502, '豆包LLM服务不可用');
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

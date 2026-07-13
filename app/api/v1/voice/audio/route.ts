@@ -8,6 +8,7 @@ import {
   toApiResponse,
 } from '@/lib/server';
 import { assertSafeId } from '../../messages/_lib';
+import { withPrivateNoStore } from '../../_http';
 
 export const runtime = 'nodejs';
 
@@ -50,16 +51,13 @@ export async function GET(request: NextRequest) {
     }
 
     const signedUrl = await createSignedVoiceUrl(supabase, row.audio_url);
-    return new NextResponse(null, {
+    return withPrivateNoStore(new NextResponse(null, {
       status: 307,
       headers: {
         Location: signedUrl,
-        'Cache-Control': 'private, no-store, max-age=0',
-        Pragma: 'no-cache',
-        Vary: 'Authorization',
       },
-    });
+    }));
   } catch (error) {
-    return toApiResponse(error);
+    return withPrivateNoStore(toApiResponse(error));
   }
 }

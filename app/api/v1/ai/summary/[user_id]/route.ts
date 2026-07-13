@@ -25,6 +25,7 @@ import type {
   AiConversationSummaryRow,
   SummaryResponse,
 } from '../../_lib';
+import { withPrivateNoStore } from '../../../_http';
 
 export const runtime = 'nodejs';
 
@@ -57,10 +58,10 @@ export async function GET(
     const messageCount = rows.length;
 
     if (messageCount === 0) {
-      return NextResponse.json<SummaryResponse>({
+      return withPrivateNoStore(NextResponse.json<SummaryResponse>({
         summary: '暂无对话记录',
         message_count: 0,
-      });
+      }));
     }
 
     // 逆序成时间正序，组装 user/assistant 交替（对齐 Python reversed(rows)）
@@ -76,11 +77,11 @@ export async function GET(
 
     const summary = await generateSummary(conversations);
 
-    return NextResponse.json<SummaryResponse>({
+    return withPrivateNoStore(NextResponse.json<SummaryResponse>({
       summary,
       message_count: messageCount,
-    });
+    }));
   } catch (err) {
-    return toApiResponse(err);
+    return withPrivateNoStore(toApiResponse(err));
   }
 }

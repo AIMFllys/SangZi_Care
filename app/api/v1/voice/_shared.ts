@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { MimoError, toApiResponse } from '@/lib/server';
-
-const PRIVATE_NO_STORE = 'private, no-store, max-age=0';
+import { withPrivateNoStore } from '../_http';
 
 interface VoiceRequestContext {
   operation: 'tts' | 'asr';
@@ -31,9 +30,7 @@ export function finishVoiceResponse(
   context: VoiceRequestContext,
   metrics: { textLength?: number; audioBytes?: number },
 ): NextResponse {
-  response.headers.set('Cache-Control', PRIVATE_NO_STORE);
-  response.headers.set('Pragma', 'no-cache');
-  response.headers.set('Vary', 'Authorization');
+  withPrivateNoStore(response);
   response.headers.set('X-Request-Id', context.requestId);
 
   console.info('[voice-request]', {

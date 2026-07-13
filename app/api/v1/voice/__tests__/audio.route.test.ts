@@ -52,7 +52,13 @@ describe('GET /api/v1/voice/audio', () => {
 
   it('要求登录和安全 message_id', async () => {
     mocks.requireUser.mockRejectedValueOnce(new ApiError(401, 'Missing authentication token'));
-    expect((await GET(request())).status).toBe(401);
+    const unauthorized = await GET(request());
+    expect(unauthorized.status).toBe(401);
+    expect(unauthorized.headers.get('cache-control')).toBe(
+      'private, no-store, max-age=0',
+    );
+    expect(unauthorized.headers.get('pragma')).toBe('no-cache');
+    expect(unauthorized.headers.get('vary')).toContain('Authorization');
     expect((await GET(request(''))).status).toBe(400);
     expect((await GET(request('../other'))).status).toBe(400);
   });

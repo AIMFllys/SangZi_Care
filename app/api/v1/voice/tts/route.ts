@@ -9,10 +9,12 @@ import {
   finishVoiceResponse,
   voiceErrorResponse,
 } from '../_shared';
+import { readBoundedJson } from '../../_http';
 
 export const runtime = 'nodejs';
 
 const MAX_TEXT_CHARACTERS = 1_000;
+const MAX_JSON_BYTES = 8 * 1024;
 
 interface TtsRequestBody {
   text?: unknown;
@@ -27,7 +29,10 @@ export async function POST(request: NextRequest) {
   try {
     await requireUser(request);
 
-    const body = (await request.json().catch(() => null)) as TtsRequestBody | null;
+    const body = await readBoundedJson<TtsRequestBody | null>(
+      request,
+      MAX_JSON_BYTES,
+    );
     if (!body) {
       throw new ApiError(400, '请求体必须为 JSON');
     }

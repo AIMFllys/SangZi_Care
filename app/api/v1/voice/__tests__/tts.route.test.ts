@@ -53,6 +53,27 @@ describe('POST /api/v1/voice/tts', () => {
     expect(response.status).toBe(400);
   });
 
+  it('Content-Length 明示超过 8 KiB 时在读取请求体前返回 413', async () => {
+    const oversized = request({ text: '您好' });
+    oversized.headers.set('Content-Length', String(8 * 1024 + 1));
+
+    const response = await POST(oversized);
+
+    expect(response.status).toBe(413);
+    expect(oversized.bodyUsed).toBe(false);
+    expect(mocks.synthesizeSpeech).not.toHaveBeenCalled();
+  });
+
+  it('Content-Length 不可信时仍按实际 JSON 字节数返回 413', async () => {
+    const oversized = request({ text: '您好', padding: 'x'.repeat(8 * 1024) });
+    oversized.headers.set('Content-Length', '1');
+
+    const response = await POST(oversized);
+
+    expect(response.status).toBe(413);
+    expect(mocks.synthesizeSpeech).not.toHaveBeenCalled();
+  });
+
   it.each([
     [{}, 'text 不能为空'],
     [{ text: '' }, 'text 不能为空'],
