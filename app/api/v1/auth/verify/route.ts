@@ -54,12 +54,15 @@ export async function POST(request: Request) {
     const normalizedEmail = email.toLowerCase().trim();
 
     // --- 校验并消费 OTP（一次性） ---
-    const result = consumeOtp(normalizedEmail, code);
+    const result = await consumeOtp(normalizedEmail, code);
     if (result === 'not_found' || result === 'mismatch') {
       throw new ApiError(400, '验证码错误');
     }
     if (result === 'expired') {
       throw new ApiError(400, '验证码已过期');
+    }
+    if (result === 'locked') {
+      throw new ApiError(400, '验证码错误次数过多，请重新获取');
     }
 
     // --- 查找 / 自动创建用户 ---

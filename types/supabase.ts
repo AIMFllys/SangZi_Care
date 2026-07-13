@@ -70,6 +70,48 @@ export type Database = {
           },
         ]
       }
+      oc_auth_challenges: {
+        Row: {
+          activated_at: string | null
+          attempt_count: number
+          challenge_kind: string
+          created_at: string
+          expires_at: string
+          lookup_key: string
+          reserved_at: string | null
+          secret_digest: string
+          state: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          activated_at?: string | null
+          attempt_count?: number
+          challenge_kind: string
+          created_at?: string
+          expires_at: string
+          lookup_key: string
+          reserved_at?: string | null
+          secret_digest: string
+          state: string
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          activated_at?: string | null
+          attempt_count?: number
+          challenge_kind?: string
+          created_at?: string
+          expires_at?: string
+          lookup_key?: string
+          reserved_at?: string | null
+          secret_digest?: string
+          state?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       oc_broadcast_play_history: {
         Row: {
           broadcast_id: string
@@ -609,7 +651,52 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      oc_auth_challenge_activate_otp: {
+        Args: {
+          p_lookup_key: string
+          p_version: string
+        }
+        Returns: boolean
+      }
+      oc_auth_challenge_consume_captcha: {
+        Args: {
+          p_lookup_key: string
+          p_secret_digest: string
+        }
+        Returns: string
+      }
+      oc_auth_challenge_consume_otp: {
+        Args: {
+          p_lookup_key: string
+          p_max_attempts: number
+          p_secret_digest: string
+        }
+        Returns: string
+      }
+      oc_auth_challenge_put_captcha: {
+        Args: {
+          p_lookup_key: string
+          p_secret_digest: string
+          p_ttl_seconds: number
+        }
+        Returns: undefined
+      }
+      oc_auth_challenge_reserve_otp: {
+        Args: {
+          p_lookup_key: string
+          p_rate_limit_seconds: number
+          p_secret_digest: string
+          p_ttl_seconds: number
+        }
+        Returns: Json
+      }
+      oc_auth_challenge_rollback_otp: {
+        Args: {
+          p_lookup_key: string
+          p_version: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

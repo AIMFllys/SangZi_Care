@@ -50,7 +50,7 @@ function expectPrivateNoStore(response: Response): void {
 describe('token response cache policy', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.consumeOtp.mockReturnValue('ok');
+    mocks.consumeOtp.mockResolvedValue('ok');
     mocks.createAccessToken.mockResolvedValue('access-token');
     mocks.createRefreshToken.mockResolvedValue('refresh-token');
     mocks.verifyToken.mockResolvedValue({
@@ -81,6 +81,21 @@ describe('token response cache policy', () => {
       is_new_user: false,
     });
     expectPrivateNoStore(response);
+  });
+
+  it('verify 等待原子消费结果，并拒绝已锁定 OTP', async () => {
+    mocks.consumeOtp.mockResolvedValueOnce('locked');
+
+    const response = await verify(jsonRequest('verify', {
+      email: USER.email,
+      code: '000000',
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      detail: '验证码错误次数过多，请重新获取',
+    });
+    expect(mocks.getSupabaseServerClient).not.toHaveBeenCalled();
   });
 
   it('refresh 返回新 token 时明确 private no-store', async () => {
