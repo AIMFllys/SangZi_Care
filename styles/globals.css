@@ -4,7 +4,9 @@
  * ============================================================ */
 
 /* ---- Tailwind v4 base ---- */
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "../app";
+@source "../components";
 
 /* ============================================================
  * 1. 全局 Reset & Base
