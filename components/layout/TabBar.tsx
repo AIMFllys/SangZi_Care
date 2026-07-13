@@ -24,6 +24,19 @@ interface TabItem {
   href: string;
 }
 
+type TabRole = 'elder' | 'family';
+
+const ROUTE_TAB_OWNERS: Record<
+  TabRole,
+  ReadonlyArray<{ route: string; tabKey: string }>
+> = {
+  elder: [{ route: '/radio', tabKey: 'menu' }],
+  family: [
+    { route: '/radio', tabKey: 'voice' },
+    { route: '/medicine', tabKey: 'health' },
+  ],
+};
+
 const ICON_SIZE = 24;
 
 const ELDER_TABS: TabItem[] = [
@@ -52,8 +65,28 @@ const FAMILY_TABS: TabItem[] = [
   { key: 'settings', label: '设置', icon: <Settings size={ICON_SIZE} />, href: '/settings' },
 ];
 
-export function TAB_ITEMS(role: 'elder' | 'family'): TabItem[] {
+export function TAB_ITEMS(role: TabRole): TabItem[] {
   return role === 'elder' ? ELDER_TABS : FAMILY_TABS;
+}
+
+function belongsToRoute(pathname: string, route: string): boolean {
+  return pathname === route || pathname.startsWith(`${route}/`);
+}
+
+function getActiveTabKey(
+  pathname: string,
+  role: TabRole,
+  tabs: TabItem[],
+): string {
+  const ownedRoute = ROUTE_TAB_OWNERS[role].find(({ route }) =>
+    belongsToRoute(pathname, route),
+  );
+  if (ownedRoute) return ownedRoute.tabKey;
+
+  const directMatch = tabs.find(({ href }) =>
+    href === '/' ? pathname === '/' : belongsToRoute(pathname, href),
+  );
+  return directMatch?.key ?? tabs[0].key;
 }
 
 export default function TabBar() {
@@ -62,17 +95,14 @@ export default function TabBar() {
 
   if (!user) return null;
 
-  const tabs = TAB_ITEMS(user.role === 'elder' ? 'elder' : 'family');
-
-  const isActive = (href: string) => {
-    if (href === '/') return pathname === '/';
-    return pathname.startsWith(href);
-  };
+  const role = user.role === 'elder' ? 'elder' : 'family';
+  const tabs = TAB_ITEMS(role);
+  const activeTabKey = getActiveTabKey(pathname, role, tabs);
 
   return (
     <nav className={styles.tabBar} role="navigation" aria-label="主导航">
       {tabs.map((tab) => {
-        const active = isActive(tab.href);
+        const active = tab.key === activeTabKey;
         return (
           <Link
             key={tab.key}
