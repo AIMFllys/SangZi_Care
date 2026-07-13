@@ -1,182 +1,163 @@
-/* ============================================
-   聊天气泡 — 严格参考亲友对话页面成品图
-   橙色自己气泡 + 白色对方气泡 + 大语音条
-   ============================================ */
-
 .wrapper {
   display: flex;
   flex-direction: column;
-  max-width: 80%;
-  margin-bottom: var(--spacing-sm);
+  width: fit-content;
+  max-width: min(78%, 30rem);
+  min-width: 0;
+  margin-bottom: var(--space-sm);
 }
 
 .wrapperMine {
-  align-self: flex-end;
   align-items: flex-end;
+  margin-left: auto;
 }
 
 .wrapperOther {
-  align-self: flex-start;
   align-items: flex-start;
+  margin-right: auto;
 }
 
-/* 气泡 — 参考成品图大圆角 */
 .bubble {
   position: relative;
-  padding: var(--spacing-base) var(--spacing-lg);
-  border-radius: var(--radius-lg);
+  min-width: 0;
+  max-width: 100%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  overflow-wrap: anywhere;
   word-break: break-word;
-  min-width: 60px;
 }
 
-/* 自己的气泡 — 暖橙色 (参考成品图 --bubble-self: #FF8F5E) */
 .bubbleMine {
-  background-color: var(--accent);
+  border-bottom-right-radius: 5px;
+  background: var(--accent-action);
   color: var(--text-inverse);
-  border-top-right-radius: var(--radius-lg);
-  border-top-left-radius: var(--radius-lg);
-  border-bottom-left-radius: var(--radius-lg);
-  border-bottom-right-radius: 4px;
   box-shadow: 0 4px 12px var(--accent-soft);
 }
 
-/* 对方的气泡 — 白色 (参考成品图 --bubble-other: #FFFFFF) */
 .bubbleOther {
-  background-color: var(--bg-card-solid);
+  border: 1px solid var(--divider);
+  border-bottom-left-radius: 5px;
+  background: var(--bg-card-solid);
   color: var(--text-primary);
-  border-top-right-radius: var(--radius-lg);
-  border-top-left-radius: var(--radius-lg);
-  border-bottom-right-radius: var(--radius-lg);
-  border-bottom-left-radius: 4px;
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-light);
 }
 
-/* 文字内容 — 大字体 */
 .textContent {
-  font-size: var(--font-size-lg);
-  line-height: 1.6;
+  font-size: var(--font-body);
+  line-height: 1.55;
+  white-space: pre-wrap;
 }
 
-/* AI 标记 */
 .aiBadge {
   display: inline-block;
-  padding: var(--space-xs) var(--space-sm);
-  font-size: var(--font-small);
-  font-weight: 700;
-  color: var(--text-inverse);
-  background-color: var(--color-ai);
+  margin-bottom: 4px;
+  padding: 2px 6px;
   border-radius: var(--radius-sm);
-  margin-bottom: var(--space-xs);
+  background: var(--color-ai);
+  color: var(--text-inverse);
+  font-size: 10px;
+  font-weight: 800;
   line-height: 1.4;
 }
 
-.bubbleOther .aiBadge {
-  color: var(--text-inverse);
-  background-color: var(--color-ai);
-}
-
-/* 语音消息条 — 参考成品图大语音条 */
 .voiceBar {
-  display: flex;
+  display: grid;
+  grid-template-columns: 44px minmax(24px, 1fr) auto;
   align-items: center;
-  gap: var(--spacing-base);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  min-width: 200px;
-  min-height: var(--min-touch-target);
-  background: none;
-  border: none;
-  cursor: pointer;
+  gap: var(--space-sm);
+  min-width: 0;
+  max-width: 100%;
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: inherit;
   font: inherit;
+  cursor: pointer;
 }
 
 .playIcon {
-  width: 48px;
-  height: 48px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
   border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-2xl);
-  flex-shrink: 0;
+  font-size: 18px;
 }
 
-/* 自己气泡中的播放按钮 */
 .bubbleMine .playIcon {
-  background: var(--border-card);
+  background: rgb(255 255 255 / 18%);
   color: var(--text-inverse);
 }
 
-/* 对方气泡中的播放按钮 — 参考成品图粉色 */
 .bubbleOther .playIcon {
   background: var(--color-ai);
   color: var(--text-inverse);
-  box-shadow: 0 2px 8px var(--color-ai-soft);
 }
 
 .voiceWave {
   display: flex;
+  min-width: 24px;
+  height: 22px;
   align-items: center;
-  gap: var(--space-xs);
-  flex: 1;
-  height: 24px;
+  gap: 3px;
+  overflow: hidden;
 }
 
 .waveLine {
   display: block;
-  width: 4px;
+  width: 3px;
+  flex: 0 0 3px;
   border-radius: 2px;
-  background-color: currentColor;
-  opacity: 0.7;
+  background: currentColor;
+  opacity: 0.72;
   animation: wave 1.2s ease-in-out infinite;
 }
 
-.waveLine:nth-child(1) { height: 12px; animation-delay: 0.1s; }
-.waveLine:nth-child(2) { height: 20px; animation-delay: 0.2s; }
-.waveLine:nth-child(3) { height: 16px; animation-delay: 0.3s; }
-.waveLine:nth-child(4) { height: 22px; animation-delay: 0.1s; }
-.waveLine:nth-child(5) { height: 14px; animation-delay: 0.4s; }
+.waveLine:nth-child(1) { height: 10px; animation-delay: 0.1s; }
+.waveLine:nth-child(2) { height: 18px; animation-delay: 0.2s; }
+.waveLine:nth-child(3) { height: 14px; animation-delay: 0.3s; }
+.waveLine:nth-child(4) { height: 20px; animation-delay: 0.1s; }
+.waveLine:nth-child(5) { height: 12px; animation-delay: 0.4s; }
 
- @keyframes wave {
+@keyframes wave {
   0%, 100% { transform: scaleY(0.8); }
-  50% { transform: scaleY(1.2); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .waveLine {
-    animation: none;
-  }
+  50% { transform: scaleY(1.18); }
 }
 
 .duration {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
   flex-shrink: 0;
+  font-size: var(--font-caption);
+  font-weight: 750;
+  white-space: nowrap;
 }
 
-/* 语音转写文字 — 参考成品图分隔线下方 */
 .voiceTranscript {
-  font-size: var(--font-size-lg);
-  opacity: 0.9;
-  margin-top: var(--spacing-sm);
-  padding-top: var(--spacing-sm);
-  border-top: 1px solid var(--border-card);
+  margin-top: var(--space-xs);
+  padding-top: var(--space-xs);
+  border-top: 1px solid rgb(255 255 255 / 22%);
+  font-size: var(--font-caption);
   line-height: 1.5;
+  opacity: 0.92;
 }
 
 .bubbleOther .voiceTranscript {
   border-top-color: var(--divider);
 }
 
-/* 时间戳 */
 .timestamp {
-  font-size: var(--font-small);
-  color: var(--color-text-muted);
-  margin-top: var(--space-xs);
-  padding: 0 var(--space-xs);
+  margin-top: 3px;
+  padding: 0 4px;
+  color: var(--text-muted);
+  font-size: 10px;
 }
 
 .timestampMine {
   text-align: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .waveLine {
+    animation: none;
+  }
 }

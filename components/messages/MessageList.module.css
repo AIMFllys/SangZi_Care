@@ -1,30 +1,27 @@
-/* ============================================
-   消息列表组件样式
-   可滚动区域 + 日期分隔符
-   ============================================ */
-
 .list {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
-  padding: var(--spacing-base);
-  gap: 0;
+  overscroll-behavior-y: contain;
+  scroll-padding-bottom: 16px;
+  padding: var(--space-md) var(--page-gutter);
+  background: linear-gradient(180deg, var(--bg-base), var(--bg-elevated));
   -webkit-overflow-scrolling: touch;
 }
 
-/* 日期分隔符 */
 .dateSeparator {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-sm) 0;
+  padding: var(--space-sm) 0;
 }
 
 .dateText {
-  font-size: var(--font-small);
-  color: var(--color-text-secondary);
-  background-color: var(--color-bg);
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--border-radius-full);
+  padding: 3px var(--space-sm);
+  border-radius: var(--radius-full);
+  background: var(--bg-card-solid);
+  color: var(--text-muted);
+  font-size: 11px;
 }

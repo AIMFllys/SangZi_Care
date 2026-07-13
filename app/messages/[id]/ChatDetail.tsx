@@ -5,7 +5,7 @@
 // 聊天气泡展示历史消息，支持文字/语音输入切换
 // ============================================================
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useMessageStore } from '@/stores/messageStore';
 import { useUserStore } from '@/stores/userStore';
@@ -20,6 +20,7 @@ import styles from './page.module.css';
 // ---------- 组件 ----------
 
 export default function ChatDetailPage() {
+  const pageRef = useRef<HTMLDivElement>(null);
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const contactId = params?.id ?? '';
@@ -30,7 +31,7 @@ export default function ChatDetailPage() {
   const { speak } = useTextToSpeech();
 
   // 输入模式：text 或 voice
-  const [inputMode, setInputMode] = useState<'text' | 'voice'>('voice');
+  const [inputMode, setInputMode] = useState<'text' | 'voice'>('text');
   const [textInput, setTextInput] = useState('');
   const [isSending, setIsSending] = useState(false);
 
@@ -52,6 +53,28 @@ export default function ChatDetailPage() {
       });
     }
   }, [messages, user?.id, markAsRead]);
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const root = document.documentElement;
+    const previous = root.style.getPropertyValue('--chat-viewport-height');
+    const syncViewport = () => {
+      root.style.setProperty(
+        '--chat-viewport-height',
+        `${Math.round(viewport?.height ?? window.innerHeight)}px`,
+      );
+    };
+
+    syncViewport();
+    viewport?.addEventListener('resize', syncViewport);
+    viewport?.addEventListener('scroll', syncViewport);
+    return () => {
+      viewport?.removeEventListener('resize', syncViewport);
+      viewport?.removeEventListener('scroll', syncViewport);
+      if (previous) root.style.setProperty('--chat-viewport-height', previous);
+      else root.style.removeProperty('--chat-viewport-height');
+    };
+  }, []);
 
   // 播放语音消息（使用 TTS 朗读转写文本）
   const handlePlayVoice = useCallback(
@@ -123,7 +146,7 @@ export default function ChatDetailPage() {
   );
 
   return (
-    <div className={styles.page}>
+    <div ref={pageRef} className={styles.page}>
       {/* 顶部栏 */}
       <header className={styles.header}>
         <button
@@ -137,6 +160,7 @@ export default function ChatDetailPage() {
         <h1 className={styles.title}>
           {contactId ? `对话` : '聊天'}
         </h1>
+        <span className={styles.headerSpacer} aria-hidden="true" />
       </header>
 
       {/* 消息列表 */}
@@ -153,7 +177,7 @@ export default function ChatDetailPage() {
       )}
 
       {/* 底部输入区域 */}
-      <div className={styles.inputArea}>
+      <footer className={styles.inputArea}>
         {/* 输入模式切换按钮 */}
         <button
           className={styles.modeToggle}
@@ -161,7 +185,6 @@ export default function ChatDetailPage() {
           type="button"
           aria-label={inputMode === 'text' ? '切换到语音模式' : '切换到文字模式'}
           data-testid="mode-toggle"
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           {inputMode === 'text' ? <Mic size={24} /> : <Keyboard size={24} />}
         </button>
@@ -195,7 +218,7 @@ export default function ChatDetailPage() {
         {inputMode === 'voice' && (
           <VoiceRecorder onSend={handleSendVoice} onCancel={handleCancelVoice} />
         )}
-      </div>
+      </footer>
     </div>
   );
 }

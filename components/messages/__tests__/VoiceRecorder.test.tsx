@@ -33,15 +33,11 @@ describe('VoiceRecorder 组件', () => {
     mockTranscript = '';
   });
 
-  it('渲染麦克风按钮', () => {
+  it('空闲时只渲染紧凑的按住说话按钮', () => {
     render(<VoiceRecorder onSend={mockOnSend} onCancel={mockOnCancel} />);
-    expect(screen.getByTestId('mic-button')).toBeDefined();
-  });
-
-  it('渲染发送和取消按钮', () => {
-    render(<VoiceRecorder onSend={mockOnSend} onCancel={mockOnCancel} />);
-    expect(screen.getByText('发送')).toBeDefined();
-    expect(screen.getByText('取消')).toBeDefined();
+    expect(screen.getByRole('button', { name: '按住说话' })).toBeDefined();
+    expect(screen.queryByText('发送')).toBeNull();
+    expect(screen.queryByText('取消')).toBeNull();
   });
 
   it('点击麦克风按钮调用 startListening', () => {
@@ -57,11 +53,10 @@ describe('VoiceRecorder 组件', () => {
     expect(mockStopListening).toHaveBeenCalledTimes(1);
   });
 
-  it('无转写文本时发送按钮禁用', () => {
+  it('无转写文本时不显示确认操作', () => {
     mockTranscript = '';
     render(<VoiceRecorder onSend={mockOnSend} onCancel={mockOnCancel} />);
-    const sendBtn = screen.getByText('发送');
-    expect(sendBtn.hasAttribute('disabled')).toBe(true);
+    expect(screen.queryByText('发送')).toBeNull();
   });
 
   it('有转写文本时发送按钮可用', () => {
@@ -81,6 +76,7 @@ describe('VoiceRecorder 组件', () => {
   });
 
   it('点击取消调用 onCancel', () => {
+    mockTranscript = '不发送这段话';
     render(<VoiceRecorder onSend={mockOnSend} onCancel={mockOnCancel} />);
     fireEvent.click(screen.getByText('取消'));
     expect(mockOnCancel).toHaveBeenCalledTimes(1);

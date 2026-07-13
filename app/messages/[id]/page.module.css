@@ -1,98 +1,142 @@
-/* messages/[id] — 聊天详情 */
 .page {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: 100%;
+  height: min(100dvh, var(--chat-viewport-height, 100dvh));
+  min-height: 0;
+  overflow: hidden;
   background: var(--bg-base);
 }
 
 .header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
   align-items: center;
-  gap: var(--space-md);
-  padding: var(--safe-top) var(--space-lg) var(--space-md);
-  backdrop-filter: blur(20px);
-  background: var(--bg-glass);
+  min-height: calc(var(--header-height) + var(--safe-top));
+  padding: var(--safe-top) var(--page-gutter) 0;
   border-bottom: 1px solid var(--divider);
+  background: var(--bg-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
-.backBtn {
+.backBtn,
+.modeToggle {
+  display: grid;
   width: 48px;
   height: 48px;
+  flex: 0 0 48px;
+  place-items: center;
+  padding: 0;
+  border: 0;
   border-radius: var(--radius-full);
-  background: none;
-  border: none;
-  font-size: 20px;
+  background: transparent;
+  color: var(--text-primary);
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-primary);
   font-size: var(--font-heading);
-  font-weight: 700;
+  font-weight: 800;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerSpacer {
+  width: 48px;
+  height: 48px;
 }
 
 .loading {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  min-height: 0;
+  place-items: center;
   color: var(--text-secondary);
 }
 
-/* 底部输入 */
 .inputArea {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md) var(--safe-bottom);
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px);
+  min-width: 0;
+  padding: 8px var(--page-gutter) calc(8px + var(--safe-bottom));
   border-top: 1px solid var(--divider);
+  background: var(--bg-card-solid);
+  box-shadow: 0 -6px 18px rgb(0 0 0 / 5%);
 }
 
 .modeToggle {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-full);
-  background: var(--border-light);
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  flex-shrink: 0;
+  background: var(--bg-input);
+  color: var(--accent-action);
 }
 
 .textInputRow {
-  flex: 1;
-  display: flex;
-  gap: var(--space-sm);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
+  flex: 1;
+  gap: var(--space-sm);
+  min-width: 0;
 }
 
 .textInput {
-  flex: 1;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-full);
+  min-width: 0;
+  height: 52px;
+  padding: 0 var(--space-md);
   border: 1.5px solid var(--divider);
-  background: var(--bg-input);
-  font-size: var(--font-body);
+  border-radius: var(--radius-full);
   outline: none;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 16px;
 }
 
 .textInput:focus {
-  border-color: var(--accent);
+  border-color: var(--accent-action);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .sendBtn {
-  padding: var(--space-sm) var(--space-md);
+  min-width: 58px;
+  height: 48px;
+  padding: 0 var(--space-sm);
+  border: 0;
   border-radius: var(--radius-full);
-  background: var(--accent);
+  background: var(--accent-action);
   color: var(--accent-text);
-  font-size: var(--font-caption);
-  font-weight: 600;
-  border: none;
+  font: inherit;
+  font-size: var(--font-small);
+  font-weight: 800;
   cursor: pointer;
 }
 
 .sendBtn:disabled {
-  opacity: 0.4;
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+@media (max-width: 350px) {
+  .header,
+  .inputArea {
+    padding-inline: var(--space-md);
+  }
+
+  .sendBtn {
+    min-width: 52px;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .header {
+    background: var(--bg-card-solid);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }

@@ -63,7 +63,7 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({ id: 'contact-1' }),
 }));
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const { default: ChatDetailPage } = await import('../ChatDetail');
 
@@ -127,28 +127,31 @@ describe('ChatDetailPage 聊天详情页', () => {
     expect(screen.getByText('妈妈好')).toBeDefined();
   });
 
-  it('默认为语音输入模式，显示 VoiceRecorder', () => {
+  it('默认为文字输入模式，不展开语音录制器', () => {
     render(<ChatDetailPage />);
-    expect(screen.getByTestId('voice-recorder')).toBeDefined();
+    expect(screen.getByTestId('text-input')).toBeDefined();
+    expect(screen.queryByTestId('voice-recorder')).toBeNull();
   });
 
-  it('点击模式切换按钮切换到文字输入', () => {
+  it('点击模式切换按钮显示一个紧凑的按住说话控件', () => {
     render(<ChatDetailPage />);
     const toggle = screen.getByTestId('mode-toggle');
     fireEvent.click(toggle);
-    expect(screen.getByTestId('text-input')).toBeDefined();
+    expect(screen.getByTestId('voice-recorder')).toBeDefined();
+    expect(screen.getByRole('button', { name: '按住说话' })).toBeDefined();
+    expect(screen.queryByText('取消')).toBeNull();
+    expect(screen.queryByText('发送')).toBeNull();
   });
 
   it('文字模式下输入并发送消息', async () => {
     render(<ChatDetailPage />);
-    // 切换到文字模式
-    fireEvent.click(screen.getByTestId('mode-toggle'));
-
     const input = screen.getByTestId('text-input');
     fireEvent.change(input, { target: { value: '你好啊' } });
     fireEvent.click(screen.getByText('发送'));
 
-    expect(mockSendTextMessage).toHaveBeenCalledWith('user-1', 'contact-1', '你好啊');
+    await waitFor(() => {
+      expect(mockSendTextMessage).toHaveBeenCalledWith('user-1', 'contact-1', '你好啊');
+    });
   });
 
   it('返回按钮导航到消息列表', () => {

@@ -80,55 +80,48 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
 
   return (
     <div className={styles.container} data-testid="voice-recorder">
-      {/* 录音时长 */}
-      {(isListening || recordingDuration > 0) && (
-        <div className={styles.timer} aria-live="polite">
-          {recordingDuration}秒
+      {isListening && (
+        <div className={styles.recordingHud} role="status" aria-live="polite">
+          <span className={styles.recordingDot} aria-hidden="true" />
+          <span className={styles.timer}>{recordingDuration}秒</span>
+          <span>正在录音，再点一次结束</span>
         </div>
       )}
 
-      {/* 实时转写文本 */}
-      {transcript && (
-        <div className={styles.transcript} aria-live="polite">
-          {transcript}
+      {transcript && !isListening && (
+        <div className={styles.reviewPanel} aria-live="polite">
+          <p className={styles.transcript}>{transcript}</p>
+          <div className={styles.actions}>
+            <button
+              className={styles.cancelBtn}
+              onClick={handleCancel}
+              type="button"
+              aria-label="取消录音"
+            >
+              取消
+            </button>
+            <button
+              className={styles.sendBtn}
+              onClick={handleSend}
+              type="button"
+              aria-label="发送语音消息"
+            >
+              发送
+            </button>
+          </div>
         </div>
       )}
 
-      {/* 麦克风按钮 */}
       <button
         className={`${styles.micBtn} ${isListening ? styles.micBtnRecording : ''}`}
         onClick={handleMicToggle}
         type="button"
-        aria-label={isListening ? '停止录音' : '开始录音'}
+        aria-label={isListening ? '停止录音' : '按住说话'}
         data-testid="mic-button"
       >
-        {isListening ? '⏹️' : '🎤'}
+        <span aria-hidden="true">{isListening ? '■' : '🎤'}</span>
+        <span>{isListening ? '结束录音' : '按住说话'}</span>
       </button>
-
-      <span className={styles.hint}>
-        {isListening ? '正在录音，点击停止...' : '点击麦克风开始录音'}
-      </span>
-
-      {/* 操作按钮 */}
-      <div className={styles.actions}>
-        <button
-          className={styles.cancelBtn}
-          onClick={handleCancel}
-          type="button"
-          aria-label="取消录音"
-        >
-          取消
-        </button>
-        <button
-          className={styles.sendBtn}
-          onClick={handleSend}
-          type="button"
-          disabled={!transcript.trim()}
-          aria-label="发送语音消息"
-        >
-          发送
-        </button>
-      </div>
     </div>
   );
 }
