@@ -18,6 +18,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import {
   resolveMedicationTarget,
@@ -127,9 +128,11 @@ export async function POST(request: NextRequest) {
       throw new ApiError(500, '记录服药失败');
     }
 
-    return NextResponse.json<MedicationRecordResponse>(
-      toRecordResponse(data[0] as MedicationRecordRow),
-      { status: 201 },
+    return withPrivateNoStore(
+      NextResponse.json<MedicationRecordResponse>(
+        toRecordResponse(data[0] as MedicationRecordRow),
+        { status: 201 },
+      ),
     );
   } catch (err) {
     return toApiResponse(err);

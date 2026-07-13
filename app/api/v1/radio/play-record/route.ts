@@ -16,6 +16,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import { toPlayRecordResponse } from '../_lib';
 import type {
@@ -91,9 +92,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json<PlayRecordResponse>(
-      toPlayRecordResponse(rows[0]),
-      { status: 201 },
+    return withPrivateNoStore(
+      NextResponse.json<PlayRecordResponse>(
+        toPlayRecordResponse(rows[0]),
+        { status: 201 },
+      ),
     );
   } catch (err) {
     return toApiResponse(err);

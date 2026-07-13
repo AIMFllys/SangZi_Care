@@ -17,6 +17,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import {
   resolveMedicationTarget,
@@ -138,10 +139,12 @@ export async function GET(request: NextRequest) {
     // 6. 按 scheduled_time 升序
     items.sort((a, b) => a.scheduled_time.localeCompare(b.scheduled_time));
 
-    return NextResponse.json<TodayTimelineResponse>({
-      date: todayStr,
-      items,
-    });
+    return withPrivateNoStore(
+      NextResponse.json<TodayTimelineResponse>({
+        date: todayStr,
+        items,
+      }),
+    );
   } catch (err) {
     return toApiResponse(err);
   }

@@ -8,6 +8,7 @@ import {
   requireUser,
   toApiResponse,
   uploadVoiceObject,
+  withPrivateNoStore,
 } from '@/lib/server';
 import {
   resolveMessagePeer,
@@ -22,12 +23,6 @@ export const runtime = 'nodejs';
 const MAX_AUDIO_BYTES = 5 * 1024 * 1024;
 const MAX_TRANSCRIPT_CODE_POINTS = 1_000;
 const DURATION_TOLERANCE_MS = 1_000;
-const PRIVATE_HEADERS = {
-  'Cache-Control': 'private, no-store, max-age=0',
-  Pragma: 'no-cache',
-  Vary: 'Authorization',
-};
-
 async function bestEffortRemove(
   client: ReturnType<typeof getSupabaseServerClient>,
   path: string,
@@ -131,9 +126,11 @@ export async function POST(request: NextRequest) {
       throw new ApiError(500, '发送语音消息失败');
     }
 
-    return NextResponse.json<MessageResponse>(
-      toPlayableMessageResponse(rows[0]),
-      { status: 201, headers: PRIVATE_HEADERS },
+    return withPrivateNoStore(
+      NextResponse.json<MessageResponse>(
+        toPlayableMessageResponse(rows[0]),
+        { status: 201 },
+      ),
     );
   } catch (error) {
     return toApiResponse(error);

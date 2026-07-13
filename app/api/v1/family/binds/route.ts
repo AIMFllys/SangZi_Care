@@ -13,6 +13,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import { toBindResponse, type FamilyBindRow } from '../_lib';
 
@@ -58,7 +59,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json(allRows.map(toBindResponse));
+    return withPrivateNoStore(
+      NextResponse.json(allRows.map(toBindResponse)),
+    );
   } catch (err) {
     return toApiResponse(err);
   }

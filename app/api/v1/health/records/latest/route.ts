@@ -11,6 +11,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import { RECORD_TYPES } from '@/lib/server/health-thresholds';
 import {
@@ -58,7 +59,9 @@ export async function GET(request: NextRequest) {
       latest[rt] = rows.length > 0 ? toRecordResponse(rows[0]) : null;
     }
 
-    return NextResponse.json<LatestRecordsResponse>(latest);
+    return withPrivateNoStore(
+      NextResponse.json<LatestRecordsResponse>(latest),
+    );
   } catch (err) {
     return toApiResponse(err);
   }

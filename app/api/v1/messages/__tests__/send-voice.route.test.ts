@@ -126,6 +126,10 @@ describe('POST /api/v1/messages/send-voice multipart', () => {
     const response = await POST(formRequest());
     expect(response.status).toBe(401);
     expect(mocks.uploadVoiceObject).not.toHaveBeenCalled();
+    expect(response.headers.get('cache-control'))
+      .toBe('private, no-store, max-age=0');
+    expect(response.headers.get('pragma')).toBe('no-cache');
+    expect(response.headers.get('vary')).toBe('Authorization');
   });
 
   it('只接受 multipart 和必需字段', async () => {

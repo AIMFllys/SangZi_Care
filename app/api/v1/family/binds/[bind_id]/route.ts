@@ -15,6 +15,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import {
   toBindResponse,
@@ -99,7 +100,9 @@ export async function PATCH(
       throw new ApiError(500, '更新绑定权限失败');
     }
 
-    return NextResponse.json(toBindResponse(data[0] as FamilyBindRow));
+    return withPrivateNoStore(
+      NextResponse.json(toBindResponse(data[0] as FamilyBindRow)),
+    );
   } catch (err) {
     return toApiResponse(err);
   }
@@ -134,7 +137,9 @@ export async function DELETE(
       throw new ApiError(404, '绑定记录不存在');
     }
 
-    return NextResponse.json<DeleteBindResponse>({ message: '绑定已解除' });
+    return withPrivateNoStore(
+      NextResponse.json<DeleteBindResponse>({ message: '绑定已解除' }),
+    );
   } catch (err) {
     return toApiResponse(err);
   }

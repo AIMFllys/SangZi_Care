@@ -21,6 +21,7 @@ import {
   requireUser,
   toApiResponse,
   uploadVoiceObject,
+  withPrivateNoStore,
 } from '@/lib/server';
 import { generateAudio, generateBroadcastText } from '@/lib/server/broadcast';
 import { toBroadcastResponse } from '../_lib';
@@ -32,19 +33,6 @@ import type {
 } from '../_lib';
 
 export const runtime = 'nodejs';
-
-const PRIVATE_HEADERS = {
-  'Cache-Control': 'private, no-store, max-age=0',
-  Pragma: 'no-cache',
-  Vary: 'Authorization',
-};
-
-function withPrivateHeaders(response: NextResponse): NextResponse {
-  for (const [key, value] of Object.entries(PRIVATE_HEADERS)) {
-    response.headers.set(key, value);
-  }
-  return response;
-}
 
 async function bestEffortRemove(
   client: ReturnType<typeof getSupabaseServerClient>,
@@ -144,11 +132,10 @@ export async function POST(request: NextRequest) {
       response.audio_url = null;
     }
 
-    return NextResponse.json<BroadcastResponse>(response, {
-      status: 201,
-      headers: PRIVATE_HEADERS,
-    });
+    return withPrivateNoStore(
+      NextResponse.json<BroadcastResponse>(response, { status: 201 }),
+    );
   } catch (err) {
-    return withPrivateHeaders(toApiResponse(err));
+    return withPrivateNoStore(toApiResponse(err));
   }
 }

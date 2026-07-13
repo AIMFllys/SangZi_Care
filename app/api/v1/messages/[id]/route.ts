@@ -16,6 +16,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import {
   resolveMessagePeer,
@@ -78,15 +79,10 @@ export async function GET(
     }
 
     const rows = (data ?? []) as MessageRow[];
-    return NextResponse.json<MessageResponse[]>(
-      rows.map(toPlayableMessageResponse),
-      {
-        headers: {
-          'Cache-Control': 'private, no-store, max-age=0',
-          Pragma: 'no-cache',
-          Vary: 'Authorization',
-        },
-      },
+    return withPrivateNoStore(
+      NextResponse.json<MessageResponse[]>(
+        rows.map(toPlayableMessageResponse),
+      ),
     );
   } catch (err) {
     return toApiResponse(err);

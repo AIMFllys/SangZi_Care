@@ -92,5 +92,9 @@ describe('GET /api/v1/messages/:peer', () => {
     expect(response.status).toBe(500);
     expect(await response.text()).not.toContain(UUID);
     expect(JSON.stringify(vi.mocked(console.error).mock.calls)).not.toContain(UUID);
+    expect(response.headers.get('cache-control'))
+      .toBe('private, no-store, max-age=0');
+    expect(response.headers.get('pragma')).toBe('no-cache');
+    expect(response.headers.get('vary')).toBe('Authorization');
   });
 });

@@ -13,6 +13,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import type { Database } from '@/types/supabase';
 
@@ -95,7 +96,7 @@ export async function GET(request: NextRequest) {
       throw new ApiError(404, '用户不存在');
     }
 
-    return NextResponse.json<UserRow>(data[0]);
+    return withPrivateNoStore(NextResponse.json<UserRow>(data[0]));
   } catch (err) {
     return toApiResponse(err);
   }
@@ -130,7 +131,7 @@ export async function PATCH(request: NextRequest) {
       throw new ApiError(404, '用户不存在');
     }
 
-    return NextResponse.json<UserRow>(data[0]);
+    return withPrivateNoStore(NextResponse.json<UserRow>(data[0]));
   } catch (err) {
     return toApiResponse(err);
   }

@@ -8,7 +8,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { ApiError, toApiResponse } from '@/lib/server';
+import { ApiError, toApiResponse, withPrivateNoStore } from '@/lib/server';
 import {
   CODE_EXPIRE_SECONDS,
   consumeCaptcha,
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       success: true,
       expires_in: CODE_EXPIRE_SECONDS,
     };
-    return NextResponse.json(res);
+    return withPrivateNoStore(NextResponse.json(res));
   } catch (err) {
     return toApiResponse(err);
   }

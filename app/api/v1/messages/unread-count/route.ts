@@ -12,6 +12,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 
 export const runtime = 'nodejs';
@@ -36,9 +37,11 @@ export async function GET(request: NextRequest) {
       throw new ApiError(500, '获取未读消息数失败');
     }
 
-    return NextResponse.json<UnreadCountResponse>({
-      count: count ?? 0,
-    });
+    return withPrivateNoStore(
+      NextResponse.json<UnreadCountResponse>({
+        count: count ?? 0,
+      }),
+    );
   } catch (err) {
     return toApiResponse(err);
   }

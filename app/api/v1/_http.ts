@@ -1,11 +1,6 @@
-import { NextResponse } from 'next/server';
 import { ApiError } from '@/lib/server';
 
-const PRIVATE_NO_STORE_HEADERS = {
-  'Cache-Control': 'private, no-store, max-age=0',
-  Pragma: 'no-cache',
-  Vary: 'Authorization',
-} as const;
+export { withPrivateNoStore } from '@/lib/server';
 
 function assertDeclaredLength(request: Request, maxBytes: number): void {
   const rawLength = request.headers.get('content-length');
@@ -93,11 +88,4 @@ export async function readBoundedFormData(
   } catch {
     throw new ApiError(400, '请求体必须为 multipart/form-data');
   }
-}
-
-export function withPrivateNoStore(response: NextResponse): NextResponse {
-  for (const [name, value] of Object.entries(PRIVATE_NO_STORE_HEADERS)) {
-    response.headers.set(name, value);
-  }
-  return response;
 }

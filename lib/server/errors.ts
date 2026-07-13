@@ -8,6 +8,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
+import { withPrivateNoStore } from './http';
 
 export interface ApiErrorBody {
   detail: string;
@@ -15,7 +16,9 @@ export interface ApiErrorBody {
 
 /** 构造统一错误响应：{ detail } JSON + 指定状态码。 */
 export function apiError(status: number, detail: string): NextResponse<ApiErrorBody> {
-  return NextResponse.json<ApiErrorBody>({ detail }, { status });
+  return withPrivateNoStore(
+    NextResponse.json<ApiErrorBody>({ detail }, { status }),
+  );
 }
 
 export function unauthorized(

@@ -13,6 +13,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import {
   assertSafeId,
@@ -73,8 +74,10 @@ export async function PATCH(
       throw new ApiError(500, '标记已读失败');
     }
 
-    return NextResponse.json<MessageResponse>(
-      toPlayableMessageResponse(data[0] as MessageRow),
+    return withPrivateNoStore(
+      NextResponse.json<MessageResponse>(
+        toPlayableMessageResponse(data[0] as MessageRow),
+      ),
     );
   } catch (err) {
     return toApiResponse(err);

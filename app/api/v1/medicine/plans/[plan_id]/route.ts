@@ -17,6 +17,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import {
   resolveMedicationTarget,
@@ -160,8 +161,10 @@ export async function PATCH(
       throw new ApiError(404, '用药计划不存在');
     }
 
-    return NextResponse.json<MedicationPlanResponse>(
-      toPlanResponse(data[0] as MedicationPlanRow),
+    return withPrivateNoStore(
+      NextResponse.json<MedicationPlanResponse>(
+        toPlanResponse(data[0] as MedicationPlanRow),
+      ),
     );
   } catch (err) {
     return toApiResponse(err);

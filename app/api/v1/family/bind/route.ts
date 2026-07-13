@@ -16,6 +16,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import { toBindResponse, type FamilyBindRow, type FamilyBindUpdate } from '../_lib';
 
@@ -91,7 +92,9 @@ export async function POST(request: NextRequest) {
       throw new ApiError(500, '绑定失败');
     }
 
-    return NextResponse.json(toBindResponse(updatedRows[0] as FamilyBindRow));
+    return withPrivateNoStore(
+      NextResponse.json(toBindResponse(updatedRows[0] as FamilyBindRow)),
+    );
   } catch (err) {
     return toApiResponse(err);
   }

@@ -15,6 +15,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import { checkAbnormal } from '@/lib/server/health-thresholds';
 import type { Json } from '@/types/supabase';
@@ -129,9 +130,11 @@ export async function POST(request: NextRequest) {
       throw new ApiError(500, '录入健康数据失败');
     }
 
-    return NextResponse.json<HealthRecordResponse>(
-      toRecordResponse(data[0] as HealthRecordRow),
-      { status: 201 },
+    return withPrivateNoStore(
+      NextResponse.json<HealthRecordResponse>(
+        toRecordResponse(data[0] as HealthRecordRow),
+        { status: 201 },
+      ),
     );
   } catch (err) {
     return toApiResponse(err);
@@ -187,7 +190,9 @@ export async function GET(request: NextRequest) {
     }
 
     const rows = (data ?? []) as HealthRecordRow[];
-    return NextResponse.json<HealthRecordResponse[]>(rows.map(toRecordResponse));
+    return withPrivateNoStore(
+      NextResponse.json<HealthRecordResponse[]>(rows.map(toRecordResponse)),
+    );
   } catch (err) {
     return toApiResponse(err);
   }

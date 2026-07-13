@@ -23,6 +23,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import type { Json } from '@/types/supabase';
 import {
@@ -130,8 +131,10 @@ export async function POST(request: NextRequest) {
       throw new ApiError(500, '创建紧急呼叫记录失败');
     }
 
-    return NextResponse.json<EmergencyCallResponse>(
-      toCallResponse(data[0] as EmergencyCallRow),
+    return withPrivateNoStore(
+      NextResponse.json<EmergencyCallResponse>(
+        toCallResponse(data[0] as EmergencyCallRow),
+      ),
     );
   } catch (err) {
     return toApiResponse(err);

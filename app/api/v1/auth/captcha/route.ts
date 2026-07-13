@@ -7,6 +7,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
+import { withPrivateNoStore } from '@/lib/server';
 import { putCaptcha } from '@/lib/server/otp-store';
 
 // 强制 Node.js 运行时（nodemailer / supabase-js 依赖）
@@ -44,5 +45,5 @@ export async function GET() {
     captcha_id: captchaId,
     question,
   };
-  return NextResponse.json(body);
+  return withPrivateNoStore(NextResponse.json(body));
 }

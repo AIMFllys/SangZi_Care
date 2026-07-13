@@ -15,6 +15,7 @@ import {
   createRefreshToken,
   getSupabaseServerClient,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import { consumeOtp } from '@/lib/server/otp-store';
 import type { Database } from '@/types/supabase';
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
       user: userRow,
       is_new_user: isNewUser,
     };
-    return NextResponse.json(res);
+    return withPrivateNoStore(NextResponse.json(res));
   } catch (err) {
     return toApiResponse(err);
   }

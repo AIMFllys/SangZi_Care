@@ -15,6 +15,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import {
   toCallResponse,
@@ -56,8 +57,10 @@ export async function GET(request: NextRequest) {
     }
 
     const rows = (data ?? []) as EmergencyCallRow[];
-    return NextResponse.json<EmergencyCallResponse[]>(
-      rows.map(toCallResponse),
+    return withPrivateNoStore(
+      NextResponse.json<EmergencyCallResponse[]>(
+        rows.map(toCallResponse),
+      ),
     );
   } catch (err) {
     return toApiResponse(err);

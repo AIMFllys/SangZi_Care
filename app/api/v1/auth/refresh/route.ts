@@ -25,6 +25,7 @@ import {
   createRefreshToken,
   toApiResponse,
   verifyToken,
+  withPrivateNoStore,
 } from '@/lib/server';
 
 export const runtime = 'nodejs';
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
       access_token,
       refresh_token: new_refresh_token,
     };
-    return NextResponse.json(res);
+    return withPrivateNoStore(NextResponse.json(res));
   } catch (err) {
     return toApiResponse(err);
   }

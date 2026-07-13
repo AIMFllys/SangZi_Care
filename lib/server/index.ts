@@ -18,6 +18,8 @@ export {
   type ApiErrorBody,
 } from './errors';
 
+export { withPrivateNoStore } from './http';
+
 export {
   createAccessToken,
   createRefreshToken,

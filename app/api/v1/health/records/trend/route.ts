@@ -13,6 +13,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import {
   resolveHealthTarget,
@@ -64,7 +65,9 @@ export async function GET(request: NextRequest) {
     }
 
     const rows = (data ?? []) as HealthRecordRow[];
-    return NextResponse.json<HealthRecordResponse[]>(rows.map(toRecordResponse));
+    return withPrivateNoStore(
+      NextResponse.json<HealthRecordResponse[]>(rows.map(toRecordResponse)),
+    );
   } catch (err) {
     return toApiResponse(err);
   }

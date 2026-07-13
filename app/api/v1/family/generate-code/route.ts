@@ -13,6 +13,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import { generateBindCode, type FamilyBindInsert } from '../_lib';
 
@@ -59,10 +60,12 @@ export async function POST(request: NextRequest) {
       throw new ApiError(500, '生成绑定码失败');
     }
 
-    return NextResponse.json<GenerateCodeResponse>({
-      bind_code,
-      bind_id: data[0].id,
-    });
+    return withPrivateNoStore(
+      NextResponse.json<GenerateCodeResponse>({
+        bind_code,
+        bind_id: data[0].id,
+      }),
+    );
   } catch (err) {
     return toApiResponse(err);
   }

@@ -14,6 +14,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import {
   resolveMessagePeer,
@@ -87,9 +88,11 @@ export async function POST(request: NextRequest) {
       throw new ApiError(500, '发送消息失败');
     }
 
-    return NextResponse.json<MessageResponse>(
-      toMessageResponse(data[0] as MessageRow),
-      { status: 201 },
+    return withPrivateNoStore(
+      NextResponse.json<MessageResponse>(
+        toMessageResponse(data[0] as MessageRow),
+        { status: 201 },
+      ),
     );
   } catch (err) {
     return toApiResponse(err);

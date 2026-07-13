@@ -17,6 +17,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import {
   resolveMedicationTarget,
@@ -155,8 +156,10 @@ export async function GET(request: NextRequest) {
     }
 
     const rows = (data ?? []) as MedicationPlanRow[];
-    return NextResponse.json<MedicationPlanResponse[]>(
-      rows.map(toPlanResponse),
+    return withPrivateNoStore(
+      NextResponse.json<MedicationPlanResponse[]>(
+        rows.map(toPlanResponse),
+      ),
     );
   } catch (err) {
     return toApiResponse(err);
@@ -259,9 +262,11 @@ export async function POST(request: NextRequest) {
       throw new ApiError(500, '创建用药计划失败');
     }
 
-    return NextResponse.json<MedicationPlanResponse>(
-      toPlanResponse(data[0] as MedicationPlanRow),
-      { status: 201 },
+    return withPrivateNoStore(
+      NextResponse.json<MedicationPlanResponse>(
+        toPlanResponse(data[0] as MedicationPlanRow),
+        { status: 201 },
+      ),
     );
   } catch (err) {
     return toApiResponse(err);

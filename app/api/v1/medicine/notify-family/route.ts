@@ -17,6 +17,7 @@ import {
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
+  withPrivateNoStore,
 } from '@/lib/server';
 import type { NotifyFamilyResponse } from '../_lib';
 
@@ -82,7 +83,9 @@ export async function POST(request: NextRequest) {
             notified_family_ids: notifiedFamilyIds,
           };
 
-    return NextResponse.json<NotifyFamilyResponse>(response);
+    return withPrivateNoStore(
+      NextResponse.json<NotifyFamilyResponse>(response),
+    );
   } catch (err) {
     return toApiResponse(err);
   }
