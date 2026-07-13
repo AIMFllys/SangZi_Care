@@ -16,6 +16,7 @@ const state = {
   getUserMedia: vi.fn(),
   contextSampleRate: 48_000,
   throwOnSource: false,
+  throwOnSourceConnect: false,
 };
 
 function makeStream(): MediaStream {
@@ -32,7 +33,9 @@ class FakeAudioContext {
   createMediaStreamSource() {
     if (state.throwOnSource) throw new Error('source failed');
     return {
-      connect: vi.fn(),
+      connect: vi.fn(() => {
+        if (state.throwOnSourceConnect) throw new Error('source connect failed');
+      }),
       disconnect: state.sourceDisconnect,
     } as unknown as MediaStreamAudioSourceNode;
   }
@@ -75,6 +78,7 @@ describe('startPcmWavRecording', () => {
     state.getUserMedia = vi.fn().mockResolvedValue(makeStream());
     state.contextSampleRate = 48_000;
     state.throwOnSource = false;
+    state.throwOnSourceConnect = false;
 
     Object.defineProperty(navigator, 'mediaDevices', {
       configurable: true,
@@ -150,6 +154,18 @@ describe('startPcmWavRecording', () => {
     expect(state.close).toHaveBeenCalledOnce();
   });
 
+  it('调用方请求超过 60 秒时仍按应用硬上限自动停止', async () => {
+    const session = await startPcmWavRecording({ maxDurationMs: 120_000 });
+    emitAudio([[0, 0, 0]]);
+
+    await vi.advanceTimersByTimeAsync(60_000);
+    const result = await session.stop();
+
+    expect(result.durationMs).toBe(60_000);
+    expect(state.trackStop).toHaveBeenCalledOnce();
+    expect(state.close).toHaveBeenCalledOnce();
+  });
+
   it('abort 立即释放资源，后续 stop 返回 AbortError', async () => {
     const session = await startPcmWavRecording({ maxDurationMs: 60_000 });
     session.abort();
@@ -189,6 +205,17 @@ describe('startPcmWavRecording', () => {
 
     await expect(startPcmWavRecording({ maxDurationMs: 60_000 }))
       .rejects.toThrow('source failed');
+    expect(state.trackStop).toHaveBeenCalledOnce();
+    expect(state.close).toHaveBeenCalledOnce();
+  });
+
+  it('节点创建后连接失败时仍断开节点并释放底层资源', async () => {
+    state.throwOnSourceConnect = true;
+
+    await expect(startPcmWavRecording({ maxDurationMs: 60_000 }))
+      .rejects.toThrow('source connect failed');
+    expect(state.sourceDisconnect).toHaveBeenCalledOnce();
+    expect(state.processorDisconnect).toHaveBeenCalledOnce();
     expect(state.trackStop).toHaveBeenCalledOnce();
     expect(state.close).toHaveBeenCalledOnce();
   });
