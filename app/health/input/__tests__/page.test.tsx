@@ -265,6 +265,7 @@ describe('HealthInputPage 组件', () => {
 
   it('渲染手动录入和语音录入切换', () => {
     render(<HealthInputPage />);
+    expect(screen.getAllByRole('tab')).toHaveLength(2);
     expect(screen.getByText(/手动录入/)).toBeDefined();
     expect(screen.getByText(/语音录入/)).toBeDefined();
   });
@@ -363,7 +364,8 @@ describe('HealthInputPage 组件', () => {
   });
 
   it('渲染备注和症状文本框', () => {
-    render(<HealthInputPage />);
+    const { container } = render(<HealthInputPage />);
+    expect(container.querySelector('details')?.hasAttribute('open')).toBe(false);
     expect(screen.getByPlaceholderText(/添加备注信息/)).toBeDefined();
     expect(screen.getByPlaceholderText(/描述当前症状/)).toBeDefined();
   });

@@ -494,10 +494,12 @@ export default function HealthInputPage() {
       {/* 顶部栏 */}
       <PageHeader
         title="录入健康数据"
+        variant="detail"
         backHref={ROUTES.HEALTH}
         rightAction={<FileEdit size={24} />}
       />
 
+      <div className={styles.scroller}>
       {/* 记录类型选择 */}
       <section className={styles.typeSection} aria-label="选择记录类型">
         <div className={styles.typeGrid}>
@@ -531,7 +533,7 @@ export default function HealthInputPage() {
           type="button"
           role="tab"
           variant={inputMethod === 'manual' ? 'primary' : 'secondary'}
-          size="lg"
+          size="md"
           fullWidth
           leftIcon={<Edit3 size={18} />}
           onClick={() => handleMethodChange('manual')}
@@ -543,7 +545,7 @@ export default function HealthInputPage() {
           type="button"
           role="tab"
           variant={inputMethod === 'voice' ? 'primary' : 'secondary'}
-          size="lg"
+          size="md"
           fullWidth
           leftIcon={<Mic size={20} />}
           onClick={() => handleMethodChange('voice')}
@@ -584,7 +586,9 @@ export default function HealthInputPage() {
       </div>
 
       {/* 可选字段 */}
-      <div className={styles.optionalSection}>
+      <details className={styles.optionalSection}>
+        <summary className={styles.optionalSummary}>补充备注与症状（可选）</summary>
+        <div className={styles.optionalFields}>
         <div className={styles.fieldGroup}>
           <label htmlFor="notes" className={styles.fieldLabel}>备注</label>
           <textarea
@@ -605,10 +609,22 @@ export default function HealthInputPage() {
             onChange={(e) => updateField('symptoms', e.target.value)}
           />
         </div>
+        </div>
+      </details>
       </div>
 
       {/* 提交按钮 */}
       <div className={styles.submitSection}>
+        <Button
+          type="button"
+          variant="secondary"
+          size="lg"
+          fullWidth
+          onClick={handleCancel}
+          className={styles.cancelBtn}
+        >
+          取消
+        </Button>
         <Button
           type="button"
           variant="success"
@@ -619,16 +635,6 @@ export default function HealthInputPage() {
           loading={isSubmitting}
         >
           保存记录
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          size="lg"
-          fullWidth
-          onClick={handleCancel}
-          className={styles.cancelBtn}
-        >
-          取消
         </Button>
       </div>
 

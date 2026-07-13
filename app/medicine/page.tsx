@@ -1,18 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { useMedicineStore } from '@/stores/medicineStore';
+import { fetchApi } from '@/lib/api';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
 import { Button, Card, IconButton } from '@/components/ui';
 import PageHeader from '@/components/layout/PageHeader';
-import { Pill, Tablets, TestTube, Syringe, CheckCircle, Clock, ChevronLeft, ChevronRight, Timer } from 'lucide-react';
+import { Pill, Tablets, TestTube, Syringe, CheckCircle, Clock, History, Timer } from 'lucide-react';
 import styles from './page.module.css';
 
 const PILL_COLORS = [styles.medicineIconInfo, styles.medicineIconDanger, styles.medicineIconWarning, styles.medicineIconSuccess];
 const PILL_ICONS = [<Pill size={24} key="pill" />, <Tablets size={24} key="tablets" />, <TestTube size={24} key="tube" />, <Syringe size={24} key="syringe" />];
 
 export default function MedicinePage() {
+  const router = useRouter();
   const user = useUserStore((s) => s.user);
 
   const todayTimeline = useMedicineStore((s) => s.todayTimeline);
@@ -21,7 +24,12 @@ export default function MedicinePage() {
   const fetchTodayTimeline = useMedicineStore((s) => s.fetchTodayTimeline);
   const confirmMedication = useMedicineStore((s) => s.confirmMedication);
 
-  const [showReminder, setShowReminder] = useState(true);
+  const [showReminder, setShowReminder] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    const deferredUntil = Number(window.sessionStorage.getItem('medicine-reminder-deferred-until'));
+    return !Number.isFinite(deferredUntil) || deferredUntil <= Date.now();
+  });
+  const [sosMessage, setSosMessage] = useState('');
 
   useEffect(() => {
     if (user?.id) {
@@ -30,17 +38,37 @@ export default function MedicinePage() {
   }, [user?.id, fetchTodayTimeline]);
 
   const pendingMeds = todayTimeline.filter((t) => t.status !== 'taken');
-  const currentMeds = pendingMeds.slice(0, 3);
+  const currentMed = pendingMeds[0];
 
   const handleConfirm = async () => {
-    for (const med of currentMeds) {
-      await confirmMedication(med.plan.id, med.scheduled_time);
-    }
+    if (!currentMed) return;
+    await confirmMedication(currentMed.plan.id, currentMed.scheduled_time);
     setShowReminder(false);
   };
 
+  const handleDefer = () => {
+    window.sessionStorage.setItem(
+      'medicine-reminder-deferred-until',
+      String(Date.now() + 15 * 60 * 1000),
+    );
+    setShowReminder(false);
+  };
+
+  const handleEmergency = async () => {
+    setSosMessage('');
+    try {
+      await fetchApi('/api/v1/emergency/trigger', {
+        method: 'POST',
+        body: { trigger_method: 'button' },
+      });
+      setSosMessage('紧急求助已发出');
+    } catch (error) {
+      setSosMessage(error instanceof Error ? error.message : '求助发送失败，请拨打 120');
+    }
+  };
+
   // 提醒视图：单屏 ≤ 2 核心操作
-  if (showReminder && currentMeds.length > 0) {
+  if (showReminder && currentMed) {
     return (
       <div className={styles.page}>
         {/* 顶部状态栏 */}
@@ -52,12 +80,12 @@ export default function MedicinePage() {
               <div className={styles.bar} />
               <div className={styles.bar} />
             </div>
-            语音提醒中...
+            当前用药提醒
           </Card>
           <IconButton
             aria-label="SOS 紧急呼叫"
             className={styles.sosBtn}
-            onClick={() => { /* SOS 逻辑保留 */ }}
+            onClick={handleEmergency}
           >
             <span className={styles.sosText}>SOS</span>
           </IconButton>
@@ -76,18 +104,19 @@ export default function MedicinePage() {
 
         {/* 药品列表 */}
         <Card variant="solid" className={styles.medicineCard}>
-          {currentMeds.map((med, i) => (
-            <div key={`${med.plan.id}-${med.scheduled_time}`} className={styles.medicineItem}>
-              <div className={`${styles.medicineIcon} ${PILL_COLORS[i % PILL_COLORS.length]}`}>
-                {PILL_ICONS[i % PILL_ICONS.length]}
+            <div className={styles.medicineItem}>
+              <div className={`${styles.medicineIcon} ${PILL_COLORS[0]}`}>
+                {PILL_ICONS[0]}
               </div>
               <div className={styles.medicineInfo}>
-                <div className={styles.medicineName}>{med.plan.medicine_name}</div>
-                <div className={styles.medicineDose}>{med.plan.dosage}</div>
+                <div className={styles.medicineName}>{currentMed.plan.medicine_name}</div>
+                <div className={styles.medicineDose}>{currentMed.plan.dosage}</div>
               </div>
+              <time className={styles.currentTime}>{currentMed.scheduled_time}</time>
             </div>
-          ))}
         </Card>
+
+        {sosMessage && <p className={styles.sosMessage} role="status">{sosMessage}</p>}
 
         {/* 操作按钮 */}
         <div className={styles.actions}>
@@ -105,7 +134,7 @@ export default function MedicinePage() {
             size="lg"
             fullWidth
             leftIcon={<Clock size={20} />}
-            onClick={() => setShowReminder(false)}
+            onClick={handleDefer}
           >
             15分钟后再提醒
           </Button>
@@ -117,16 +146,17 @@ export default function MedicinePage() {
   // 时间线列表视图
   return (
     <div className={styles.page}>
-      <PageHeader title="用药管家" backHref="/" />
+      <PageHeader
+        title="用药管家"
+        rightAction={
+          <IconButton aria-label="查看用药历史" onClick={() => router.push('/medicine/history')}>
+            <History size={22} />
+          </IconButton>
+        }
+      />
 
       <div className={styles.dateNav}>
-        <IconButton aria-label="上一天">
-          <ChevronLeft size={24} />
-        </IconButton>
-        <span className={styles.dateNavLabel}>今天</span>
-        <IconButton aria-label="下一天">
-          <ChevronRight size={24} />
-        </IconButton>
+        <span className={styles.dateNavLabel}>今日计划</span>
       </div>
 
       <DataStateWrapper

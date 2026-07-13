@@ -1,76 +1,65 @@
 .page {
-  min-height: 100dvh;
-  padding: var(--safe-top) var(--space-lg) var(--space-lg);
-  background: linear-gradient(180deg, var(--bg-base) 0%, var(--bg-elevated) 100%);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 var(--page-gutter);
+  background: linear-gradient(180deg, var(--bg-base), var(--bg-elevated));
+}
+
+.page > header {
+  width: auto;
+  margin-inline: calc(-1 * var(--page-gutter));
 }
 
 .topBar {
-  width: 100%;
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-md) 0;
+  padding-top: calc(var(--safe-top) + var(--space-sm));
 }
 
 .voiceIndicator {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
+  padding: 6px var(--space-md);
   border-radius: var(--radius-full);
-  font-size: var(--font-caption);
   color: var(--text-secondary);
+  font-size: var(--font-small);
 }
 
 .voiceBars {
   display: flex;
-  gap: 2px;
   align-items: center;
+  gap: 2px;
 }
 
 .bar {
   width: 3px;
-  height: 14px;
+  height: 12px;
   border-radius: 2px;
-  background: var(--accent);
+  background: var(--accent-action);
   animation: bar-pulse 1s ease-in-out infinite;
 }
 
-.bar:nth-child(2) {
-  animation-delay: 0.15s;
-  height: 20px;
-}
-
-.bar:nth-child(3) {
-  animation-delay: 0.3s;
-  height: 10px;
-}
-
-.bar:nth-child(4) {
-  animation-delay: 0.45s;
-  height: 18px;
-}
+.bar:nth-child(2) { height: 18px; animation-delay: 0.15s; }
+.bar:nth-child(3) { height: 9px; animation-delay: 0.3s; }
+.bar:nth-child(4) { height: 15px; animation-delay: 0.45s; }
 
 @keyframes bar-pulse {
-
-  0%,
-  100% {
-    transform: scaleY(0.6);
-  }
-
-  50% {
-    transform: scaleY(1);
-  }
+  0%, 100% { transform: scaleY(0.6); }
+  50% { transform: scaleY(1); }
 }
 
 .sosBtn {
-  background: var(--color-danger) !important;
-  color: var(--text-inverse) !important;
   width: 48px;
   height: 48px;
+  background: var(--color-danger) !important;
+  color: var(--text-inverse) !important;
   box-shadow: 0 4px 12px var(--color-danger-soft);
 }
 
@@ -79,177 +68,195 @@
   font-weight: 900;
 }
 
-/* 药瓶图标区 */
 .heroSection {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: var(--space-xl) 0;
-  gap: var(--space-md);
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  padding: clamp(6px, 1.5dvh, 14px) 0;
+  text-align: center;
 }
 
 .pillIconWrapper {
-  width: 140px;
-  height: 140px;
+  display: grid;
+  width: clamp(92px, 15dvh, 116px);
+  height: clamp(92px, 15dvh, 116px);
+  place-items: center;
   border-radius: var(--radius-full);
   background: var(--accent-soft);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
 }
 
 .pillIconInner {
-  width: 100px;
-  height: 100px;
-  border-radius: var(--radius-full);
-  background: var(--bg-card-solid);
   display: flex;
+  width: 72%;
+  height: 72%;
   align-items: center;
   justify-content: center;
-  color: var(--accent);
-  gap: var(--space-xs);
+  gap: 2px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card-solid);
+  color: var(--accent-action);
+}
+
+.pillIconInner svg {
+  width: 34px;
+  height: 34px;
 }
 
 .heroTitle {
-  font-size: var(--font-title);
-  font-weight: 900;
   color: var(--text-primary);
-  text-align: center;
+  font-size: clamp(25px, 7vw, var(--font-title));
+  font-weight: 900;
 }
 
 .heroSubtitle {
-  font-size: var(--font-body);
   color: var(--text-secondary);
-  text-align: center;
+  font-size: var(--font-caption);
 }
 
-/* 药品列表卡 */
 .medicineCard {
   width: 100%;
-  padding: var(--space-lg);
-  margin: var(--space-lg) 0;
-  border-left: 4px solid var(--accent);
+  min-height: 92px;
+  margin: var(--space-sm) 0;
+  padding: var(--space-md);
+  border-left: 4px solid var(--accent-action);
 }
 
 .medicineItem {
-  display: flex;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-md);
-  padding: var(--space-md) 0;
-}
-
-.medicineItem+.medicineItem {
-  border-top: 1px solid var(--divider);
+  min-width: 0;
 }
 
 .medicineIcon {
+  display: grid;
   width: 52px;
   height: 52px;
+  place-items: center;
   border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
 }
 
-.medicineIconInfo {
-  background: var(--color-info-soft);
-  color: var(--color-info);
-}
-
-.medicineIconDanger {
-  background: var(--color-danger-soft);
-  color: var(--color-danger);
-}
-
-.medicineIconWarning {
-  background: var(--color-warning-soft);
-  color: var(--color-warning);
-}
-
-.medicineIconSuccess {
-  background: var(--color-success-soft);
-  color: var(--color-success);
-}
+.medicineIconInfo { background: var(--color-info-soft); color: var(--color-info); }
+.medicineIconDanger { background: var(--color-danger-soft); color: var(--color-danger); }
+.medicineIconWarning { background: var(--color-warning-soft); color: var(--color-warning); }
+.medicineIconSuccess { background: var(--color-success-soft); color: var(--color-success); }
 
 .medicineInfo {
-  flex: 1;
   min-width: 0;
 }
 
 .medicineName {
-  font-size: var(--font-heading);
-  font-weight: 700;
+  overflow: hidden;
   color: var(--text-primary);
+  font-size: var(--font-heading);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .medicineDose {
-  font-size: var(--font-caption);
-  color: var(--text-secondary);
   margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: var(--font-caption);
 }
 
-/* 操作按钮 */
+.currentTime {
+  color: var(--accent-action);
+  font-size: var(--font-caption);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.sosMessage {
+  color: var(--text-secondary);
+  font-size: var(--font-small);
+  text-align: center;
+}
+
 .actions {
+  display: grid;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-sm);
   margin-top: auto;
-  padding-top: var(--space-lg);
+  padding: var(--space-sm) 0 calc(var(--space-sm) + var(--safe-bottom));
 }
 
-/* 日期导航 */
+.actions > button:nth-child(2) {
+  min-height: 48px;
+}
+
 .dateNav {
-  width: 100%;
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: center;
-  gap: var(--space-md);
-  padding: var(--space-md) 0 var(--space-sm);
+  min-height: 44px;
 }
 
 .dateNavLabel {
-  font-size: var(--font-body);
-  font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-secondary);
+  font-size: var(--font-caption);
+  font-weight: 750;
 }
 
-/* 时间线 */
 .timeline {
+  display: grid;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  padding: var(--space-md) 0;
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+  gap: var(--space-sm);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 0 0 calc(var(--space-sm) + var(--safe-bottom));
 }
 
 .timeSlot {
-  padding: var(--space-md) var(--space-lg);
-  display: flex;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
+  min-width: 0;
+  min-height: 64px;
+  padding: var(--space-sm) var(--space-md);
 }
 
 .timeSlotTime {
+  color: var(--accent-action);
   font-size: var(--font-caption);
-  font-weight: 700;
-  color: var(--accent);
-  min-width: 52px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .timeSlotMed {
-  flex: 1;
-  font-size: var(--font-body);
+  min-width: 0;
+  overflow: hidden;
   color: var(--text-primary);
+  font-size: var(--font-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .timeSlotStatus {
-  font-size: var(--font-body);
+  display: grid;
+  place-items: center;
 }
 
-/* 全局 reduced-motion 由 styles/globals.css 统一提供，保留局部兜底 */
+@media (max-height: 650px) {
+  .heroSubtitle,
+  .voiceBars .bar:nth-child(n + 3) {
+    display: none;
+  }
+
+  .medicineCard {
+    min-height: 80px;
+    margin-block: 4px;
+    padding: var(--space-sm);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bar {
     animation: none;

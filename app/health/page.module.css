@@ -1,29 +1,35 @@
 .page {
-  min-height: 100dvh;
-  padding: var(--safe-top) var(--space-lg) var(--space-lg);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   background: var(--bg-base);
 }
 
-/* 状态摘要 */
 .statusCard {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) var(--space-lg);
-  margin-top: var(--space-md);
-  margin-bottom: var(--space-lg);
+  gap: var(--space-md);
+  margin: var(--space-sm) var(--page-gutter);
+  padding: var(--space-sm) var(--space-md);
 }
 
 .statusLabel {
-  font-size: var(--font-caption);
   color: var(--text-secondary);
+  font-size: var(--font-small);
+}
+
+.statusValue,
+.statusTimeValue {
+  margin-top: 2px;
+  font-size: var(--font-body);
+  font-weight: 800;
 }
 
 .statusValue {
-  font-size: var(--font-heading);
-  font-weight: 800;
   color: var(--color-success);
-  margin-top: var(--space-xs);
 }
 
 .statusTimeGroup {
@@ -31,45 +37,57 @@
 }
 
 .statusTimeValue {
-  font-size: var(--font-heading);
-  font-weight: 800;
   color: var(--text-primary);
-  margin-top: var(--space-xs);
+  font-variant-numeric: tabular-nums;
 }
 
-/* 健康数据卡 */
 .cards {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: var(--space-sm);
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 0 var(--page-gutter) var(--space-sm);
 }
 
 .healthCard {
   position: relative;
+  min-width: 0;
+  min-height: 132px;
   overflow: hidden;
+  padding: var(--space-md);
+}
+
+.healthCard:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 
 .healthCardHeader {
   display: flex;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-md);
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
 }
 
 .healthCardTitle {
   display: flex;
+  min-width: 0;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
 }
 
 .healthCardIcon {
-  width: var(--min-touch-target);
-  height: var(--min-touch-target);
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
   border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: currentColor;
 }
 
 .iconHeart {
@@ -88,45 +106,51 @@
 }
 
 .healthCardLabel {
-  font-size: var(--font-body);
-  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
   color: var(--text-primary);
+  font-size: var(--font-caption);
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .valueRow {
   display: flex;
+  min-width: 0;
   align-items: baseline;
-  gap: var(--space-xs);
+  gap: 4px;
 }
 
 .healthValue {
-  font-size: var(--font-hero);
-  font-weight: 900;
+  min-width: 0;
+  overflow: hidden;
   color: var(--text-primary);
+  font-size: clamp(28px, 8vw, 40px);
+  font-weight: 900;
   line-height: 1;
   letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
 }
 
 .healthUnit {
-  font-size: var(--font-body);
-  font-weight: 400;
   color: var(--text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
 }
 
-/* 进度条 */
 .progressBar {
   width: 100%;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background: var(--border-light);
-  margin-top: var(--space-md);
+  height: 6px;
+  margin-top: var(--space-sm);
   overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--divider);
 }
 
 .progressFill {
   height: 100%;
-  border-radius: var(--radius-full);
-  transition: width var(--duration-slow);
+  border-radius: inherit;
 }
 
 .progressFillRed {
@@ -137,7 +161,27 @@
   background: var(--color-success);
 }
 
-/* 添加记录按钮 */
 .addBtn {
-  margin-top: var(--space-lg);
+  margin: var(--space-sm) var(--page-gutter) calc(var(--space-sm) + var(--safe-bottom));
+}
+
+@media (max-width: 339px) {
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .healthCard:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+}
+
+@media (max-height: 650px) {
+  .healthCard {
+    min-height: 112px;
+    padding: var(--space-sm);
+  }
+
+  .statusCard {
+    margin-block: 4px;
+  }
 }

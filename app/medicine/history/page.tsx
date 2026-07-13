@@ -68,9 +68,10 @@ export default function MedicineHistoryPage() {
   return (
     <div className={styles.page}>
       {/* 顶部栏 */}
-      <PageHeader title="用药历史" backHref={ROUTES.MEDICINE} />
+      <PageHeader title="用药历史" backHref={ROUTES.MEDICINE} variant="detail" />
 
       {/* 内容区域 */}
+      <div className={styles.scroller}>
       {isLoading ? (
         <div className={styles.loading}>
           <span className={styles.loadingText}>加载中...</span>
@@ -113,6 +114,7 @@ export default function MedicineHistoryPage() {
           </section>
         </>
       )}
+      </div>
     </div>
   );
 }

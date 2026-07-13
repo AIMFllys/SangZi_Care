@@ -1,70 +1,72 @@
-/* medicine history — 用药历史 */
 .page {
-  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   background: var(--bg-base);
-  padding: var(--safe-top) var(--space-lg) var(--space-lg);
 }
 
-/* 内容区 */
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-2xl);
+.scroller {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 0 var(--page-gutter) calc(var(--space-lg) + var(--safe-bottom));
+}
+
+.loading,
+.errorBox {
+  display: grid;
+  min-height: 50dvh;
+  place-items: center;
+  align-content: center;
+  gap: var(--space-md);
 }
 
 .loadingText {
-  font-size: var(--font-body);
   color: var(--text-secondary);
-}
-
-.errorBox {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-2xl);
+  font-size: var(--font-caption);
 }
 
 .errorText {
-  font-size: var(--font-body);
   color: var(--color-danger);
+  font-size: var(--font-caption);
 }
 
-/* 分组 */
 .section {
-  margin-top: var(--space-xl);
+  margin-top: var(--space-md);
 }
 
 .sectionTitle {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  font-size: var(--font-title);
-  font-weight: 700;
-  margin-bottom: var(--space-md);
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
   color: var(--text-primary);
+  font-size: var(--font-body);
+  font-weight: 800;
 }
 
 .emptySection {
-  font-size: var(--font-body);
+  padding: var(--space-md);
   color: var(--text-muted);
-  padding: var(--space-lg);
+  font-size: var(--font-caption);
   text-align: center;
 }
 
-/* 用药计划卡片 */
 .planCard {
-  display: flex;
-  gap: var(--space-md);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-md);
+  display: grid;
+  grid-template-columns: 4px minmax(0, 1fr);
+  gap: var(--space-sm);
+  min-width: 0;
+  margin-bottom: var(--space-sm);
+  padding: var(--space-md);
 }
 
 .indicator {
   width: 4px;
   border-radius: var(--radius-full);
-  flex-shrink: 0;
 }
 
 .indicatorActive {
@@ -76,39 +78,42 @@
 }
 
 .cardContent {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
+  display: grid;
+  gap: 4px;
+  min-width: 0;
 }
 
 .medicineName {
-  font-size: var(--font-body);
-  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
   color: var(--text-primary);
+  font-size: var(--font-body);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dosage {
-  font-size: var(--font-caption);
   color: var(--text-secondary);
+  font-size: var(--font-caption);
 }
 
 .scheduleTimes {
   display: flex;
-  gap: var(--space-xs);
   flex-wrap: wrap;
+  gap: 4px;
 }
 
-.timeTag {
+.timeTag,
+.dateRange {
   display: inline-flex;
   align-items: center;
   gap: 4px;
 }
 
 .dateRange {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--font-small);
-  color: var(--text-muted);
   margin-top: 2px;
+  color: var(--text-muted);
+  font-size: var(--font-small);
+  overflow-wrap: anywhere;
 }
