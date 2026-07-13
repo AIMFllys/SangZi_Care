@@ -1,34 +1,43 @@
 'use client';
 
-// ============================================================
-// 桑梓智护 — 语音识别 Hook（三级降级）
-// Web Speech API → JSBridge Android ASR → 豆包流式 ASR
-// ============================================================
-
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useVoiceStore } from '@/stores/voiceStore';
-import { jsBridge } from '@/lib/jsbridge';
-import { fetchApi, API_BASE_URL } from '@/lib/api';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  startPcmWavRecording,
+  type RecordingResult,
+  type VoiceRecorderSession,
+} from '@/lib/audio/recorder';
+import { ApiError, fetchFormData } from '@/lib/api';
 import type { VoiceLevel } from '@/lib/voiceCapabilities';
+import { useVoiceStore } from '@/stores/voiceStore';
 
-export interface UseVoiceRecognitionReturn {
-  /** 是否正在录音/识别 */
-  isListening: boolean;
-  /** 当前识别文本（中间结果或最终结果） */
+const MAX_RECORDING_DURATION_MS = 60_000;
+const WEB_FINAL_RESULT_TIMEOUT_MS = 3_000;
+
+export type RecognitionPhase =
+  | 'idle'
+  | 'requesting_permission'
+  | 'recording'
+  | 'transcribing'
+  | 'success'
+  | 'error';
+
+export interface StopResult {
   transcript: string;
-  /** 错误信息 */
-  error: string | null;
-  /** 当前使用的 ASR 级别 */
-  currentLevel: VoiceLevel;
-  /** 开始识别 */
-  startListening: () => Promise<void>;
-  /** 停止识别 */
-  stopListening: () => void;
-  /** 清空识别文本 */
-  resetTranscript: () => void;
+  audioBlob: Blob;
+  durationMs: number;
 }
 
-// ------ Web Speech API 类型补丁 ------
+export interface UseVoiceRecognitionReturn {
+  isListening: boolean;
+  phase: RecognitionPhase;
+  transcript: string;
+  error: string | null;
+  currentLevel: VoiceLevel;
+  startListening: () => Promise<void>;
+  stopListening: () => Promise<StopResult | null>;
+  cancelListening: () => void;
+  resetTranscript: () => void;
+}
 
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
@@ -59,347 +68,357 @@ declare global {
   }
 }
 
-// ------ Level 1: Web Speech API ------
+interface WebRecognitionSession {
+  stop(): Promise<string>;
+  cancel(): void;
+}
 
-function createWebSpeechRecognition(): SpeechRecognitionInstance | null {
-  if (typeof window === 'undefined') return null;
-  const Ctor = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-  if (!Ctor) return null;
-  const recognition = new Ctor();
+interface RecognitionOperation {
+  readonly id: number;
+  readonly controller: AbortController;
+  level: VoiceLevel;
+  session: VoiceRecorderSession | null;
+  web: WebRecognitionSession | null;
+  cancelled: boolean;
+  stopPromise: Promise<StopResult | null> | null;
+  timeoutId: ReturnType<typeof setTimeout> | null;
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError';
+}
+
+function isPermissionError(error: unknown): boolean {
+  return error instanceof DOMException
+    && (error.name === 'NotAllowedError' || error.name === 'SecurityError');
+}
+
+function shouldUseWebOnNextAttempt(error: unknown): boolean {
+  if (!(error instanceof ApiError)) return false;
+  return error.status === null
+    || error.status === 429
+    || (error.status !== null && error.status >= 500);
+}
+
+function createWebRecognition(
+  onVisibleText: (text: string) => void,
+): WebRecognitionSession {
+  const Constructor = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+  if (!Constructor) throw new Error('浏览器语音识别不可用');
+
+  const recognition = new Constructor();
+  let finalText = '';
+  let interimText = '';
+  let settled = false;
+  let stopping = false;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let resolveResult!: (text: string) => void;
+  let rejectResult!: (error: Error) => void;
+  const resultPromise = new Promise<string>((resolve, reject) => {
+    resolveResult = resolve;
+    rejectResult = reject;
+  });
+
+  const cleanup = (): void => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+    recognition.onresult = null;
+    recognition.onerror = null;
+    recognition.onend = null;
+  };
+  const resolveOnce = (text: string): void => {
+    if (settled) return;
+    settled = true;
+    cleanup();
+    resolveResult(text.trim());
+  };
+  const rejectOnce = (error: Error): void => {
+    if (settled) return;
+    settled = true;
+    cleanup();
+    rejectResult(error);
+  };
+
   recognition.lang = 'zh-CN';
   recognition.continuous = true;
   recognition.interimResults = true;
-  return recognition;
-}
-
-// ------ Level 3: 豆包 ASR (POST file upload) ------
-
-async function doubaoTranscribe(audioBlob: Blob): Promise<string> {
-  // Use FormData for file upload — bypass the JSON fetchApi
-  const formData = new FormData();
-  formData.append('file', audioBlob, 'recording.webm');
-
-  const token =
-    typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-  const headers: Record<string, string> = {};
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  const res = await fetch(`${API_BASE_URL}/api/v1/voice/transcribe`, {
-    method: 'POST',
-    headers,
-    body: formData,
-  });
-
-  if (!res.ok) {
-    throw new Error(`豆包 ASR 请求失败 (${res.status})`);
-  }
-
-  const data = (await res.json()) as { text?: string };
-  return data.text ?? '';
-}
-
-// ------ MediaRecorder helper (for doubao fallback) ------
-
-function createMediaRecorder(
-  stream: MediaStream,
-  onData: (blob: Blob) => void,
-): MediaRecorder {
-  const recorder = new MediaRecorder(stream, {
-    mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ? 'audio/webm;codecs=opus'
-      : 'audio/webm',
-  });
-  const chunks: Blob[] = [];
-
-  recorder.ondataavailable = (e) => {
-    if (e.data.size > 0) chunks.push(e.data);
+  recognition.onresult = (event) => {
+    interimText = '';
+    for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      const result = event.results[index];
+      const text = result[0]?.transcript ?? '';
+      if (result.isFinal) finalText += text;
+      else interimText += text;
+    }
+    onVisibleText(`${finalText}${interimText}`.trim());
   };
-
-  recorder.onstop = () => {
-    const blob = new Blob(chunks, { type: recorder.mimeType });
-    onData(blob);
+  recognition.onerror = (event) => {
+    if (event.error === 'aborted') resolveOnce('');
+    else rejectOnce(new Error(`浏览器语音识别失败：${event.error}`));
   };
-
-  return recorder;
-}
-
-// ------ Hook 实现 ------
-
-export function useVoiceRecognition(): UseVoiceRecognitionReturn {
-  const { currentASRLevel, fallbackASR, isDetected, detect } =
-    useVoiceStore();
-
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  // Refs for cleanup
-  const webRecognitionRef = useRef<SpeechRecognitionInstance | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const isStoppedRef = useRef(false);
-
-  // ------ Cleanup helpers ------
-
-  const cleanupWebSpeech = useCallback(() => {
-    if (webRecognitionRef.current) {
-      try {
-        webRecognitionRef.current.onresult = null;
-        webRecognitionRef.current.onerror = null;
-        webRecognitionRef.current.onend = null;
-        webRecognitionRef.current.abort();
-      } catch {
-        // ignore
-      }
-      webRecognitionRef.current = null;
-    }
-  }, []);
-
-  const cleanupMediaRecorder = useCallback(() => {
-    if (mediaRecorderRef.current?.state === 'recording') {
-      try {
-        mediaRecorderRef.current.stop();
-      } catch {
-        // ignore
-      }
-    }
-    mediaRecorderRef.current = null;
-
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-      mediaStreamRef.current = null;
-    }
-  }, []);
-
-  const cleanupAll = useCallback(() => {
-    cleanupWebSpeech();
-    cleanupMediaRecorder();
-  }, [cleanupWebSpeech, cleanupMediaRecorder]);
-
-  // ------ Level 1: Web Speech API ------
-
-  const startWebSpeech = useCallback((): Promise<void> => {
-    return new Promise<void>((resolve, reject) => {
-      const recognition = createWebSpeechRecognition();
-      if (!recognition) {
-        reject(new Error('Web Speech API 不可用'));
-        return;
-      }
-
-      webRecognitionRef.current = recognition;
-
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let finalText = '';
-        let interimText = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const result = event.results[i];
-          if (result.isFinal) {
-            finalText += result[0].transcript;
-          } else {
-            interimText += result[0].transcript;
-          }
-        }
-        // Append final text, show interim as current
-        if (finalText) {
-          setTranscript((prev) => prev + finalText);
-        } else if (interimText) {
-          setTranscript((prev) => {
-            // Replace only the interim portion
-            const base = prev;
-            return base + interimText;
-          });
-        }
-      };
-
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        // 'aborted' is expected when we call stop()
-        if (event.error === 'aborted') return;
-        cleanupWebSpeech();
-        setIsListening(false);
-        reject(new Error(`Web Speech API 错误: ${event.error}`));
-      };
-
-      recognition.onend = () => {
-        // If user didn't explicitly stop, this is an unexpected end
-        if (!isStoppedRef.current) {
-          setIsListening(false);
-        }
-      };
-
-      try {
-        recognition.start();
-        resolve();
-      } catch (err) {
-        reject(
-          err instanceof Error ? err : new Error('Web Speech API 启动失败'),
-        );
-      }
-    });
-  }, [cleanupWebSpeech]);
-
-  // ------ Level 2: Native ASR (JSBridge) ------
-
-  const startNativeASR = useCallback(async (): Promise<void> => {
-    const text = await jsBridge.nativeASR.startRecognition({
-      language: 'zh-CN',
-    });
-    if (text) {
-      setTranscript((prev) => prev + text);
-    }
-  }, []);
-
-  // ------ Level 3: 豆包 ASR (录音 + 上传) ------
-
-  const startDoubaoASR = useCallback((): Promise<void> => {
-    return new Promise<void>(async (resolve, reject) => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-        mediaStreamRef.current = stream;
-
-        const recorder = createMediaRecorder(stream, async (blob) => {
-          try {
-            const text = await doubaoTranscribe(blob);
-            if (text) {
-              setTranscript((prev) => prev + text);
-            }
-            resolve();
-          } catch (err) {
-            reject(
-              err instanceof Error ? err : new Error('豆包 ASR 转写失败'),
-            );
-          }
-        });
-
-        mediaRecorderRef.current = recorder;
-        recorder.start();
-      } catch (err) {
-        reject(
-          err instanceof Error ? err : new Error('无法获取麦克风权限'),
-        );
-      }
-    });
-  }, []);
-
-  // ------ 带降级的启动逻辑 ------
-
-  const startWithLevel = useCallback(
-    async (level: VoiceLevel): Promise<void> => {
-      try {
-        switch (level) {
-          case 'web':
-            await startWebSpeech();
-            break;
-          case 'native':
-            await startNativeASR();
-            break;
-          case 'doubao':
-            await startDoubaoASR();
-            break;
-        }
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : '语音识别失败';
-        console.warn(
-          `[useVoiceRecognition] ${level} 级别失败，尝试降级: ${message}`,
-        );
-
-        // 尝试降级
-        const didFallback = fallbackASR();
-        if (didFallback) {
-          const nextLevel = useVoiceStore.getState().currentASRLevel;
-          console.warn(
-            `[useVoiceRecognition] 降级: ${level} → ${nextLevel}`,
-          );
-          await startWithLevel(nextLevel);
-        } else {
-          // 所有级别都失败
-          setError(`语音识别不可用: ${message}`);
-          setIsListening(false);
-          throw new Error(`所有 ASR 级别均不可用: ${message}`);
-        }
-      }
-    },
-    [startWebSpeech, startNativeASR, startDoubaoASR, fallbackASR],
-  );
-
-  // ------ Public API ------
-
-  const startListening = useCallback(async (): Promise<void> => {
-    // 确保已检测能力
-    if (!isDetected) {
-      await detect();
-    }
-
-    cleanupAll();
-    setError(null);
-    isStoppedRef.current = false;
-    setIsListening(true);
-
-    const level = useVoiceStore.getState().currentASRLevel;
-
-    try {
-      await startWithLevel(level);
-    } catch {
-      // Error already set in startWithLevel
-      setIsListening(false);
-    }
-  }, [isDetected, detect, cleanupAll, startWithLevel]);
-
-  const stopListening = useCallback(() => {
-    isStoppedRef.current = true;
-
-    // Stop Web Speech API
-    if (webRecognitionRef.current) {
-      try {
-        webRecognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
-    }
-
-    // Stop Native ASR
-    jsBridge.nativeASR.stopRecognition();
-
-    // Stop MediaRecorder (doubao)
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state === 'recording'
-    ) {
-      mediaRecorderRef.current.stop();
-    }
-
-    // Stop media stream tracks
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-      mediaStreamRef.current = null;
-    }
-
-    setIsListening(false);
-  }, []);
-
-  const resetTranscript = useCallback(() => {
-    setTranscript('');
-    setError(null);
-  }, []);
-
-  // ------ Cleanup on unmount ------
-
-  useEffect(() => {
-    return () => {
-      cleanupAll();
-    };
-  }, [cleanupAll]);
+  recognition.onend = () => resolveOnce(finalText);
+  recognition.start();
 
   return {
-    isListening,
+    stop(): Promise<string> {
+      if (!stopping && !settled) {
+        stopping = true;
+        timeoutId = setTimeout(() => {
+          rejectOnce(new Error('浏览器语音识别结束超时'));
+        }, WEB_FINAL_RESULT_TIMEOUT_MS);
+        try {
+          recognition.stop();
+        } catch (error) {
+          rejectOnce(error instanceof Error ? error : new Error('无法停止浏览器语音识别'));
+        }
+      }
+      return resultPromise;
+    },
+    cancel(): void {
+      if (settled) return;
+      try {
+        recognition.abort();
+      } catch {
+        // 继续结算本地 Promise，避免取消流程悬挂。
+      }
+      resolveOnce('');
+    },
+  };
+}
+
+function toStopResult(
+  recording: RecordingResult,
+  transcript: string,
+): StopResult {
+  return {
+    transcript,
+    audioBlob: recording.blob,
+    durationMs: recording.durationMs,
+  };
+}
+
+export function useVoiceRecognition(): UseVoiceRecognitionReturn {
+  const {
+    currentASRLevel,
+    fallbackASR,
+    isDetected,
+    detect,
+  } = useVoiceStore();
+  const [phase, setPhase] = useState<RecognitionPhase>('idle');
+  const [transcript, setTranscript] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+  const operationRef = useRef<RecognitionOperation | null>(null);
+  const operationIdRef = useRef(0);
+
+  const updateOperation = useCallback((
+    operation: RecognitionOperation,
+    update: () => void,
+  ): void => {
+    if (mountedRef.current && operationRef.current === operation) update();
+  }, []);
+
+  const cancelOperation = useCallback((operation: RecognitionOperation): void => {
+    if (operation.cancelled) return;
+    operation.cancelled = true;
+    if (operation.timeoutId !== null) {
+      clearTimeout(operation.timeoutId);
+      operation.timeoutId = null;
+    }
+    operation.controller.abort();
+    operation.web?.cancel();
+    operation.session?.abort();
+  }, []);
+
+  const finishOperation = useCallback((
+    operation: RecognitionOperation,
+  ): Promise<StopResult | null> => {
+    if (operation.stopPromise) return operation.stopPromise;
+
+    operation.stopPromise = (async (): Promise<StopResult | null> => {
+      if (operation.timeoutId !== null) {
+        clearTimeout(operation.timeoutId);
+        operation.timeoutId = null;
+      }
+      if (operation.cancelled) return null;
+      if (!operation.session) {
+        cancelOperation(operation);
+        updateOperation(operation, () => {
+          setError(null);
+          setPhase('idle');
+          operationRef.current = null;
+        });
+        return null;
+      }
+
+      updateOperation(operation, () => setPhase('transcribing'));
+
+      try {
+        let recording: RecordingResult;
+        let text: string;
+
+        if (operation.level === 'web') {
+          if (!operation.web) throw new Error('浏览器语音识别尚未启动');
+          [recording, text] = await Promise.all([
+            operation.session.stop(),
+            operation.web.stop(),
+          ]);
+        } else {
+          recording = await operation.session.stop();
+          if (operation.cancelled) return null;
+
+          const formData = new FormData();
+          formData.append('file', recording.blob, 'recording.wav');
+          const response = await fetchFormData<{ text?: unknown }>(
+            '/api/v1/voice/transcribe',
+            formData,
+            { signal: operation.controller.signal },
+          );
+          text = typeof response.text === 'string' ? response.text : '';
+        }
+
+        if (operation.cancelled) return null;
+        const finalText = text.trim();
+        if (!finalText) {
+          throw new ApiError('未识别到有效语音，请靠近麦克风后重试', 422);
+        }
+
+        const result = toStopResult(recording, finalText);
+        updateOperation(operation, () => {
+          setTranscript(finalText);
+          setError(null);
+          setPhase('success');
+          operationRef.current = null;
+        });
+        return result;
+      } catch (cause) {
+        if (operation.cancelled || isAbortError(cause)) return null;
+
+        let message = cause instanceof Error ? cause.message : '语音转写失败';
+        if (operation.level === 'mimo' && shouldUseWebOnNextAttempt(cause)) {
+          const movedToWeb = fallbackASR()
+            && useVoiceStore.getState().currentASRLevel === 'web';
+          if (movedToWeb) {
+            message = `本次录音转写失败，请重新录音使用浏览器识别：${message}`;
+          }
+        }
+
+        updateOperation(operation, () => {
+          setError(message);
+          setPhase('error');
+          operationRef.current = null;
+        });
+        throw new Error(message, { cause });
+      }
+    })();
+
+    return operation.stopPromise;
+  }, [cancelOperation, fallbackASR, updateOperation]);
+
+  const startListening = useCallback(async (): Promise<void> => {
+    const previous = operationRef.current;
+    if (previous) cancelOperation(previous);
+
+    const operation: RecognitionOperation = {
+      id: ++operationIdRef.current,
+      controller: new AbortController(),
+      level: 'mimo',
+      session: null,
+      web: null,
+      cancelled: false,
+      stopPromise: null,
+      timeoutId: null,
+    };
+    operationRef.current = operation;
+    setTranscript('');
+    setError(null);
+    setPhase('requesting_permission');
+
+    try {
+      if (!isDetected) await detect();
+      if (operation.cancelled) return;
+      operation.level = useVoiceStore.getState().currentASRLevel;
+
+      const session = await startPcmWavRecording({
+        maxDurationMs: MAX_RECORDING_DURATION_MS,
+        signal: operation.controller.signal,
+      });
+      if (operation.cancelled) {
+        session.abort();
+        return;
+      }
+      operation.session = session;
+
+      if (operation.level === 'web') {
+        operation.web = createWebRecognition((visibleText) => {
+          updateOperation(operation, () => setTranscript(visibleText));
+        });
+      }
+
+      updateOperation(operation, () => setPhase('recording'));
+      operation.timeoutId = setTimeout(() => {
+        void finishOperation(operation).catch(() => undefined);
+      }, MAX_RECORDING_DURATION_MS);
+    } catch (cause) {
+      if (operation.cancelled || isAbortError(cause)) return;
+      const message = isPermissionError(cause)
+        ? '无法使用麦克风权限，请在系统设置中允许后重试'
+        : cause instanceof Error
+          ? `无法开始录音：${cause.message}`
+          : '无法开始录音';
+      cancelOperation(operation);
+      updateOperation(operation, () => {
+        setError(message);
+        setPhase('error');
+        operationRef.current = null;
+      });
+    }
+  }, [cancelOperation, detect, finishOperation, isDetected, updateOperation]);
+
+  const stopListening = useCallback((): Promise<StopResult | null> => {
+    const operation = operationRef.current;
+    return operation ? finishOperation(operation) : Promise.resolve(null);
+  }, [finishOperation]);
+
+  const cancelListening = useCallback((): void => {
+    const operation = operationRef.current;
+    if (operation) cancelOperation(operation);
+    operationRef.current = null;
+    if (mountedRef.current) {
+      setTranscript('');
+      setError(null);
+      setPhase('idle');
+    }
+  }, [cancelOperation]);
+
+  const resetTranscript = useCallback((): void => {
+    setTranscript('');
+    setError(null);
+    setPhase((current) =>
+      current === 'success' || current === 'error' ? 'idle' : current);
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      const operation = operationRef.current;
+      if (operation) cancelOperation(operation);
+      operationRef.current = null;
+    };
+  }, [cancelOperation]);
+
+  return {
+    isListening: phase === 'requesting_permission' || phase === 'recording',
+    phase,
     transcript,
     error,
     currentLevel: currentASRLevel,
     startListening,
     stopListening,
+    cancelListening,
     resetTranscript,
   };
 }

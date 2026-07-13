@@ -28,9 +28,9 @@ export interface VoiceState {
 
 export const useVoiceStore = create<VoiceState>()((set, get) => ({
   ttsLevels: ['mimo'],
-  asrLevels: ['doubao'],
+  asrLevels: ['mimo'],
   currentTTSLevel: 'mimo',
-  currentASRLevel: 'doubao',
+  currentASRLevel: 'mimo',
   isDetected: false,
 
   detect: async () => {

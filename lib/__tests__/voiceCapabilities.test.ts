@@ -1,62 +1,35 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-vi.mock('@/lib/jsbridge', () => ({
-  jsBridge: {
-    nativeTTS: { isAvailable: vi.fn() },
-    nativeASR: { isAvailable: vi.fn() },
-  },
-}));
-
-import { jsBridge } from '@/lib/jsbridge';
+import { afterEach, describe, expect, it } from 'vitest';
 import { detect } from '../voiceCapabilities';
 
-const nativeTTS = jsBridge.nativeTTS.isAvailable as ReturnType<typeof vi.fn>;
-const nativeASR = jsBridge.nativeASR.isAvailable as ReturnType<typeof vi.fn>;
-
-describe('voiceCapabilities.detect transitional MiMo migration', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    nativeTTS.mockResolvedValue(false);
-    nativeASR.mockResolvedValue(false);
-  });
-
+describe('voiceCapabilities.detect final MiMo policy', () => {
   afterEach(() => {
     delete (window as unknown as Record<string, unknown>).speechSynthesis;
     delete (window as unknown as Record<string, unknown>).SpeechRecognition;
     delete (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
   });
 
-  it('TTS 始终把 MiMo 放在首位且不再探测 Native TTS', async () => {
-    nativeTTS.mockResolvedValue(true);
-
-    const result = await detect();
-
-    expect(result.tts).toEqual(['mimo']);
-    expect(nativeTTS).not.toHaveBeenCalled();
+  it('没有浏览器语音 API 时只公开 MiMo', async () => {
+    await expect(detect()).resolves.toEqual({
+      tts: ['mimo'],
+      asr: ['mimo'],
+    });
   });
 
-  it('Web Speech 可用时仅作为 MiMo 后备 TTS', async () => {
+  it('浏览器 TTS 仅排在 MiMo 之后', async () => {
     (window as unknown as Record<string, unknown>).speechSynthesis = {};
 
     const result = await detect();
 
     expect(result.tts).toEqual(['mimo', 'web']);
+    expect(result.asr).toEqual(['mimo']);
   });
 
-  it('Task 5 前暂时保留旧 ASR 能力顺序', async () => {
-    (window as unknown as Record<string, unknown>).SpeechRecognition = class { };
-    nativeASR.mockResolvedValue(true);
+  it('标准或 webkit ASR 仅排在 MiMo 之后', async () => {
+    (window as unknown as Record<string, unknown>).webkitSpeechRecognition = class { };
 
     const result = await detect();
 
-    expect(result.asr).toEqual(['web', 'native', 'doubao']);
-  });
-
-  it('Native ASR 探测失败时安全回退到旧服务端级别', async () => {
-    nativeASR.mockRejectedValue(new Error('bridge failed'));
-
-    const result = await detect();
-
-    expect(result.asr).toEqual(['doubao']);
+    expect(result.asr).toEqual(['mimo', 'web']);
+    expect(result.tts).toEqual(['mimo']);
   });
 });

@@ -9,57 +9,55 @@ import { detect } from '@/lib/voiceCapabilities';
 
 const mockDetect = detect as ReturnType<typeof vi.fn>;
 
-describe('voiceStore transitional MiMo migration', () => {
+describe('voiceStore final MiMo policy', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useVoiceStore.setState(useVoiceStore.getInitialState(), true);
   });
 
-  it('默认从 MiMo TTS 与旧 ASR 服务端级别开始', () => {
+  it('TTS 与 ASR 均默认从 MiMo 开始', () => {
     const state = useVoiceStore.getState();
     expect(state.ttsLevels).toEqual(['mimo']);
+    expect(state.asrLevels).toEqual(['mimo']);
     expect(state.currentTTSLevel).toBe('mimo');
-    expect(state.asrLevels).toEqual(['doubao']);
-    expect(state.currentASRLevel).toBe('doubao');
+    expect(state.currentASRLevel).toBe('mimo');
   });
 
-  it('检测后分别选择 TTS/ASR 的首个能力并缓存', async () => {
+  it('能力检测只缓存一次并分别选择首项', async () => {
     mockDetect.mockResolvedValue({
       tts: ['mimo', 'web'],
-      asr: ['web', 'native', 'doubao'],
+      asr: ['mimo', 'web'],
     });
 
     await useVoiceStore.getState().detect();
     await useVoiceStore.getState().detect();
 
-    const state = useVoiceStore.getState();
-    expect(state.currentTTSLevel).toBe('mimo');
-    expect(state.currentASRLevel).toBe('web');
-    expect(state.isDetected).toBe(true);
     expect(mockDetect).toHaveBeenCalledOnce();
+    expect(useVoiceStore.getState()).toEqual(expect.objectContaining({
+      currentTTSLevel: 'mimo',
+      currentASRLevel: 'mimo',
+      isDetected: true,
+    }));
   });
 
-  it('TTS 只在显式失败后从 MiMo 降级到 Web', () => {
+  it('ASR 故障只把下一次尝试切换到 Web', () => {
+    useVoiceStore.setState({
+      asrLevels: ['mimo', 'web'] as never,
+      currentASRLevel: 'mimo',
+    });
+
+    expect(useVoiceStore.getState().fallbackASR()).toBe(true);
+    expect(useVoiceStore.getState().currentASRLevel).toBe('web');
+    expect(useVoiceStore.getState().fallbackASR()).toBe(false);
+  });
+
+  it('TTS 故障可切换到同文本 Web 播放', () => {
     useVoiceStore.setState({
       ttsLevels: ['mimo', 'web'] as never,
-      currentTTSLevel: 'mimo' as never,
+      currentTTSLevel: 'mimo',
     });
 
     expect(useVoiceStore.getState().fallbackTTS()).toBe(true);
     expect(useVoiceStore.getState().currentTTSLevel).toBe('web');
-    expect(useVoiceStore.getState().fallbackTTS()).toBe(false);
-  });
-
-  it('Task 5 前旧 ASR 仍可按既有顺序降级', () => {
-    useVoiceStore.setState({
-      asrLevels: ['web', 'native', 'doubao'],
-      currentASRLevel: 'web',
-    });
-
-    expect(useVoiceStore.getState().fallbackASR()).toBe(true);
-    expect(useVoiceStore.getState().currentASRLevel).toBe('native');
-    expect(useVoiceStore.getState().fallbackASR()).toBe(true);
-    expect(useVoiceStore.getState().currentASRLevel).toBe('doubao');
-    expect(useVoiceStore.getState().fallbackASR()).toBe(false);
   });
 });

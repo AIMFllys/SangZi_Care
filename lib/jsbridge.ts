@@ -8,12 +8,6 @@
 /** Android 原生注入到 window 上的桥接对象 */
 interface AndroidBridgeNative {
   makePhoneCall(phoneNumber: string): void;
-  ttsSpeak(text: string, speed: number, pitch: number, callbackId: string): void;
-  ttsStop(): void;
-  ttsIsAvailable(callbackId: string): void;
-  asrStart(language: string, callbackId: string): void;
-  asrStop(callbackId: string): void;
-  asrIsAvailable(callbackId: string): void;
   storageGetItem(key: string, callbackId: string): void;
   storageSetItem(key: string, value: string, callbackId: string): void;
   storageRemoveItem(key: string, callbackId: string): void;
@@ -24,31 +18,6 @@ declare global {
     AndroidBridge?: AndroidBridgeNative;
     __jsBridgeCallbacks?: Record<string, (result: string) => void>;
   }
-}
-
-/** TTS speak 选项 */
-export interface TTSSpeakOptions {
-  speed?: number;
-  pitch?: number;
-}
-
-/** ASR 识别选项 */
-export interface ASROptions {
-  language?: string;
-}
-
-/** NativeTTS 模块接口 */
-export interface NativeTTSModule {
-  speak(text: string, options?: TTSSpeakOptions): Promise<void>;
-  stop(): void;
-  isAvailable(): Promise<boolean>;
-}
-
-/** NativeASR 模块接口 */
-export interface NativeASRModule {
-  startRecognition(options?: ASROptions): Promise<string>;
-  stopRecognition(): void;
-  isAvailable(): Promise<boolean>;
 }
 
 /** Storage 模块接口 */
@@ -63,8 +32,6 @@ export interface JSBridge {
   /** 是否运行在 Android WebView 中 */
   readonly isInWebView: boolean;
   makePhoneCall(phoneNumber: string): Promise<boolean>;
-  nativeTTS: NativeTTSModule;
-  nativeASR: NativeASRModule;
   storage: StorageModule;
 }
 
@@ -161,109 +128,6 @@ async function makePhoneCall(phoneNumber: string): Promise<boolean> {
   return false;
 }
 
-// ------ nativeTTS ------
-
-const nativeTTS: NativeTTSModule = {
-  async speak(text: string, options?: TTSSpeakOptions): Promise<void> {
-    const bridge = getBridge();
-    if (!bridge) {
-      console.warn('[JSBridge] nativeTTS.speak: 不在 WebView 环境，跳过');
-      return;
-    }
-
-    const speed = options?.speed ?? 1.0;
-    const pitch = options?.pitch ?? 1.0;
-
-    const result = await callNativeAsync((cbId) => {
-      bridge.ttsSpeak(text, speed, pitch, cbId);
-    });
-
-    if (result !== 'ok' && result !== 'success') {
-      throw new Error(`nativeTTS.speak 失败: ${result}`);
-    }
-  },
-
-  stop(): void {
-    const bridge = getBridge();
-    if (!bridge) {
-      console.warn('[JSBridge] nativeTTS.stop: 不在 WebView 环境，跳过');
-      return;
-    }
-    bridge.ttsStop();
-  },
-
-  async isAvailable(): Promise<boolean> {
-    const bridge = getBridge();
-    if (!bridge) return false;
-
-    try {
-      const result = await callNativeAsync((cbId) => {
-        bridge.ttsIsAvailable(cbId);
-      });
-      return result === 'true';
-    } catch {
-      return false;
-    }
-  },
-};
-
-// ------ nativeASR ------
-
-const nativeASR: NativeASRModule = {
-  async startRecognition(options?: ASROptions): Promise<string> {
-    const bridge = getBridge();
-    if (!bridge) {
-      console.warn('[JSBridge] nativeASR.startRecognition: 不在 WebView 环境');
-      return '';
-    }
-
-    const language = options?.language ?? 'zh-CN';
-
-    const result = await callNativeAsync(
-      (cbId) => {
-        bridge.asrStart(language, cbId);
-      },
-      // ASR 可能需要更长时间等待用户说话
-      30_000,
-    );
-
-    return result;
-  },
-
-  stopRecognition(): void {
-    const bridge = getBridge();
-    if (!bridge) {
-      console.warn('[JSBridge] nativeASR.stopRecognition: 不在 WebView 环境，跳过');
-      return;
-    }
-
-    // 停止识别，结果会通过 startRecognition 的回调返回
-    try {
-      callNativeAsync((cbId) => {
-        bridge.asrStop(cbId);
-      }).catch(() => {
-        // stop 的回调结果可忽略
-      });
-    } catch {
-      // 忽略 stop 错误
-    }
-  },
-
-  async isAvailable(): Promise<boolean> {
-    const bridge = getBridge();
-    if (!bridge) return false;
-
-    try {
-      const result = await callNativeAsync((cbId) => {
-        bridge.asrIsAvailable(cbId);
-      });
-      return result === 'true';
-    } catch {
-      return false;
-    }
-  },
-};
-
 // ------ storage ------
 
 const storage: StorageModule = {
@@ -342,8 +206,6 @@ export const jsBridge: JSBridge = {
     return getBridge() !== null;
   },
   makePhoneCall,
-  nativeTTS,
-  nativeASR,
   storage,
 };
 
