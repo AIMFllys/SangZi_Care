@@ -170,6 +170,21 @@ describe('private voice storage', () => {
     });
   });
 
+  it('Storage 未返回已创建对象时不能伪装上传成功', async () => {
+    const { client, bucket } = createClient();
+    bucket.upload.mockResolvedValue({ data: null, error: null });
+
+    await expect(uploadVoiceObject(
+      client as never,
+      `user-1/messages/${UUID}.wav`,
+      new Uint8Array([1]),
+      'audio/wav',
+    )).rejects.toMatchObject({
+      status: 503,
+      detail: '语音文件存储失败，请稍后重试',
+    });
+  });
+
   it('公开 bucket 在签名前返回安全 503', async () => {
     const { client, bucket, getBucket } = createClient();
     getBucket.mockResolvedValue({
@@ -189,6 +204,36 @@ describe('private voice storage', () => {
       detail: '私有语音存储不可用',
     });
     expect(bucket.createSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it('广播签名只接受稳定的 broadcasts MP3 对象路径', async () => {
+    const { client, bucket } = createClient();
+    bucket.createSignedUrl.mockResolvedValue({
+      data: { signedUrl: 'https://storage.test/signed' },
+      error: null,
+    });
+
+    for (const path of [
+      'https://evil.test/audio.mp3',
+      `user-1/messages/${UUID}.wav`,
+      `user-1/broadcasts/${UUID}.wav`,
+      `user-1/broadcasts/../${UUID}.mp3`,
+    ]) {
+      await expect(createSignedVoiceUrl(
+        client as never,
+        path,
+        'broadcasts',
+      )).rejects.toMatchObject({ status: 400 });
+    }
+    expect(bucket.createSignedUrl).not.toHaveBeenCalled();
+
+    const validPath = `user-1/broadcasts/${UUID}.mp3`;
+    await expect(createSignedVoiceUrl(
+      client as never,
+      validPath,
+      'broadcasts',
+    )).resolves.toBe('https://storage.test/signed');
+    expect(bucket.createSignedUrl).toHaveBeenCalledWith(validPath, 600);
   });
 
   it('补偿删除不被 bucket 隐私查询阻塞', async () => {

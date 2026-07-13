@@ -42,6 +42,47 @@ export function formatTime(seconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+const PLAYBACK_ERROR = '广播音频播放失败，请稍后重试';
+
+let activeAudio: HTMLAudioElement | null = null;
+let activeBroadcastId: string | null = null;
+let activeAudioUrl: string | null = null;
+let activePlaybackEnded = false;
+let activeWantsToPlay = false;
+let playbackGeneration = 0;
+let playAttemptGeneration = 0;
+let detachActiveListeners: (() => void) | null = null;
+
+function releaseActiveAudio(): void {
+  playbackGeneration += 1;
+  playAttemptGeneration += 1;
+  const audio = activeAudio;
+  activeAudio = null;
+  activeBroadcastId = null;
+  activeAudioUrl = null;
+  activePlaybackEnded = false;
+  activeWantsToPlay = false;
+  detachActiveListeners?.();
+  detachActiveListeners = null;
+
+  if (!audio) return;
+  try {
+    audio.pause();
+  } catch {
+    // 已损坏的媒体实例仍需继续释放 src。
+  }
+  try {
+    audio.removeAttribute('src');
+    audio.load();
+  } catch {
+    // 某些 WebView 在销毁阶段可能拒绝 load；状态已经失效，不再传播。
+  }
+}
+
+function finiteNonNegative(value: number, fallback = 0): number {
+  return Number.isFinite(value) && value >= 0 ? value : fallback;
+}
+
 // ---------- Store ----------
 
 interface RadioState {
@@ -86,7 +127,32 @@ interface RadioState {
   reset: () => void;
 }
 
-export const useRadioStore = create<RadioState>()((set, get) => ({
+export const useRadioStore = create<RadioState>()((set, get) => {
+  function attemptPlay(audio: HTMLAudioElement, generation: number): void {
+    const attempt = ++playAttemptGeneration;
+    activeWantsToPlay = true;
+    const isCurrent = () => (
+      activeAudio === audio
+      && playbackGeneration === generation
+      && playAttemptGeneration === attempt
+    );
+
+    set({ isPlaying: true, error: null });
+    try {
+      void audio.play().catch(() => {
+        if (!isCurrent()) return;
+        activeWantsToPlay = false;
+        set({ isPlaying: false, error: PLAYBACK_ERROR });
+      });
+    } catch {
+      if (isCurrent()) {
+        activeWantsToPlay = false;
+        set({ isPlaying: false, error: PLAYBACK_ERROR });
+      }
+    }
+  }
+
+  return {
   broadcasts: [],
   categories: [],
   currentIndex: 0,
@@ -102,7 +168,15 @@ export const useRadioStore = create<RadioState>()((set, get) => ({
       const data = await fetchApi<BroadcastResponse[]>(
         '/api/v1/radio/recommend',
       );
-      set({ broadcasts: data, loading: false });
+      releaseActiveAudio();
+      set({
+        broadcasts: data,
+        currentIndex: 0,
+        isPlaying: false,
+        currentTime: 0,
+        duration: 0,
+        loading: false,
+      });
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : '加载推荐广播失败',
@@ -128,15 +202,154 @@ export const useRadioStore = create<RadioState>()((set, get) => ({
     const { broadcasts } = get();
     if (index < 0 || index >= broadcasts.length) return;
     const broadcast = broadcasts[index];
+    const audioUrl = broadcast.audio_url?.trim() ?? '';
+
+    if (!audioUrl) {
+      releaseActiveAudio();
+      set({
+        currentIndex: index,
+        isPlaying: false,
+        currentTime: 0,
+        duration: finiteNonNegative(broadcast.audio_duration ?? 0),
+        error: '该广播暂无可播放音频',
+      });
+      return;
+    }
+
+    if (
+      activeAudio
+      && !activePlaybackEnded
+      && activeBroadcastId === broadcast.id
+      && activeAudioUrl === audioUrl
+    ) {
+      set({ currentIndex: index });
+      attemptPlay(activeAudio, playbackGeneration);
+      return;
+    }
+
+    releaseActiveAudio();
+    const generation = ++playbackGeneration;
+    let audio: HTMLAudioElement;
+    try {
+      audio = new Audio(audioUrl);
+    } catch {
+      set({
+        currentIndex: index,
+        isPlaying: false,
+        currentTime: 0,
+        duration: finiteNonNegative(broadcast.audio_duration ?? 0),
+        error: PLAYBACK_ERROR,
+      });
+      return;
+    }
+
+    audio.preload = 'metadata';
+    activeAudio = audio;
+    activeBroadcastId = broadcast.id;
+    activeAudioUrl = audioUrl;
+    activePlaybackEnded = false;
+    activeWantsToPlay = false;
+    let playbackRecorded = false;
+    const isCurrent = () => (
+      activeAudio === audio && playbackGeneration === generation
+    );
+
+    const onPlay = () => {
+      if (!isCurrent()) return;
+      if (!activeWantsToPlay) {
+        try {
+          audio.pause();
+        } catch {
+          // 状态仍保持暂停；后续 reset 会继续释放实例。
+        }
+        set({ isPlaying: false });
+        return;
+      }
+      set({ isPlaying: true, error: null });
+    };
+    const onPause = () => {
+      if (!isCurrent()) return;
+      activeWantsToPlay = false;
+      playAttemptGeneration += 1;
+      set({ isPlaying: false });
+    };
+    const onDuration = () => {
+      if (!isCurrent()) return;
+      const fallback = finiteNonNegative(broadcast.audio_duration ?? 0);
+      set({ duration: finiteNonNegative(audio.duration, fallback) });
+    };
+    const onTimeUpdate = () => {
+      if (!isCurrent()) return;
+      const maxDuration = finiteNonNegative(
+        audio.duration,
+        finiteNonNegative(get().duration),
+      );
+      const currentTime = finiteNonNegative(audio.currentTime);
+      set({
+        currentTime: maxDuration > 0
+          ? Math.min(currentTime, maxDuration)
+          : currentTime,
+      });
+    };
+    const onEnded = () => {
+      if (!isCurrent() || playbackRecorded) return;
+      playbackRecorded = true;
+      activePlaybackEnded = true;
+      activeWantsToPlay = false;
+      playAttemptGeneration += 1;
+      const completedDuration = finiteNonNegative(
+        audio.duration,
+        finiteNonNegative(get().duration),
+      );
+      set({
+        isPlaying: false,
+        currentTime: completedDuration,
+        duration: completedDuration,
+      });
+      void get().recordPlayback(broadcast.id, completedDuration, true);
+    };
+    const onError = () => {
+      if (!isCurrent()) return;
+      activeWantsToPlay = false;
+      playAttemptGeneration += 1;
+      set({ isPlaying: false, error: PLAYBACK_ERROR });
+    };
+
+    audio.addEventListener('play', onPlay);
+    audio.addEventListener('pause', onPause);
+    audio.addEventListener('loadedmetadata', onDuration);
+    audio.addEventListener('durationchange', onDuration);
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('ended', onEnded);
+    audio.addEventListener('error', onError);
+    detachActiveListeners = () => {
+      audio.removeEventListener('play', onPlay);
+      audio.removeEventListener('pause', onPause);
+      audio.removeEventListener('loadedmetadata', onDuration);
+      audio.removeEventListener('durationchange', onDuration);
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('error', onError);
+    };
+
     set({
       currentIndex: index,
       isPlaying: true,
       currentTime: 0,
-      duration: broadcast.audio_duration ?? 0,
+      duration: finiteNonNegative(broadcast.audio_duration ?? 0),
+      error: null,
     });
+    attemptPlay(audio, generation);
   },
 
   pause: () => {
+    activeWantsToPlay = false;
+    playAttemptGeneration += 1;
+    try {
+      activeAudio?.pause();
+    } catch {
+      // 即使媒体暂停抛错，也要同步 UI 为非播放态。
+    }
     set({ isPlaying: false });
   },
 
@@ -155,7 +368,22 @@ export const useRadioStore = create<RadioState>()((set, get) => ({
   },
 
   seek: (time: number) => {
-    set({ currentTime: Math.max(0, time) });
+    const requested = finiteNonNegative(time);
+    const maxDuration = activeAudio
+      ? finiteNonNegative(activeAudio.duration, finiteNonNegative(get().duration))
+      : finiteNonNegative(get().duration);
+    const target = maxDuration > 0
+      ? Math.min(requested, maxDuration)
+      : requested;
+    if (activeAudio) {
+      try {
+        activeAudio.currentTime = target;
+      } catch {
+        set({ error: PLAYBACK_ERROR });
+        return;
+      }
+    }
+    set({ currentTime: target });
   },
 
   setCurrentTime: (time: number) => {
@@ -182,6 +410,7 @@ export const useRadioStore = create<RadioState>()((set, get) => ({
   },
 
   reset: () => {
+    releaseActiveAudio();
     set({
       broadcasts: [],
       categories: [],
@@ -193,4 +422,5 @@ export const useRadioStore = create<RadioState>()((set, get) => ({
       error: null,
     });
   },
-}));
+  };
+});

@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
@@ -166,6 +167,17 @@ describe('RadioPage 组件', () => {
     expect(screen.getByLabelText('播放春季养生小贴士')).toBeDefined();
   });
 
+  it('已有列表时播放错误以内联提示呈现，不把所有节目替换成加载失败页', () => {
+    mockStoreState.broadcasts = [makeBroadcast()];
+    mockStoreState.error = '广播音频播放失败，请稍后重试';
+
+    render(<RadioPage />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('广播音频播放失败');
+    expect(screen.getByText('春季养生小贴士')).toBeInTheDocument();
+    expect(screen.queryByText('重新加载')).not.toBeInTheDocument();
+  });
+
   it('搜索框有可访问名称并可提交筛选', () => {
     mockStoreState.broadcasts = [
       makeBroadcast({ id: 'health', title: '春季养生小贴士' }),
@@ -191,6 +203,26 @@ describe('RadioPage 组件', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '养生常识' }));
     expect(mockFetchRecommendations).toHaveBeenCalled();
+  });
+
+  it('没有签名音频 URL 时禁用播放按钮', () => {
+    mockStoreState.broadcasts = [makeBroadcast({ audio_url: null })];
+    render(<RadioPage />);
+
+    const button = screen.getByRole('button', {
+      name: '春季养生小贴士暂无可播放音频',
+    });
+    expect(button).toHaveProperty('disabled', true);
+    fireEvent.click(button);
+    expect(mockPlay).not.toHaveBeenCalled();
+  });
+
+  it('卸载页面时重置播放器，防止音频继续播放', () => {
+    const { unmount } = render(<RadioPage />);
+
+    unmount();
+
+    expect(mockStoreState.reset).toHaveBeenCalledOnce();
   });
 
   it('播放中显示底部播放器', () => {

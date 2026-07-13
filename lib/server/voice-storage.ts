@@ -74,17 +74,23 @@ export async function uploadVoiceObject(
   contentType: 'audio/wav' | 'audio/mpeg',
 ): Promise<void> {
   const bucket = await getPrivateVoiceBucketName(client);
-  const { error } = await client.storage
+  const { data, error } = await client.storage
     .from(bucket)
     .upload(path, bytes, { contentType, upsert: false });
 
-  if (error) throw new ApiError(503, '语音文件存储失败，请稍后重试');
+  if (error || data?.path !== path) {
+    throw new ApiError(503, '语音文件存储失败，请稍后重试');
+  }
 }
 
 export async function createSignedVoiceUrl(
   client: SupabaseClient<Database>,
   path: string,
+  expectedKind?: VoiceObjectKind,
 ): Promise<string> {
+  if (expectedKind && !OBJECT_PATHS[expectedKind].test(path)) {
+    throw new ApiError(400, '语音对象路径非法');
+  }
   const bucket = await getPrivateVoiceBucketName(client);
   const { data, error } = await client.storage
     .from(bucket)

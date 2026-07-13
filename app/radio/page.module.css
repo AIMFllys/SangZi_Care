@@ -198,6 +198,18 @@
   gap: var(--space-sm);
 }
 
+.playbackError {
+  margin-bottom: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  font-size: var(--font-small);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .recommendItem {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr) 48px;

@@ -4,17 +4,23 @@
 // 对齐 backend/api/v1/radio.py · generate_broadcast
 //   1. requireUser 鉴权
 //   2. generateBroadcastText：调豆包 LLM 生成标题+正文（无 Key 时降级占位回复）
-//   3. generateAudio：调火山 TTS（speed=0.9）+ 估算时长；audio_bytes 不落库
-//   4. 写 health_broadcasts（is_published=true, generated_by='doubao'）
+//   3. generateAudio：调 MiMo TTS 生成真实 MP3 + 估算时长
+//   4. MP3 上传到私有 Supabase Storage，数据库只保存稳定对象路径
+//   5. 写 health_broadcasts（is_published=true, generated_by='doubao'）
+//      数据库失败时补偿删除已上传对象
 // 返回：201 BroadcastResponse（插入的行）
 // ============================================================
 
 import { NextResponse, type NextRequest } from 'next/server';
 import {
   ApiError,
+  buildVoiceObjectPath,
+  createSignedVoiceUrl,
   getSupabaseServerClient,
+  removeVoiceObject,
   requireUser,
   toApiResponse,
+  uploadVoiceObject,
 } from '@/lib/server';
 import { generateAudio, generateBroadcastText } from '@/lib/server/broadcast';
 import { toBroadcastResponse } from '../_lib';
@@ -27,10 +33,34 @@ import type {
 
 export const runtime = 'nodejs';
 
+const PRIVATE_HEADERS = {
+  'Cache-Control': 'private, no-store, max-age=0',
+  Pragma: 'no-cache',
+  Vary: 'Authorization',
+};
+
+function withPrivateHeaders(response: NextResponse): NextResponse {
+  for (const [key, value] of Object.entries(PRIVATE_HEADERS)) {
+    response.headers.set(key, value);
+  }
+  return response;
+}
+
+async function bestEffortRemove(
+  client: ReturnType<typeof getSupabaseServerClient>,
+  path: string,
+): Promise<void> {
+  try {
+    await removeVoiceObject(client, path);
+  } catch {
+    // 数据库失败是主错误；孤儿对象交给运维清理，不覆盖原始响应。
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // 鉴权（Python 仅用于依赖校验，未将 user_id 落库到 health_broadcasts）
-    await requireUser(request);
+    const { user_id: currentUserId } = await requireUser(request);
 
     const body = (await request
       .json()
@@ -50,15 +80,28 @@ export async function POST(request: NextRequest) {
       target_diseases: body.target_diseases ?? null,
     });
 
-    // 2. 使用 TTS 生成音频（仅取估算时长，audio_bytes 不落库）
-    const { duration } = await generateAudio(textResult.content);
+    // 2. 使用 MiMo TTS 生成真实 MP3
+    const { bytes, contentType, duration } = await generateAudio(
+      textResult.content,
+    );
 
-    // 3. 保存广播记录到数据库
+    // 3. 先上传私有对象。上传失败时绝不写入已发布数据库记录。
+    const supabase = getSupabaseServerClient();
+    const objectPath = buildVoiceObjectPath(currentUserId, 'broadcasts');
+    await uploadVoiceObject(
+      supabase,
+      objectPath,
+      bytes,
+      contentType,
+    );
+
+    // 4. 保存广播记录到数据库；audio_url 只存稳定对象路径。
     const now = new Date().toISOString();
     const record: BroadcastInsert = {
       title: textResult.title,
       content: textResult.content,
       category: body.category,
+      audio_url: objectPath,
       audio_duration: duration,
       is_published: true,
       target_age_min: body.target_age_min ?? null,
@@ -71,27 +114,41 @@ export async function POST(request: NextRequest) {
       updated_at: now,
     };
 
-    const supabase = getSupabaseServerClient();
-    const { data, error } = await supabase
-      .from('oc_health_broadcasts')
-      .insert(record)
-      .select();
-
-    if (error) {
-      console.error('[POST /radio/generate] 保存广播失败:', error);
+    let result: { data: unknown; error: unknown };
+    try {
+      result = await supabase
+        .from('oc_health_broadcasts')
+        .insert(record)
+        .select();
+    } catch {
+      await bestEffortRemove(supabase, objectPath);
       throw new ApiError(500, '保存广播内容失败');
     }
 
-    const rows = (data ?? []) as BroadcastRow[];
-    if (rows.length === 0) {
+    const rows = (result.data ?? []) as BroadcastRow[];
+    if (result.error || rows.length === 0) {
+      await bestEffortRemove(supabase, objectPath);
+      console.error('[POST /radio/generate] 保存广播失败');
       throw new ApiError(500, '保存广播内容失败');
     }
 
-    return NextResponse.json<BroadcastResponse>(
-      toBroadcastResponse(rows[0]),
-      { status: 201 },
-    );
+    const response = toBroadcastResponse(rows[0]);
+    try {
+      response.audio_url = await createSignedVoiceUrl(
+        supabase,
+        objectPath,
+        'broadcasts',
+      );
+    } catch {
+      // 广播已经成功发布；签名可由 recommend 重试，响应不得泄露对象路径。
+      response.audio_url = null;
+    }
+
+    return NextResponse.json<BroadcastResponse>(response, {
+      status: 201,
+      headers: PRIVATE_HEADERS,
+    });
   } catch (err) {
-    return toApiResponse(err);
+    return withPrivateHeaders(toApiResponse(err));
   }
 }

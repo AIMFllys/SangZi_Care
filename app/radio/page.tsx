@@ -37,6 +37,7 @@ export default function RadioPage() {
   const fetchRecommendations = useRadioStore((state) => state.fetchRecommendations);
   const play = useRadioStore((state) => state.play);
   const pause = useRadioStore((state) => state.pause);
+  const reset = useRadioStore((state) => state.reset);
 
   const [searchDraft, setSearchDraft] = useState('');
   const [query, setQuery] = useState('');
@@ -58,7 +59,8 @@ export default function RadioPage() {
 
   useEffect(() => {
     if (user?.id) void fetchRecommendations();
-  }, [user?.id, fetchRecommendations]);
+    return () => reset();
+  }, [user?.id, fetchRecommendations, reset]);
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -127,9 +129,12 @@ export default function RadioPage() {
           <h2 id="radio-recommendations-title" className={styles.sectionTitle}>
             {query ? `“${query}”的结果` : '为您推荐'}
           </h2>
+          {error && broadcasts.length > 0 && (
+            <p className={styles.playbackError} role="alert">{error}</p>
+          )}
           <DataStateWrapper
             loading={loading}
-            error={error}
+            error={broadcasts.length === 0 ? error : null}
             empty={filteredBroadcasts.length === 0 ? {
               icon: <RadioIcon size={44} />,
               title: query ? '没有找到相关节目' : '暂无推荐',
@@ -154,7 +159,10 @@ export default function RadioPage() {
                     <button
                       type="button"
                       className={styles.playBtn}
-                      aria-label={`${playing ? '暂停' : '播放'}${broadcast.title}`}
+                      aria-label={broadcast.audio_url
+                        ? `${playing ? '暂停' : '播放'}${broadcast.title}`
+                        : `${broadcast.title}暂无可播放音频`}
+                      disabled={!broadcast.audio_url}
                       onClick={() => togglePlayback(index)}
                     >
                       {playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}

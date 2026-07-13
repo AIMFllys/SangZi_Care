@@ -14,6 +14,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import {
   ApiError,
+  createSignedVoiceUrl,
   getSupabaseServerClient,
   requireUser,
   toApiResponse,
@@ -23,6 +24,19 @@ import { toBroadcastResponse } from '../_lib';
 import type { BroadcastResponse, BroadcastRow, UsersRow } from '../_lib';
 
 export const runtime = 'nodejs';
+
+const PRIVATE_HEADERS = {
+  'Cache-Control': 'private, no-store, max-age=0',
+  Pragma: 'no-cache',
+  Vary: 'Authorization',
+};
+
+function withPrivateHeaders(response: NextResponse): NextResponse {
+  for (const [key, value] of Object.entries(PRIVATE_HEADERS)) {
+    response.headers.set(key, value);
+  }
+  return response;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -85,10 +99,29 @@ export async function GET(request: NextRequest) {
     }
 
     const rows = (data ?? []) as BroadcastRow[];
+    const playableRows = await Promise.all(rows.map(async (row) => {
+      const response = toBroadcastResponse(row);
+      if (!row.audio_url) return response;
+
+      try {
+        return {
+          ...response,
+          audio_url: await createSignedVoiceUrl(
+            supabase,
+            row.audio_url,
+            'broadcasts',
+          ),
+        };
+      } catch {
+        // 数据库存的是内部对象路径；签名失败时只返回安全错误，绝不回退泄露路径。
+        throw new ApiError(503, '广播音频暂时无法播放');
+      }
+    }));
     return NextResponse.json<BroadcastResponse[]>(
-      rows.map((row) => toBroadcastResponse(row)),
+      playableRows,
+      { headers: PRIVATE_HEADERS },
     );
   } catch (err) {
-    return toApiResponse(err);
+    return withPrivateHeaders(toApiResponse(err));
   }
 }

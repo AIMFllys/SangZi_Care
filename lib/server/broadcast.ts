@@ -5,14 +5,14 @@
 //   - BROADCAST_CATEGORIES:        静态广播分类常量（6 项）
 //   - buildRecommendFilters:       根据用户信息构建推荐过滤条件
 //   - generateBroadcastText:       调豆包 LLM 生成广播文案
-//   - generateAudio:               调火山 TTS 合成音频（当前 audio_bytes 不落库，仅取估算时长）
+//   - generateAudio:               调 MiMo TTS 合成 MP3，并附带估算时长
 //
 // 密钥安全：本文件仅在服务端 Route Handler 内 import；
-//   LLM / TTS 密钥由 doubao.ts / voice.ts 各自读取，绝不进 NEXT_PUBLIC_*。
+//   LLM / TTS 密钥由 doubao.ts / mimo.ts 各自读取，绝不进 NEXT_PUBLIC_*。
 // ============================================================
 
 import { chat, type LlmMessage } from './doubao';
-import { textToSpeech } from './voice';
+import { synthesizeSpeech, type SynthesizedSpeech } from './mimo';
 
 // ---------- 广播分类（对齐 Python BROADCAST_CATEGORIES） ----------
 
@@ -154,21 +154,25 @@ export async function generateBroadcastText(
   };
 }
 
-// ---------- TTS 生成音频（仅取估算时长） ----------
+// ---------- TTS 生成音频 ----------
+
+export interface GeneratedBroadcastAudio extends SynthesizedSpeech {
+  duration: number;
+}
 
 /**
- * 使用火山 TTS 将文本转为音频，返回估算时长。
- * 对齐 Python HealthBroadcastService.generate_audio：
- *   - speed=0.9（老年人稍慢语速）
- *   - 时长估算：char_count / (4 * 0.9)，round(_, 1)
- * 当前 audio_bytes 不落库（health_broadcasts 表无二进制列，与 Python 一致），
- * 故仅返回 duration；仍调用 textToSpeech 以对齐 Python 触发语音服务路径。
+ * 使用 MiMo TTS 将文本转为真实 MP3，并返回供数据库展示的估算时长。
+ * MiMo 当前响应不含时长，因此沿用老年慢语速的估算公式：
+ * char_count / (4 * 0.9)，round(_, 1)。调用方负责把 bytes 存入私有 Storage。
  */
 export async function generateAudio(
   text: string,
-): Promise<{ duration: number }> {
-  await textToSpeech(text, 0.9);
+): Promise<GeneratedBroadcastAudio> {
+  const speech = await synthesizeSpeech(text);
   const charCount = text.length;
   const estimatedDuration = charCount / (4 * 0.9);
-  return { duration: Math.round(estimatedDuration * 10) / 10 };
+  return {
+    ...speech,
+    duration: Math.round(estimatedDuration * 10) / 10,
+  };
 }
