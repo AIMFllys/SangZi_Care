@@ -51,7 +51,9 @@ export function Input({
           aria-describedby={error ? `${inputId}-error` : undefined}
           {...rest}
         />
-        {suffix && <span className={styles.affix}>{suffix}</span>}
+        {suffix && (
+          <span className={`${styles.affix} ${styles.suffix}`}>{suffix}</span>
+        )}
       </div>
       {error && (
         <p id={`${inputId}-error`} className={styles.error} role="alert">

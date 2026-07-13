@@ -79,7 +79,7 @@
   font-size: var(--font-body);
 }
 
-.field > .affix:last-child {
+.suffix {
   min-width: 0;
   flex-shrink: 1;
   overflow: hidden;

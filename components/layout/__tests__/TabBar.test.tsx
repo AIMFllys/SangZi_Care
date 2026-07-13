@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import TabBar from '../TabBar';
 
@@ -86,5 +88,37 @@ describe('TabBar', () => {
       ['健康', '/health'],
       ['设置', '/settings'],
     ]);
+  });
+
+  it('导航内容高度不被边框从 border-box 中扣减', () => {
+    const css = readFileSync(
+      resolve(process.cwd(), 'components/layout/TabBar.module.css'),
+      'utf8',
+    );
+    const tabBarRule = css.match(/\.tabBar\s*\{([\s\S]*?)\}/)?.[1] ?? '';
+
+    expect(tabBarRule).toContain(
+      'height: calc(var(--tabbar-content-height) + var(--safe-bottom))',
+    );
+    expect(tabBarRule).not.toContain('border-top');
+    expect(tabBarRule).toMatch(/inset\s+0\s+1px\s+0/);
+  });
+
+  it.each([
+    ['elder', '/radio', '功能'],
+    ['family', '/radio', '语音'],
+    ['family', '/medicine', '健康'],
+  ] as const)('%s 在 %s 仍有唯一当前导航项 %s', (role, pathname, label) => {
+    navigation.role = role;
+    navigation.pathname = pathname;
+
+    render(<TabBar />);
+
+    const links = screen.getAllByRole('link');
+    expect(links.filter((link) => link.hasAttribute('aria-current'))).toHaveLength(1);
+    expect(screen.getByRole('link', { name: label })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
   });
 });

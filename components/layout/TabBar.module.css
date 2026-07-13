@@ -12,8 +12,7 @@
   background: var(--bg-card);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border-top: 1px solid var(--border-light);
-  box-shadow: var(--shadow-up);
+  box-shadow: inset 0 1px 0 var(--border-light), var(--shadow-up);
 }
 
 .tabItem {

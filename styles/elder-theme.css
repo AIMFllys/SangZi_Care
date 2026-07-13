@@ -16,7 +16,9 @@
   --accent: var(--accent-action);
   --accent-light: #fbb97a;
   --accent-soft: rgba(245, 146, 62, 0.12);
+  --accent-soft: color-mix(in srgb, var(--accent-decoration) 12%, transparent);
   --accent-glow: rgba(245, 146, 62, 0.08);
+  --accent-glow: color-mix(in srgb, var(--accent-decoration) 8%, transparent);
   --accent-hover: #873804;
   --accent-text: #ffffff;
 
