@@ -129,7 +129,7 @@ describe('生产构建门禁', () => {
     const edgeone = JSON.parse(readFileSync(resolve(root, 'edgeone.json'), 'utf8'));
 
     expect(edgeone.installCommand).toBe('npm ci');
-    expect(edgeone.nodeVersion).toBe('22.13.0');
+    expect(edgeone.nodeVersion).toBe('22.17.1');
     expect(edgeone.outputDirectory).toBe('.next');
   });
 

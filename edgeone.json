@@ -3,7 +3,7 @@
   "buildCommand": "npm run build",
   "installCommand": "npm ci",
   "outputDirectory": ".next",
-  "nodeVersion": "22.13.0",
+  "nodeVersion": "22.17.1",
   "redirects": [],
   "headers": [
     {

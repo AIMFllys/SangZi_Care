@@ -2,7 +2,7 @@
 
 > 审计日期：2026-07-13
 > 当前实现：Next.js 16.2.10 全栈 App Router
-> 本地验证运行时：Node.js 22.13.0；EdgeOne 生产版本仍待按官方预装版本确认
+> 项目构建门禁最低运行时：Node.js 22.13.0；EdgeOne 生产运行时固定为官方预装的 Node.js 22.17.1
 
 ## 结论
 
@@ -42,7 +42,7 @@
 - 安装：`npm ci`
 - 构建：`npm run build`
 - 输出：`.next`
-- Node.js：`22.13.0`；EdgeOne 2026-07 [构建指南](https://pages.edgeone.ai/zh/document/build-guide)列出的预装 Node 22 为 `22.11.0` / `22.17.1`，[edgeone.json 文档](https://pages.edgeone.ai/zh/document/edgeone-json)也提示其他版本可能部署失败，因此推送前必须确认并切到控制台实际支持的版本
+- Node.js：`22.17.1`；该版本属于 EdgeOne 2026-07 [构建指南](https://pages.edgeone.ai/zh/document/build-guide)列出的预装 Node 22 版本（`22.11.0` / `22.17.1`），符合 [edgeone.json 文档](https://pages.edgeone.ai/zh/document/edgeone-json)对预装版本的要求
 - 函数区域：`ap-guangzhou`
 - 函数最大时长：60 秒
 - `/_next/static/*`：`public, max-age=31536000, immutable`
@@ -63,7 +63,7 @@
 
 本审计只证明可复现的本地构建与预算，不把外部状态伪装成成功。以下项目必须在推送后单独记录：
 
-- EdgeOne 实际构建并运行精确 Git commit（Node 22.13.0）。
+- EdgeOne 实际构建并运行精确 Git commit（Node 22.17.1）。
 - `sangzicare.husteread.com` 的公共 DNS、TLS、`/api/ping` 与安全/缓存响应头。
 - EdgeOne 控制台已配置的 Supabase、SMTP 与 MiMo 服务端变量。
 - 通过线上同源路由完成一次非敏感 MiMo TTS → ASR 冒烟。
