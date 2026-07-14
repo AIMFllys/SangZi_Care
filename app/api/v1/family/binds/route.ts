@@ -15,7 +15,11 @@ import {
   toApiResponse,
   withPrivateNoStore,
 } from '@/lib/server';
-import { toBindResponse, type FamilyBindRow } from '../_lib';
+import {
+  toBindResponse,
+  type FamilyBindRow,
+  type FamilyPeerRow,
+} from '../_lib';
 
 export const runtime = 'nodejs';
 
@@ -25,42 +29,40 @@ export async function GET(request: NextRequest) {
 
     const supabase = getSupabaseServerClient();
 
-    // 作为老人查询
-    const { data: elderRows, error: elderError } = await supabase
+    const { data, error } = await supabase
       .from('oc_elder_family_binds')
       .select('*')
-      .eq('elder_id', user_id)
+      .or(`elder_id.eq.${user_id},family_id.eq.${user_id}`)
       .eq('status', 'active');
 
-    if (elderError) {
-      console.error('[GET /family/binds] elder 查询失败:', elderError);
+    if (error) {
+      console.error('[GET /family/binds] 查询失败:', error);
       throw new ApiError(500, '获取绑定列表失败');
     }
 
-    // 作为家属查询
-    const { data: familyRows, error: familyError } = await supabase
-      .from('oc_elder_family_binds')
-      .select('*')
-      .eq('family_id', user_id)
-      .eq('status', 'active');
+    const rows = (data ?? []) as FamilyBindRow[];
+    const peerIds = rows
+      .map((row) => row.elder_id === user_id ? row.family_id : row.elder_id)
+      .filter((id): id is string => Boolean(id));
+    const peersById = new Map<string, FamilyPeerRow>();
 
-    if (familyError) {
-      console.error('[GET /family/binds] family 查询失败:', familyError);
-      throw new ApiError(500, '获取绑定列表失败');
-    }
-
-    // 按 id 去重
-    const seenIds = new Set<string>();
-    const allRows: FamilyBindRow[] = [];
-    for (const row of [...(elderRows ?? []), ...(familyRows ?? [])]) {
-      if (!seenIds.has(row.id)) {
-        seenIds.add(row.id);
-        allRows.push(row);
+    if (peerIds.length > 0) {
+      const { data: peers, error: peersError } = await supabase
+        .from('oc_users')
+        .select('id, name, phone, avatar_url, last_active_at, role')
+        .in('id', [...new Set(peerIds)]);
+      if (peersError) {
+        console.error('[GET /family/binds] 联系人查询失败:', peersError);
+        throw new ApiError(500, '获取联系人资料失败');
       }
+      for (const peer of peers ?? []) peersById.set(peer.id, peer);
     }
 
     return withPrivateNoStore(
-      NextResponse.json(allRows.map(toBindResponse)),
+      NextResponse.json(rows.map((row) => {
+        const peerId = row.elder_id === user_id ? row.family_id : row.elder_id;
+        return toBindResponse(row, peerId ? peersById.get(peerId) ?? null : null);
+      })),
     );
   } catch (err) {
     return toApiResponse(err);

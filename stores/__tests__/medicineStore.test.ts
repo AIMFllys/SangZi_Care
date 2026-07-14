@@ -11,6 +11,16 @@ import { fetchApi } from '@/lib/api';
 
 const mockFetchApi = fetchApi as ReturnType<typeof vi.fn>;
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
+
 // ---------- 辅助工厂 ----------
 
 function makePlan(overrides: Partial<MedicationPlanResponse> = {}): MedicationPlanResponse {
@@ -42,6 +52,7 @@ function makeTimelineItem(
   return {
     plan: makePlan(),
     scheduled_time: '08:00',
+    scheduled_at: '2026-07-14T00:00:00.000Z',
     record: null,
     status: 'pending',
     ...overrides,
@@ -146,6 +157,16 @@ describe('useMedicineStore', () => {
       expect(mockFetchApi).toHaveBeenCalledWith('/api/v1/medicine/plans');
     });
 
+    it('家属查询计划时显式携带长辈 ID', async () => {
+      mockFetchApi.mockResolvedValue([]);
+
+      await useMedicineStore.getState().fetchPlans('elder-1');
+
+      expect(mockFetchApi).toHaveBeenCalledWith(
+        '/api/v1/medicine/plans?user_id=elder-1',
+      );
+    });
+
     it('拉取失败设置错误信息', async () => {
       mockFetchApi.mockRejectedValue(new Error('网络错误'));
 
@@ -155,6 +176,27 @@ describe('useMedicineStore', () => {
       expect(state.plans).toEqual([]);
       expect(state.error).toBe('网络错误');
       expect(state.isLoading).toBe(false);
+    });
+
+    it('切换长辈后忽略旧计划响应', async () => {
+      const first = deferred<MedicationPlanResponse[]>();
+      const second = deferred<MedicationPlanResponse[]>();
+      const elderA = [makePlan({ id: 'a', user_id: 'elder-a' })];
+      const elderB = [makePlan({ id: 'b', user_id: 'elder-b' })];
+      mockFetchApi
+        .mockImplementationOnce(() => first.promise)
+        .mockImplementationOnce(() => second.promise);
+
+      const firstRequest = useMedicineStore.getState().fetchPlans('elder-a');
+      const secondRequest = useMedicineStore.getState().fetchPlans('elder-b');
+      expect(useMedicineStore.getState().plans).toEqual([]);
+
+      second.resolve(elderB);
+      await secondRequest;
+      first.resolve(elderA);
+      await firstRequest;
+
+      expect(useMedicineStore.getState().plans).toEqual(elderB);
     });
   });
 
@@ -204,6 +246,16 @@ describe('useMedicineStore', () => {
       expect(state.isLoading).toBe(false);
     });
 
+    it('家属查询今日用药时显式携带长辈 ID', async () => {
+      mockFetchApi.mockResolvedValue({ date: '2026-07-14', items: [] });
+
+      await useMedicineStore.getState().fetchTodayTimeline('elder-1');
+
+      expect(mockFetchApi).toHaveBeenCalledWith(
+        '/api/v1/medicine/today?user_id=elder-1',
+      );
+    });
+
     it('拉取失败设置错误信息', async () => {
       mockFetchApi.mockRejectedValue(new Error('服务器错误'));
 
@@ -211,6 +263,35 @@ describe('useMedicineStore', () => {
 
       const state = useMedicineStore.getState();
       expect(state.error).toBe('服务器错误');
+    });
+
+    it('切换长辈后忽略旧时间线响应', async () => {
+      const first = deferred<{ date: string; items: TodayTimelineItem[] }>();
+      const second = deferred<{ date: string; items: TodayTimelineItem[] }>();
+      const elderA = {
+        date: '2026-07-14',
+        items: [makeTimelineItem({ plan: makePlan({ id: 'a', user_id: 'elder-a' }) })],
+      };
+      const elderB = {
+        date: '2026-07-14',
+        items: [makeTimelineItem({ plan: makePlan({ id: 'b', user_id: 'elder-b' }) })],
+      };
+      mockFetchApi
+        .mockImplementationOnce(() => first.promise)
+        .mockImplementationOnce(() => second.promise);
+
+      const firstRequest = useMedicineStore.getState()
+        .fetchTodayTimeline('elder-a');
+      const secondRequest = useMedicineStore.getState()
+        .fetchTodayTimeline('elder-b');
+      expect(useMedicineStore.getState().todayTimeline).toEqual([]);
+
+      second.resolve(elderB);
+      await secondRequest;
+      first.resolve(elderA);
+      await firstRequest;
+
+      expect(useMedicineStore.getState().todayTimeline).toEqual(elderB.items);
     });
   });
 
@@ -228,11 +309,17 @@ describe('useMedicineStore', () => {
 
       mockFetchApi.mockResolvedValue({});
 
-      await useMedicineStore.getState().confirmMedication('p1', '08:00');
+      await useMedicineStore.getState().confirmMedication('p1', items[0].scheduled_at);
 
       const state = useMedicineStore.getState();
       expect(state.todayTimeline[0].status).toBe('taken');
       expect(state.todayProgress).toBe(100);
+      expect(mockFetchApi).toHaveBeenCalledWith('/api/v1/medicine/records', {
+        method: 'POST',
+        body: expect.objectContaining({
+          scheduled_time: items[0].scheduled_at,
+        }),
+      });
     });
 
     it('API 失败时回滚状态', async () => {
@@ -247,7 +334,9 @@ describe('useMedicineStore', () => {
 
       mockFetchApi.mockRejectedValue(new Error('失败'));
 
-      await useMedicineStore.getState().confirmMedication('p1', '08:00');
+      await expect(
+        useMedicineStore.getState().confirmMedication('p1', items[0].scheduled_at),
+      ).rejects.toThrow('失败');
 
       const state = useMedicineStore.getState();
       // 回滚到 pending

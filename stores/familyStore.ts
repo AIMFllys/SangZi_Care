@@ -14,10 +14,20 @@ export interface FamilyBind {
   status?: string | null;
   bind_code?: string | null;
   can_view_health?: boolean | null;
+  can_edit_health?: boolean | null;
   can_edit_medication?: boolean | null;
   can_receive_emergency?: boolean | null;
   bound_at?: string | null;
   created_at?: string | null;
+  expires_at?: string | null;
+  peer?: {
+    id: string;
+    name: string;
+    phone?: string | null;
+    avatar_url?: string | null;
+    last_active_at?: string | null;
+    role: string;
+  } | null;
 }
 
 /** 绑定关系 + 对方用户信息（前端组合） */
@@ -49,6 +59,9 @@ interface FamilyState {
   isLoading: boolean;
   /** 错误信息 */
   error: string | null;
+  /** 当前缓存归属账号，防共用设备串用上一账号数据 */
+  ownerUserId: string | null;
+  bindsRequestId: number;
 
   /** 拉取绑定列表（需传当前用户 ID 以正确识别对方） */
   fetchBinds: (currentUserId: string) => Promise<void>;
@@ -58,15 +71,27 @@ interface FamilyState {
   reset: () => void;
 }
 
-export const useFamilyStore = create<FamilyState>()((set) => ({
+export const useFamilyStore = create<FamilyState>()((set, get) => ({
   binds: [],
   rawBinds: [],
   healthSummaries: {},
   isLoading: false,
   error: null,
+  ownerUserId: null,
+  bindsRequestId: 0,
 
   fetchBinds: async (currentUserId: string) => {
-    set({ isLoading: true, error: null });
+    const requestId = get().bindsRequestId + 1;
+    set((state) => ({
+      bindsRequestId: requestId,
+      ownerUserId: currentUserId,
+      binds: state.ownerUserId === currentUserId ? state.binds : [],
+      rawBinds: state.ownerUserId === currentUserId ? state.rawBinds : [],
+      healthSummaries:
+        state.ownerUserId === currentUserId ? state.healthSummaries : {},
+      isLoading: true,
+      error: null,
+    }));
     try {
       const data = await fetchApi<FamilyBind[]>('/api/v1/family/binds');
 
@@ -80,17 +105,35 @@ export const useFamilyStore = create<FamilyState>()((set) => ({
           ? (bind.family_id || bind.id)
           : (bind.elder_id || bind.id);
 
+        const peer = bind.peer;
         return {
           bind,
           user: {
-            id: otherUserId,
-            name: bind.relation || '家人',
+            id: peer?.id ?? otherUserId,
+            name: peer?.name ?? '家人',
+            phone: peer?.phone ?? null,
+            avatar_url: peer?.avatar_url ?? null,
+            last_active_at: peer?.last_active_at ?? null,
           },
         };
       });
 
-      set({ binds: bindsWithUser, rawBinds: data, isLoading: false });
+      if (
+        get().bindsRequestId !== requestId
+        || get().ownerUserId !== currentUserId
+      ) return;
+
+      set({
+        binds: bindsWithUser,
+        rawBinds: data,
+        ownerUserId: currentUserId,
+        isLoading: false,
+      });
     } catch (err) {
+      if (
+        get().bindsRequestId !== requestId
+        || get().ownerUserId !== currentUserId
+      ) return;
       set({
         error: err instanceof Error ? err.message : '加载失败',
         isLoading: false,
@@ -99,10 +142,12 @@ export const useFamilyStore = create<FamilyState>()((set) => ({
   },
 
   fetchElderHealthSummary: async (elderId: string) => {
+    const requestOwner = get().ownerUserId;
     try {
       const summary = await fetchApi<ElderHealthSummary>(
         `/api/v1/health/records/latest?user_id=${elderId}`,
       );
+      if (get().ownerUserId !== requestOwner) return;
       set((state) => ({
         healthSummaries: { ...state.healthSummaries, [elderId]: summary },
       }));
@@ -112,6 +157,14 @@ export const useFamilyStore = create<FamilyState>()((set) => ({
   },
 
   reset: () => {
-    set({ binds: [], rawBinds: [], healthSummaries: {}, isLoading: false, error: null });
+    set({
+      binds: [],
+      rawBinds: [],
+      healthSummaries: {},
+      isLoading: false,
+      error: null,
+      ownerUserId: null,
+      bindsRequestId: get().bindsRequestId + 1,
+    });
   },
 }));

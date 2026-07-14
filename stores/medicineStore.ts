@@ -37,11 +37,13 @@ export interface MedicationRecordResponse {
   delayed_count: number | null;
   notes: string | null;
   created_at: string | null;
+  confirmed_by: string | null;
 }
 
 export interface TodayTimelineItem {
   plan: MedicationPlanResponse;
   scheduled_time: string;
+  scheduled_at: string;
   record: MedicationRecordResponse | null;
   status: 'pending' | 'taken' | 'skipped' | 'delayed';
 }
@@ -150,15 +152,20 @@ interface MedicineState {
   isLoading: boolean;
   /** 错误信息 */
   error: string | null;
+  /** 请求代次与目标，用于隔离长辈切换前后的异步响应 */
+  plansRequestId: number;
+  plansTargetKey: string | null;
+  timelineRequestId: number;
+  timelineTargetKey: string | null;
 
   /** 拉取用药计划列表（默认仅活跃） */
-  fetchPlans: () => Promise<void>;
+  fetchPlans: (userId?: string) => Promise<void>;
   /** 拉取所有用药计划（含已停用） */
-  fetchAllPlans: () => Promise<void>;
+  fetchAllPlans: (userId?: string) => Promise<void>;
   /** 拉取今日时间线 */
-  fetchTodayTimeline: () => Promise<void>;
+  fetchTodayTimeline: (userId?: string) => Promise<void>;
   /** 确认服药 */
-  confirmMedication: (planId: string, scheduledTime: string) => Promise<void>;
+  confirmMedication: (planId: string, scheduledAt: string) => Promise<void>;
   /** 创建用药计划 */
   createPlan: (data: MedicationPlanCreate) => Promise<MedicationPlanResponse>;
   /** 更新用药计划 */
@@ -174,15 +181,35 @@ export const useMedicineStore = create<MedicineState>()((set, get) => ({
   todayProgress: 0,
   isLoading: false,
   error: null,
+  plansRequestId: 0,
+  plansTargetKey: null,
+  timelineRequestId: 0,
+  timelineTargetKey: null,
 
-  fetchPlans: async () => {
-    set({ isLoading: true, error: null });
+  fetchPlans: async (userId) => {
+    const targetKey = userId ?? 'self';
+    const requestId = get().plansRequestId + 1;
+    set((state) => ({
+      plansRequestId: requestId,
+      plansTargetKey: targetKey,
+      plans: state.plansTargetKey === targetKey ? state.plans : [],
+      isLoading: true,
+      error: null,
+    }));
     try {
       const data = await fetchApi<MedicationPlanResponse[]>(
-        '/api/v1/medicine/plans',
+        `/api/v1/medicine/plans${userId ? `?user_id=${encodeURIComponent(userId)}` : ''}`,
       );
+      if (
+        get().plansRequestId !== requestId
+        || get().plansTargetKey !== targetKey
+      ) return;
       set({ plans: data, isLoading: false });
     } catch (err) {
+      if (
+        get().plansRequestId !== requestId
+        || get().plansTargetKey !== targetKey
+      ) return;
       set({
         error: err instanceof Error ? err.message : '加载用药计划失败',
         isLoading: false,
@@ -190,14 +217,30 @@ export const useMedicineStore = create<MedicineState>()((set, get) => ({
     }
   },
 
-  fetchAllPlans: async () => {
-    set({ isLoading: true, error: null });
+  fetchAllPlans: async (userId) => {
+    const targetKey = userId ?? 'self';
+    const requestId = get().plansRequestId + 1;
+    set((state) => ({
+      plansRequestId: requestId,
+      plansTargetKey: targetKey,
+      plans: state.plansTargetKey === targetKey ? state.plans : [],
+      isLoading: true,
+      error: null,
+    }));
     try {
       const data = await fetchApi<MedicationPlanResponse[]>(
-        '/api/v1/medicine/plans?active_only=false',
+        `/api/v1/medicine/plans?active_only=false${userId ? `&user_id=${encodeURIComponent(userId)}` : ''}`,
       );
+      if (
+        get().plansRequestId !== requestId
+        || get().plansTargetKey !== targetKey
+      ) return;
       set({ plans: data, isLoading: false });
     } catch (err) {
+      if (
+        get().plansRequestId !== requestId
+        || get().plansTargetKey !== targetKey
+      ) return;
       set({
         error: err instanceof Error ? err.message : '加载用药计划失败',
         isLoading: false,
@@ -205,12 +248,28 @@ export const useMedicineStore = create<MedicineState>()((set, get) => ({
     }
   },
 
-  fetchTodayTimeline: async () => {
-    set({ isLoading: true, error: null });
+  fetchTodayTimeline: async (userId) => {
+    const targetKey = userId ?? 'self';
+    const requestId = get().timelineRequestId + 1;
+    set((state) => ({
+      timelineRequestId: requestId,
+      timelineTargetKey: targetKey,
+      todayTimeline:
+        state.timelineTargetKey === targetKey ? state.todayTimeline : [],
+      todayDate: state.timelineTargetKey === targetKey ? state.todayDate : '',
+      todayProgress:
+        state.timelineTargetKey === targetKey ? state.todayProgress : 0,
+      isLoading: true,
+      error: null,
+    }));
     try {
       const data = await fetchApi<TodayTimelineResponse>(
-        '/api/v1/medicine/today',
+        `/api/v1/medicine/today${userId ? `?user_id=${encodeURIComponent(userId)}` : ''}`,
       );
+      if (
+        get().timelineRequestId !== requestId
+        || get().timelineTargetKey !== targetKey
+      ) return;
       set({
         todayTimeline: data.items,
         todayDate: data.date,
@@ -218,6 +277,10 @@ export const useMedicineStore = create<MedicineState>()((set, get) => ({
         isLoading: false,
       });
     } catch (err) {
+      if (
+        get().timelineRequestId !== requestId
+        || get().timelineTargetKey !== targetKey
+      ) return;
       set({
         error: err instanceof Error ? err.message : '加载今日用药失败',
         isLoading: false,
@@ -225,18 +288,23 @@ export const useMedicineStore = create<MedicineState>()((set, get) => ({
     }
   },
 
-  confirmMedication: async (planId: string, scheduledTime: string) => {
-    const { todayTimeline } = get();
+  confirmMedication: async (planId: string, scheduledAt: string) => {
+    const {
+      todayTimeline,
+      timelineRequestId,
+      timelineTargetKey,
+    } = get();
 
     // 找到对应的时间线项获取 user_id
     const item = todayTimeline.find(
-      (i) => i.plan.id === planId && i.scheduled_time === scheduledTime,
+      (i) => i.plan.id === planId && i.scheduled_at === scheduledAt,
     );
     if (!item) return;
+    const previousStatus = item.status;
 
     // 乐观更新
     const updatedTimeline = todayTimeline.map((i) =>
-      i.plan.id === planId && i.scheduled_time === scheduledTime
+      i.plan.id === planId && i.scheduled_at === scheduledAt
         ? { ...i, status: 'taken' as const }
         : i,
     );
@@ -251,38 +319,63 @@ export const useMedicineStore = create<MedicineState>()((set, get) => ({
         body: {
           user_id: item.plan.user_id,
           plan_id: planId,
-          scheduled_time: scheduledTime,
+          scheduled_time: scheduledAt,
           status: 'taken',
         },
       });
-    } catch {
-      // 回滚
-      set({
-        todayTimeline,
-        todayProgress: calcProgress(todayTimeline),
-      });
+    } catch (error) {
+      // 只回滚当前发生项；若期间已经切换/刷新长辈，则丢弃旧操作的回滚。
+      if (
+        get().timelineRequestId === timelineRequestId
+        && get().timelineTargetKey === timelineTargetKey
+      ) {
+        set((state) => {
+          const rolledBackTimeline = state.todayTimeline.map((timelineItem) =>
+            timelineItem.plan.id === planId
+            && timelineItem.scheduled_at === scheduledAt
+              ? { ...timelineItem, status: previousStatus }
+              : timelineItem,
+          );
+          return {
+            todayTimeline: rolledBackTimeline,
+            todayProgress: calcProgress(rolledBackTimeline),
+          };
+        });
+      }
+      throw error;
     }
   },
 
   createPlan: async (data: MedicationPlanCreate) => {
+    const { plansRequestId, plansTargetKey } = get();
     const result = await fetchApi<MedicationPlanResponse>(
       '/api/v1/medicine/plans',
       { method: 'POST', body: data },
     );
-    // 将新计划追加到列表
-    set((state) => ({ plans: [...state.plans, result] }));
+    // 仅更新发起操作时的同一目标列表，防止切换长辈后串入旧结果。
+    if (
+      get().plansRequestId === plansRequestId
+      && get().plansTargetKey === plansTargetKey
+    ) {
+      set((state) => ({ plans: [...state.plans, result] }));
+    }
     return result;
   },
 
   updatePlan: async (planId: string, data: MedicationPlanUpdate) => {
+    const { plansRequestId, plansTargetKey } = get();
     const result = await fetchApi<MedicationPlanResponse>(
       `/api/v1/medicine/plans/${planId}`,
       { method: 'PATCH', body: data },
     );
-    // 更新列表中对应的计划
-    set((state) => ({
-      plans: state.plans.map((p) => (p.id === planId ? result : p)),
-    }));
+    if (
+      get().plansRequestId === plansRequestId
+      && get().plansTargetKey === plansTargetKey
+    ) {
+      set((state) => ({
+        plans: state.plans.map((p) => (p.id === planId ? result : p)),
+      }));
+    }
     return result;
   },
 
@@ -294,6 +387,10 @@ export const useMedicineStore = create<MedicineState>()((set, get) => ({
       todayProgress: 0,
       isLoading: false,
       error: null,
+      plansRequestId: get().plansRequestId + 1,
+      plansTargetKey: null,
+      timelineRequestId: get().timelineRequestId + 1,
+      timelineTargetKey: null,
     });
   },
 }));

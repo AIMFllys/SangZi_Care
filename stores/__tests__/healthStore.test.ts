@@ -6,7 +6,10 @@ import {
   RECORD_TYPE_CONFIG,
   RECORD_TYPES,
 } from '../healthStore';
-import type { HealthRecordResponse } from '../healthStore';
+import type {
+  HealthRecordResponse,
+  LatestRecordsResponse,
+} from '../healthStore';
 
 // Mock fetchApi
 vi.mock('@/lib/api', () => ({
@@ -16,6 +19,16 @@ vi.mock('@/lib/api', () => ({
 import { fetchApi } from '@/lib/api';
 
 const mockFetchApi = fetchApi as ReturnType<typeof vi.fn>;
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
 
 // ---------- 辅助工厂 ----------
 
@@ -146,6 +159,16 @@ describe('useHealthStore', () => {
       expect(mockFetchApi).toHaveBeenCalledWith('/api/v1/health/records/latest');
     });
 
+    it('家属查询时显式携带长辈 ID', async () => {
+      mockFetchApi.mockResolvedValue({});
+
+      await useHealthStore.getState().fetchLatest('elder-1');
+
+      expect(mockFetchApi).toHaveBeenCalledWith(
+        '/api/v1/health/records/latest?user_id=elder-1',
+      );
+    });
+
     it('拉取失败设置错误信息', async () => {
       mockFetchApi.mockRejectedValue(new Error('网络错误'));
 
@@ -154,6 +177,40 @@ describe('useHealthStore', () => {
       const state = useHealthStore.getState();
       expect(state.error).toBe('网络错误');
       expect(state.loading).toBe(false);
+    });
+
+    it('切换长辈后清空旧数据并忽略迟到响应', async () => {
+      const first = deferred<LatestRecordsResponse>();
+      const second = deferred<LatestRecordsResponse>();
+      const elderA = {
+        blood_pressure: makeRecord({ id: 'a', user_id: 'elder-a' }),
+        blood_sugar: null,
+        heart_rate: null,
+        weight: null,
+        temperature: null,
+      };
+      const elderB = {
+        blood_pressure: makeRecord({ id: 'b', user_id: 'elder-b' }),
+        blood_sugar: null,
+        heart_rate: null,
+        weight: null,
+        temperature: null,
+      };
+      mockFetchApi
+        .mockImplementationOnce(() => first.promise)
+        .mockImplementationOnce(() => second.promise);
+
+      const firstRequest = useHealthStore.getState().fetchLatest('elder-a');
+      const secondRequest = useHealthStore.getState().fetchLatest('elder-b');
+
+      expect(useHealthStore.getState().latestRecords).toEqual({});
+      second.resolve(elderB);
+      await secondRequest;
+      first.resolve(elderA);
+      await firstRequest;
+
+      expect(useHealthStore.getState().latestRecords).toEqual(elderB);
+      expect(useHealthStore.getState().error).toBeNull();
     });
   });
 
@@ -176,6 +233,16 @@ describe('useHealthStore', () => {
       );
     });
 
+    it('趋势查询显式携带长辈 ID', async () => {
+      mockFetchApi.mockResolvedValue([]);
+
+      await useHealthStore.getState().fetchTrend('heart_rate', 7, 'elder-1');
+
+      expect(mockFetchApi).toHaveBeenCalledWith(
+        '/api/v1/health/records/trend?record_type=heart_rate&days=7&user_id=elder-1',
+      );
+    });
+
     it('默认 days 为 7', async () => {
       mockFetchApi.mockResolvedValue([]);
 
@@ -194,6 +261,28 @@ describe('useHealthStore', () => {
       const state = useHealthStore.getState();
       expect(state.error).toBe('服务器错误');
       expect(state.loading).toBe(false);
+    });
+
+    it('不同长辈的趋势请求乱序返回时保留最新目标', async () => {
+      const first = deferred<HealthRecordResponse[]>();
+      const second = deferred<HealthRecordResponse[]>();
+      const elderA = [makeRecord({ id: 'a', user_id: 'elder-a' })];
+      const elderB = [makeRecord({ id: 'b', user_id: 'elder-b' })];
+      mockFetchApi
+        .mockImplementationOnce(() => first.promise)
+        .mockImplementationOnce(() => second.promise);
+
+      const firstRequest = useHealthStore.getState()
+        .fetchTrend('heart_rate', 7, 'elder-a');
+      const secondRequest = useHealthStore.getState()
+        .fetchTrend('heart_rate', 7, 'elder-b');
+
+      second.resolve(elderB);
+      await secondRequest;
+      first.resolve(elderA);
+      await firstRequest;
+
+      expect(useHealthStore.getState().trendData).toEqual(elderB);
     });
   });
 

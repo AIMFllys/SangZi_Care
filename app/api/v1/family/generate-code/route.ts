@@ -7,6 +7,7 @@
 // 返回：{ bind_code, bind_id }
 // ============================================================
 
+import { randomInt } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import {
   ApiError,
@@ -15,57 +16,55 @@ import {
   toApiResponse,
   withPrivateNoStore,
 } from '@/lib/server';
-import { generateBindCode, type FamilyBindInsert } from '../_lib';
+import {
+  assertExpectedRole,
+  getDatabaseUserRole,
+} from '../_lib';
 
 export const runtime = 'nodejs';
 
 interface GenerateCodeResponse {
   bind_code: string;
   bind_id: string;
+  expires_at: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const { user_id } = await requireUser(request);
-
-    const bind_code = generateBindCode();
-    const now = new Date().toISOString();
-
-    // 注意：family_id 留空（migration-family-bind.sql 已将其改为可空），
-    // relation 占位为 'pending'，待家属兑码时覆盖。
-    const record: FamilyBindInsert = {
-      elder_id: user_id,
-      bind_code,
-      status: 'pending',
-      relation: 'pending',
-      can_view_health: true,
-      can_edit_medication: false,
-      can_receive_emergency: true,
-      created_at: now,
-      bound_at: now,
-    };
-
     const supabase = getSupabaseServerClient();
-    const { data, error } = await supabase
-      .from('oc_elder_family_binds')
-      .insert(record)
-      .select('*');
+    const role = await getDatabaseUserRole(supabase, user_id);
+    assertExpectedRole(role, 'elder');
 
-    if (error) {
-      console.error('[POST /family/generate-code] 插入失败:', error);
-      throw new ApiError(500, `生成绑定码失败: ${error.message}`);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+
+    // RPC 在数据库事务内按长辈加锁、失效旧码并创建新码，确保并发请求
+    // 最终也只有一个 pending 绑定码。
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const bind_code = randomInt(0, 1_000_000).toString().padStart(6, '0');
+      const { data, error } = await supabase
+        .rpc('oc_create_family_bind_code', {
+          p_elder_id: user_id,
+          p_bind_code: bind_code,
+          p_expires_at: expiresAt,
+        });
+
+      if (!error && data) {
+        return withPrivateNoStore(
+          NextResponse.json<GenerateCodeResponse>({
+            bind_code,
+            bind_id: data,
+            expires_at: expiresAt,
+          }),
+        );
+      }
+      if (error?.code !== '23505') {
+        console.error('[POST /family/generate-code] 插入失败:', error);
+        throw new ApiError(500, '生成绑定码失败');
+      }
     }
 
-    if (!data || data.length === 0) {
-      throw new ApiError(500, '生成绑定码失败');
-    }
-
-    return withPrivateNoStore(
-      NextResponse.json<GenerateCodeResponse>({
-        bind_code,
-        bind_id: data[0].id,
-      }),
-    );
+    throw new ApiError(503, '暂时无法生成唯一绑定码，请稍后重试');
   } catch (err) {
     return toApiResponse(err);
   }

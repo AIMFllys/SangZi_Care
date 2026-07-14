@@ -2,10 +2,9 @@
 // PATCH / DELETE /api/v1/family/binds/{bind_id}
 // ------------------------------------------------------------
 // 对齐 backend/api/v1/family.py · update_bind / delete_bind
-//   PATCH  : 更新权限子集（can_view_health / can_edit_medication /
-//            can_receive_emergency / status），同时刷新 bound_at
+//   PATCH  : 仅允许长辈本人更新 active 绑定的权限子集
 //   DELETE : 软解绑，置 status='inactive'
-// 权限对齐 Python：仅 requireUser 鉴权，不额外做归属校验。
+// 双方均可解绑；解绑后必须重新使用绑定码建立关系，不能恢复旧记录。
 // 返回：PATCH → FamilyBindResponse；DELETE → { message }
 // ============================================================
 
@@ -18,6 +17,8 @@ import {
   withPrivateNoStore,
 } from '@/lib/server';
 import {
+  assertBindParticipant,
+  assertCanManagePermissions,
   toBindResponse,
   type FamilyBindRow,
   type FamilyBindUpdate,
@@ -27,9 +28,9 @@ export const runtime = 'nodejs';
 
 interface FamilyBindUpdateRequest {
   can_view_health?: unknown;
+  can_edit_health?: unknown;
   can_edit_medication?: unknown;
   can_receive_emergency?: unknown;
-  status?: unknown;
 }
 
 interface DeleteBindResponse {
@@ -41,7 +42,7 @@ export async function PATCH(
   { params }: { params: Promise<{ bind_id: string }> },
 ) {
   try {
-    await requireUser(request);
+    const { user_id: currentUserId } = await requireUser(request);
     const { bind_id } = await params;
 
     if (!bind_id) {
@@ -50,14 +51,39 @@ export async function PATCH(
 
     const body = (await request.json()) as FamilyBindUpdateRequest;
 
-    const now = new Date().toISOString();
-    const update_data: FamilyBindUpdate = { bound_at: now };
+    const supabase = getSupabaseServerClient();
+    const { data: existingRows, error: existingError } = await supabase
+      .from('oc_elder_family_binds')
+      .select('*')
+      .eq('id', bind_id)
+      .eq('status', 'active')
+      .limit(1);
+    if (existingError) {
+      console.error('[PATCH /family/binds/:id] 查询失败:', existingError);
+      throw new ApiError(500, '读取绑定关系失败');
+    }
+    if (!existingRows || existingRows.length === 0) {
+      throw new ApiError(404, '绑定记录不存在');
+    }
+    const existing = existingRows[0] as FamilyBindRow;
+    assertCanManagePermissions(existing, currentUserId);
+
+    const update_data: FamilyBindUpdate = {};
+    let changed = false;
 
     if (body.can_view_health !== undefined && body.can_view_health !== null) {
       if (typeof body.can_view_health !== 'boolean') {
         throw new ApiError(400, 'can_view_health 必须为布尔值');
       }
       update_data.can_view_health = body.can_view_health;
+      changed = true;
+    }
+    if (body.can_edit_health !== undefined && body.can_edit_health !== null) {
+      if (typeof body.can_edit_health !== 'boolean') {
+        throw new ApiError(400, 'can_edit_health 必须为布尔值');
+      }
+      update_data.can_edit_health = body.can_edit_health;
+      changed = true;
     }
     if (
       body.can_edit_medication !== undefined &&
@@ -67,6 +93,7 @@ export async function PATCH(
         throw new ApiError(400, 'can_edit_medication 必须为布尔值');
       }
       update_data.can_edit_medication = body.can_edit_medication;
+      changed = true;
     }
     if (
       body.can_receive_emergency !== undefined &&
@@ -76,19 +103,15 @@ export async function PATCH(
         throw new ApiError(400, 'can_receive_emergency 必须为布尔值');
       }
       update_data.can_receive_emergency = body.can_receive_emergency;
+      changed = true;
     }
-    if (body.status !== undefined && body.status !== null) {
-      if (typeof body.status !== 'string') {
-        throw new ApiError(400, 'status 必须为字符串');
-      }
-      update_data.status = body.status;
-    }
+    if (!changed) throw new ApiError(400, '没有需要更新的字段');
 
-    const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
       .from('oc_elder_family_binds')
       .update(update_data)
       .eq('id', bind_id)
+      .eq('status', 'active')
       .select('*');
 
     if (error) {
@@ -97,7 +120,7 @@ export async function PATCH(
     }
 
     if (!data || data.length === 0) {
-      throw new ApiError(500, '更新绑定权限失败');
+      throw new ApiError(409, '绑定关系已变更，请刷新后重试');
     }
 
     return withPrivateNoStore(
@@ -113,7 +136,7 @@ export async function DELETE(
   { params }: { params: Promise<{ bind_id: string }> },
 ) {
   try {
-    await requireUser(request);
+    const { user_id: currentUserId } = await requireUser(request);
     const { bind_id } = await params;
 
     if (!bind_id) {
@@ -122,10 +145,26 @@ export async function DELETE(
 
     const now = new Date().toISOString();
     const supabase = getSupabaseServerClient();
+    const { data: existingRows, error: existingError } = await supabase
+      .from('oc_elder_family_binds')
+      .select('*')
+      .eq('id', bind_id)
+      .eq('status', 'active')
+      .limit(1);
+    if (existingError) {
+      console.error('[DELETE /family/binds/:id] 查询失败:', existingError);
+      throw new ApiError(500, '读取绑定关系失败');
+    }
+    if (!existingRows || existingRows.length === 0) {
+      throw new ApiError(404, '绑定记录不存在');
+    }
+    assertBindParticipant(existingRows[0] as FamilyBindRow, currentUserId);
+
     const { data, error } = await supabase
       .from('oc_elder_family_binds')
       .update({ status: 'inactive', bound_at: now })
       .eq('id', bind_id)
+      .eq('status', 'active')
       .select('id');
 
     if (error) {

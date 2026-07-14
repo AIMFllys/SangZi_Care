@@ -13,12 +13,25 @@ import { IconButton } from '@/components/ui/IconButton';
 import PageHeader from '@/components/layout/PageHeader';
 import styles from './page.module.css';
 
-const GENDER_OPTIONS = ['男', '女'] as const;
+const GENDER_OPTIONS = [
+  { value: 'male', label: '男' },
+  { value: 'female', label: '女' },
+  { value: 'other', label: '其他' },
+] as const;
+
+type GenderValue = (typeof GENDER_OPTIONS)[number]['value'];
+
+function normalizeGender(value: string | null | undefined): GenderValue | '' {
+  if (value === 'male' || value === '男') return 'male';
+  if (value === 'female' || value === '女') return 'female';
+  if (value === 'other' || value === '其他') return 'other';
+  return '';
+}
 
 interface ProfileForm {
   name: string;
   birth_date: string;
-  gender: string;
+  gender: GenderValue | '';
   chronic_diseases: string[];
 }
 
@@ -44,7 +57,7 @@ export default function ProfilePage() {
       setForm({
         name: user.name || '',
         birth_date: user.birth_date || '',
-        gender: user.gender || '',
+        gender: normalizeGender(user.gender),
         chronic_diseases: user.chronic_diseases || [],
       });
     }
@@ -159,19 +172,19 @@ export default function ProfilePage() {
           <div className={styles.formGroup}>
             <span className={styles.formLabel}>性别</span>
             <div className={styles.genderGrid} role="radiogroup" aria-label="性别选择">
-              {GENDER_OPTIONS.map((g) => (
+              {GENDER_OPTIONS.map((option) => (
                 <button
-                  key={g}
+                  key={option.value}
                   type="button"
                   role="radio"
-                  aria-checked={form.gender === g}
-                  className={`${styles.genderChip} ${form.gender === g ? styles.genderChipActive : ''}`}
+                  aria-checked={form.gender === option.value}
+                  className={`${styles.genderChip} ${form.gender === option.value ? styles.genderChipActive : ''}`}
                   onClick={() => {
-                    setForm((p) => ({ ...p, gender: g }));
+                    setForm((p) => ({ ...p, gender: option.value }));
                     setSuccess(false);
                   }}
                 >
-                  {g}
+                  {option.label}
                 </button>
               ))}
             </div>

@@ -26,6 +26,7 @@ import {
   type MedicationPlanResponse,
   type MedicationPlanRow,
 } from '../_lib';
+import { normalizePlanTime } from '../_time';
 
 export const runtime = 'nodejs';
 
@@ -189,7 +190,13 @@ export async function POST(request: NextRequest) {
     const scheduleTimes = parseStringArray(
       body.schedule_times,
       'schedule_times',
-    );
+    ).map((time) => {
+      try {
+        return normalizePlanTime(time);
+      } catch {
+        throw new ApiError(400, 'schedule_times 必须为有效的 HH:MM 时间数组');
+      }
+    });
     const startDate = parseString(body.start_date, 'start_date');
 
     // 跨用户写校验：目标 user_id ≠ 当前用户 → 需 can_edit_medication
@@ -208,7 +215,6 @@ export async function POST(request: NextRequest) {
     );
     const endDate = parseOptionalString(body.end_date, 'end_date');
     const isActive = parseOptionalBoolean(body.is_active, 'is_active');
-    const createdByRaw = parseOptionalString(body.created_by, 'created_by');
     const unit = parseOptionalString(body.unit, 'unit');
     const notes = parseOptionalString(body.notes, 'notes');
     const sideEffects = parseOptionalString(
@@ -224,9 +230,6 @@ export async function POST(request: NextRequest) {
       'remind_before_minutes',
     );
 
-    // created_by 缺省回填当前用户（对齐 Python）
-    const createdBy = createdByRaw ?? currentUserId;
-
     const now = new Date().toISOString();
     const record: MedicationPlanInsert = {
       user_id: targetUserId,
@@ -236,7 +239,7 @@ export async function POST(request: NextRequest) {
       start_date: startDate,
       created_at: now,
       updated_at: now,
-      created_by: createdBy,
+      created_by: currentUserId,
       ...(repeatDays !== null ? { repeat_days: repeatDays } : {}),
       ...(endDate !== null ? { end_date: endDate } : {}),
       ...(isActive !== null ? { is_active: isActive } : {}),

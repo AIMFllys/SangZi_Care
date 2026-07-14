@@ -40,23 +40,26 @@ export async function GET(request: NextRequest) {
 
     const latest: LatestRecordsResponse = {};
 
-    for (const rt of RECORD_TYPES) {
-      const { data, error } = await supabase
+    const results = await Promise.all(RECORD_TYPES.map(async (recordType) => {
+      const result = await supabase
         .from('oc_health_records')
         .select('*')
         .eq('user_id', targetUserId)
-        .eq('record_type', rt)
+        .eq('record_type', recordType)
         .order('measured_at', { ascending: false })
         .limit(1);
+      return { recordType, ...result };
+    }));
 
+    for (const { recordType, data, error } of results) {
       if (error) {
         console.error('[GET /health/records/latest] 查询失败:', error);
-        latest[rt] = null;
+        latest[recordType] = null;
         continue;
       }
 
       const rows = (data ?? []) as HealthRecordRow[];
-      latest[rt] = rows.length > 0 ? toRecordResponse(rows[0]) : null;
+      latest[recordType] = rows.length > 0 ? toRecordResponse(rows[0]) : null;
     }
 
     return withPrivateNoStore(

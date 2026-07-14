@@ -61,6 +61,7 @@ export interface MedicationRecordResponse {
   delayed_count: number | null;
   notes: string | null;
   created_at: string | null;
+  confirmed_by: string | null;
 }
 
 export type MedicationStatus = 'pending' | 'taken' | 'skipped' | 'delayed';
@@ -69,6 +70,7 @@ export type MedicationStatus = 'pending' | 'taken' | 'skipped' | 'delayed';
 export interface TodayTimelineItem {
   plan: MedicationPlanResponse;
   scheduled_time: string;
+  scheduled_at: string;
   record: MedicationRecordResponse | null;
   status: MedicationStatus;
 }
@@ -130,6 +132,7 @@ export function toRecordResponse(
     delayed_count: row.delayed_count,
     notes: row.notes,
     created_at: row.created_at,
+    confirmed_by: row.confirmed_by,
   };
 }
 
@@ -137,7 +140,7 @@ export function toRecordResponse(
  * 解析用药数据查询/写入的目标用户 id，并校验跨用户可见性。
  *
  * - requestedUserId 为空或等于当前用户 → 返回当前用户（看自己/写自己）。
- * - mode='view'：需存在 active 绑定且 can_view_health=true（家属只读）。
+ * - mode='view'：需存在 active 绑定，且具备健康查看或用药管理权限。
  * - mode='edit'：需存在 active 绑定且 can_edit_medication=true（家属代管药）。
  *   不满足 → 抛 403。
  *
@@ -153,17 +156,18 @@ export async function resolveMedicationTarget(
     return currentUserId;
   }
 
-  const permissionColumn =
-    mode === 'edit' ? 'can_edit_medication' : 'can_view_health';
-
-  const { data, error } = await supabase
+  let query = supabase
     .from('oc_elder_family_binds')
     .select('id')
     .eq('family_id', currentUserId)
     .eq('elder_id', requestedUserId)
-    .eq(permissionColumn, true)
-    .eq('status', 'active')
-    .limit(1);
+    .eq('status', 'active');
+
+  query = mode === 'edit'
+    ? query.eq('can_edit_medication', true)
+    : query.or('can_view_health.eq.true,can_edit_medication.eq.true');
+
+  const { data, error } = await query.limit(1);
 
   if (error) {
     console.error('[medicine] 校验家庭绑定失败:', error);

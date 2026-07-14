@@ -33,6 +33,7 @@ const mockFamilyUser = {
 const mockState = {
   currentUser: mockElderUser as Record<string, unknown>,
   isElderMode: true,
+  ownerUserId: 'elder-1',
   currentBinds: [
     {
       bind: { elder_id: 'elder-1', family_id: 'family-1', relation: '儿子', status: 'active' },
@@ -50,6 +51,7 @@ vi.mock('@/stores/familyStore', () => ({
   useFamilyStore: (selector: (s: Record<string, unknown>) => unknown) =>
     selector({
       binds: mockState.currentBinds,
+      ownerUserId: mockState.ownerUserId,
       healthSummaries: {},
       isLoading: false,
       fetchBinds: mockFetchBinds,
@@ -89,6 +91,7 @@ describe('FamilyDetailClient — 老年人端', () => {
     vi.clearAllMocks();
     mockState.currentUser = mockElderUser;
     mockState.isElderMode = true;
+    mockState.ownerUserId = 'elder-1';
     mockState.currentBinds = [
       {
         bind: { elder_id: 'elder-1', family_id: 'family-1', relation: '儿子', status: 'active' },
@@ -141,6 +144,14 @@ describe('FamilyDetailClient — 老年人端', () => {
     expect(mockFetchBinds).toHaveBeenCalledWith('elder-1');
   });
 
+  it('不会展示共用设备上一个账号的绑定缓存', () => {
+    mockState.ownerUserId = 'previous-user';
+    render(<FamilyDetailClient userId="family-1" />);
+    expect(screen.getByText('未找到该用户信息')).toBeTruthy();
+    expect(screen.queryByText('张小明')).toBeNull();
+    expect(mockFetchBinds).toHaveBeenCalledWith('elder-1');
+  });
+
   it('last_active_at 为 null 时显示"未知"', () => {
     mockState.currentBinds = [
       {
@@ -160,6 +171,7 @@ describe('FamilyDetailClient — 家属端', () => {
     vi.clearAllMocks();
     mockState.currentUser = mockFamilyUser;
     mockState.isElderMode = false;
+    mockState.ownerUserId = 'family-1';
     mockState.currentBinds = [
       {
         bind: { elder_id: 'elder-1', family_id: 'family-1', relation: '奶奶', status: 'active' },

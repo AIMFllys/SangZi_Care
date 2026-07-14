@@ -16,7 +16,7 @@ let mockUser: Record<string, unknown> | null = {
   phone: '13800138000',
   role: 'elder',
   birth_date: '1950-05-15',
-  gender: '男',
+  gender: 'male',
   chronic_diseases: ['高血压', '糖尿病'],
   font_size: 'normal',
   voice_speed: 0.8,
@@ -64,7 +64,7 @@ describe('ProfilePage 个人信息编辑页', () => {
       phone: '13800138000',
       role: 'elder',
       birth_date: '1950-05-15',
-      gender: '男',
+      gender: 'male',
       chronic_diseases: ['高血压', '糖尿病'],
       font_size: 'normal',
       voice_speed: 0.8,
@@ -151,7 +151,11 @@ describe('ProfilePage 个人信息编辑页', () => {
     await waitFor(() => {
       expect(mockFetchApi).toHaveBeenCalledWith('/api/v1/users/me', {
         method: 'PATCH',
-        body: expect.objectContaining({ name: '李四' }),
+        body: expect.objectContaining({
+          name: '李四',
+          gender: 'male',
+          birth_date: '1950-05-15',
+        }),
       });
     });
     await waitFor(() => {

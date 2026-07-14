@@ -13,12 +13,17 @@ export function useFamilyBinds() {
     const binds = useFamilyStore((s) => s.binds);
     const fetchBinds = useFamilyStore((s) => s.fetchBinds);
     const isLoading = useFamilyStore((s) => s.isLoading);
+    const ownerUserId = useFamilyStore((s) => s.ownerUserId);
 
     useEffect(() => {
-        if (user?.id && binds.length === 0) {
+        if (user?.id && (binds.length === 0 || ownerUserId !== user.id)) {
             fetchBinds(user.id);
         }
-    }, [user?.id, binds.length, fetchBinds]);
+    }, [user?.id, binds.length, fetchBinds, ownerUserId]);
 
-    return { binds, isLoading };
+    const ownsCache = Boolean(user?.id && ownerUserId === user.id);
+    return {
+        binds: ownsCache ? binds : [],
+        isLoading: Boolean(user?.id) && (!ownsCache || isLoading),
+    };
 }

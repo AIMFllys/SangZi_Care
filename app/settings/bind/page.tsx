@@ -11,16 +11,16 @@ import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import PageHeader from '@/components/layout/PageHeader';
+import {
+  displayElderRelation,
+  ELDER_RELATION_OPTIONS,
+} from '@/lib/familyRelations';
 import styles from './page.module.css';
-
-/** 关系类型选项 */
-const RELATION_OPTIONS = [
-  '儿子', '女儿', '配偶', '儿媳', '女婿', '孙子', '孙女', '其他',
-] as const;
 
 /** 权限配置项 */
 const PERMISSION_LABELS: Record<string, string> = {
   can_view_health: '查看健康数据',
+  can_edit_health: '代为记录健康',
   can_edit_medication: '编辑用药计划',
   can_receive_emergency: '接收紧急通知',
 };
@@ -33,15 +33,26 @@ interface FamilyBindResponse {
   status: string;
   bind_code: string;
   can_view_health: boolean;
+  can_edit_health: boolean;
   can_edit_medication: boolean;
   can_receive_emergency: boolean;
   bound_at: string;
   created_at: string;
+  expires_at: string | null;
+  peer: {
+    id: string;
+    name: string;
+    phone: string | null;
+    avatar_url: string | null;
+    last_active_at: string | null;
+    role: string;
+  } | null;
 }
 
 interface GenerateCodeResponse {
   bind_code: string;
   bind_id: string;
+  expires_at: string;
 }
 
 export default function BindManagementPage() {
@@ -55,10 +66,12 @@ export default function BindManagementPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [generatedExpiresAt, setGeneratedExpiresAt] = useState<string | null>(null);
+  const [codeSecondsLeft, setCodeSecondsLeft] = useState(0);
   const [generating, setGenerating] = useState(false);
 
   const [bindCode, setBindCode] = useState('');
-  const [selectedRelation, setSelectedRelation] = useState<string>(RELATION_OPTIONS[0]);
+  const [selectedRelation, setSelectedRelation] = useState<string>(ELDER_RELATION_OPTIONS[0]);
   const [binding, setBinding] = useState(false);
   const [bindError, setBindError] = useState<string | null>(null);
   const [bindSuccess, setBindSuccess] = useState(false);
@@ -87,14 +100,39 @@ export default function BindManagementPage() {
     }
   }, [isReady, loadBinds]);
 
+  useEffect(() => {
+    if (!generatedCode || !generatedExpiresAt) return;
+
+    const updateCountdown = () => {
+      const seconds = Math.max(
+        0,
+        Math.ceil((new Date(generatedExpiresAt).getTime() - Date.now()) / 1000),
+      );
+      setCodeSecondsLeft(seconds);
+      if (seconds === 0) {
+        setGeneratedCode(null);
+        setGeneratedExpiresAt(null);
+      }
+    };
+
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, 1000);
+    return () => window.clearInterval(timer);
+  }, [generatedCode, generatedExpiresAt]);
+
   const handleGenerateCode = async () => {
     setGenerating(true);
     setError(null);
+    // 请求开始即隐藏旧码；服务端会同步让旧码失效。
+    setGeneratedCode(null);
+    setGeneratedExpiresAt(null);
+    setCodeSecondsLeft(0);
     try {
       const res = await fetchApi<GenerateCodeResponse>('/api/v1/family/generate-code', {
         method: 'POST',
       });
       setGeneratedCode(res.bind_code);
+      setGeneratedExpiresAt(res.expires_at);
     } catch (err) {
       setError(err instanceof Error ? err.message : '生成绑定码失败');
     } finally {
@@ -206,11 +244,17 @@ export default function BindManagementPage() {
               {bindList.map((bind) => (
                 <Card key={bind.id} variant="glass" className={styles.bindCard}>
                   <div className={styles.bindCardHeader}>
-                    <span className={styles.relation}>{bind.relation || '未知关系'}</span>
+                    <span className={styles.relation}>
+                      {bind.peer?.name || displayElderRelation(bind.relation)}
+                    </span>
                     <Badge variant={bind.status === 'active' ? 'success' : 'warning'}>
                       {bind.status === 'active' ? '已绑定' : bind.status}
                     </Badge>
                   </div>
+
+                  {bind.peer?.name && (
+                    <p className={styles.hint}>{displayElderRelation(bind.relation)}</p>
+                  )}
 
                   <div className={styles.permissions}>
                     {(Object.keys(PERMISSION_LABELS) as Array<keyof typeof PERMISSION_LABELS>).map(
@@ -222,17 +266,23 @@ export default function BindManagementPage() {
                             <span className={styles.permissionLabel}>
                               {PERMISSION_LABELS[permKey]}
                             </span>
-                            <button
-                              type="button"
-                              role="switch"
-                              aria-checked={value}
-                              aria-label={`${PERMISSION_LABELS[permKey]} ${value ? '已开启' : '已关闭'}`}
-                              className={`${styles.toggle} ${value ? styles.toggleOn : styles.toggleOff}`}
-                              disabled={isUpdating}
-                              onClick={() => handlePermissionToggle(bind.id, permKey, value)}
-                            >
-                              <span className={styles.toggleThumb} />
-                            </button>
+                            {isElder ? (
+                              <button
+                                type="button"
+                                role="switch"
+                                aria-checked={value}
+                                aria-label={`${PERMISSION_LABELS[permKey]} ${value ? '已开启' : '已关闭'}`}
+                                className={`${styles.toggle} ${value ? styles.toggleOn : styles.toggleOff}`}
+                                disabled={isUpdating}
+                                onClick={() => handlePermissionToggle(bind.id, permKey, value)}
+                              >
+                                <span className={styles.toggleThumb} />
+                              </button>
+                            ) : (
+                              <Badge variant={value ? 'success' : 'normal'}>
+                                {value ? '已授权' : '未授权'}
+                              </Badge>
+                            )}
                           </label>
                         );
                       },
@@ -256,7 +306,7 @@ export default function BindManagementPage() {
         {isElder && (
           <section className={styles.section} aria-label="生成绑定码">
             <h2 className={styles.sectionTitle}>生成绑定码</h2>
-            <p className={styles.hint}>生成绑定码后，让家属在App中输入即可完成绑定</p>
+            <p className={styles.hint}>绑定码 10 分钟内有效，请交给可信任的家属</p>
             <Button
               variant="primary"
               size="lg"
@@ -270,7 +320,11 @@ export default function BindManagementPage() {
               <div className={styles.codeDisplay} aria-live="polite">
                 <p className={styles.codeLabel}>您的绑定码</p>
                 <p className={styles.codeValue}>{generatedCode}</p>
-                <p className={styles.codeHint}>请将此码告知家属，有效期内使用</p>
+                <p className={styles.codeHint}>
+                  请将此码告知家属，剩余
+                  {Math.floor(codeSecondsLeft / 60)}:
+                  {String(codeSecondsLeft % 60).padStart(2, '0')}
+                </p>
               </div>
             )}
           </section>
@@ -307,9 +361,9 @@ export default function BindManagementPage() {
             />
 
             <div className={styles.formGroup}>
-              <span className={styles.formLabel}>关系类型</span>
+              <span className={styles.formLabel}>这位长辈是我的</span>
               <div className={styles.relationGrid}>
-                {RELATION_OPTIONS.map((rel) => (
+                {ELDER_RELATION_OPTIONS.map((rel) => (
                   <button
                     key={rel}
                     type="button"

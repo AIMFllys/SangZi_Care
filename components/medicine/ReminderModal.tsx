@@ -137,7 +137,7 @@ export function ReminderModal({
       (item) => item.status === 'pending' || item.status === 'delayed',
     );
     for (const item of pendingItems) {
-      await confirmMedication(item.plan.id, item.scheduled_time);
+      await confirmMedication(item.plan.id, item.scheduled_at);
     }
     onClose();
   }, [items, confirmMedication, onClose, stop]);

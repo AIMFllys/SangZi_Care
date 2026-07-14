@@ -13,6 +13,7 @@ module.exports = [
       'coverage/**',
       'android/**/build/**',
       '.trae/**',
+      '.worktrees/**',
       'eslint.config.js',
     ],
   },

@@ -33,6 +33,7 @@ export default function MedicinePage() {
     return !Number.isFinite(deferredUntil) || deferredUntil <= Date.now();
   });
   const [sosMessage, setSosMessage] = useState('');
+  const [actionError, setActionError] = useState('');
 
   useEffect(() => {
     if (user?.id) {
@@ -41,7 +42,12 @@ export default function MedicinePage() {
   }, [user?.id, fetchTodayTimeline]);
 
   const pendingMeds = todayTimeline.filter((t) => t.status !== 'taken');
-  const currentMed = pendingMeds[0];
+  const currentMed = pendingMeds.find((item) => {
+    if (item.plan.remind_enabled === false) return false;
+    const remindBefore = (item.plan.remind_before_minutes ?? 0) * 60_000;
+    const scheduledAt = new Date(item.scheduled_at).getTime();
+    return Number.isFinite(scheduledAt) && Date.now() >= scheduledAt - remindBefore;
+  });
   const reminderKey = showReminder && currentMed
     ? `${currentMed.plan.id}:${currentMed.scheduled_time}`
     : null;
@@ -72,8 +78,13 @@ export default function MedicinePage() {
   const handleConfirm = async () => {
     if (!currentMed) return;
     stop();
-    await confirmMedication(currentMed.plan.id, currentMed.scheduled_time);
-    setShowReminder(false);
+    setActionError('');
+    try {
+      await confirmMedication(currentMed.plan.id, currentMed.scheduled_at);
+      setShowReminder(false);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : '记录服药失败，请重试');
+    }
   };
 
   const handleDefer = () => {
@@ -149,6 +160,7 @@ export default function MedicinePage() {
           </Card>
 
           {sosMessage && <p className={styles.sosMessage} role="status">{sosMessage}</p>}
+          {actionError && <p className={styles.sosMessage} role="alert">{actionError}</p>}
 
           {/* 操作按钮 */}
           <div className={styles.actions}>

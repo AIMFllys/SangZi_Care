@@ -78,14 +78,18 @@ export async function POST(request: NextRequest) {
     }
     const values = body.values as Record<string, unknown>;
 
-    // user_id：仅本人可写；缺省回填当前用户
+    // user_id：本人可写；获 can_edit_health 授权的家属可代录。
     const targetUserId =
       typeof body.user_id === 'string' && body.user_id.trim() !== ''
         ? body.user_id
         : currentUserId;
-    if (targetUserId !== currentUserId) {
-      throw new ApiError(403, '仅本人可录入健康数据');
-    }
+    const supabase = getSupabaseServerClient();
+    await resolveHealthTarget(
+      supabase,
+      currentUserId,
+      targetUserId,
+      'edit',
+    );
 
     // measured_at：缺省/非法时回填当前时间（兼容语音录入未传时间的场景）
     const measuredAt =
@@ -93,8 +97,10 @@ export async function POST(request: NextRequest) {
         ? body.measured_at
         : new Date().toISOString();
 
-    const inputMethod = parseOptionalString(body.input_method, 'input_method');
-    const recordedBy = parseOptionalString(body.recorded_by, 'recorded_by');
+    const requestedInputMethod = parseOptionalString(body.input_method, 'input_method');
+    const inputMethod = targetUserId === currentUserId
+      ? requestedInputMethod
+      : 'family';
     const notes = parseOptionalString(body.notes, 'notes');
     const symptoms = parseOptionalString(body.symptoms, 'symptoms');
 
@@ -110,13 +116,12 @@ export async function POST(request: NextRequest) {
       is_abnormal,
       ...(abnormal_reason ? { abnormal_reason } : {}),
       ...(inputMethod !== null ? { input_method: inputMethod } : {}),
-      ...(recordedBy !== null ? { recorded_by: recordedBy } : {}),
+      recorded_by: currentUserId,
       ...(notes !== null ? { notes } : {}),
       ...(symptoms !== null ? { symptoms } : {}),
       created_at: now,
     };
 
-    const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
       .from('oc_health_records')
       .insert(record)

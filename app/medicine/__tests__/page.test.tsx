@@ -16,11 +16,13 @@ const timeline = [
   {
     plan: { id: 'plan-1', medicine_name: '降压药', dosage: '1片' },
     scheduled_time: '08:00',
+    scheduled_at: new Date(Date.now() - 60_000).toISOString(),
     status: 'pending',
   },
   {
     plan: { id: 'plan-2', medicine_name: '维生素', dosage: '1粒' },
     scheduled_time: '12:00',
+    scheduled_at: new Date(Date.now() - 30_000).toISOString(),
     status: 'pending',
   },
 ];

@@ -26,9 +26,17 @@ import {
   type MedicationRecordInsert,
   type MedicationRecordResponse,
   type MedicationRecordRow,
+  type MedicationPlanRow,
 } from '../_lib';
+import {
+  createScheduledAt,
+  getCareDateInfo,
+  normalizePlanTime,
+} from '../_time';
 
 export const runtime = 'nodejs';
+
+const ALLOWED_STATUSES = new Set(['pending', 'taken', 'skipped', 'delayed']);
 
 interface MedicationRecordCreateBody {
   user_id?: unknown;
@@ -63,7 +71,14 @@ export async function POST(request: NextRequest) {
     ) {
       throw new ApiError(400, 'scheduled_time 不能为空');
     }
-    const scheduledTime = body.scheduled_time;
+    const scheduledDate = new Date(body.scheduled_time);
+    if (Number.isNaN(scheduledDate.getTime())) {
+      throw new ApiError(400, 'scheduled_time 必须为完整的 ISO 时间');
+    }
+    const occurrence = getCareDateInfo(scheduledDate);
+    // 数据库中的发生时间必须固定到计划分钟，避免客户端携带秒/毫秒
+    // 绕过 (plan_id, scheduled_time) 唯一约束，或产生时间线无法匹配的记录。
+    const scheduledTime = createScheduledAt(occurrence.date, occurrence.time);
 
     // user_id 缺省回填当前用户
     const targetUserId =
@@ -80,11 +95,39 @@ export async function POST(request: NextRequest) {
       'edit',
     );
 
+    const { data: planRows, error: planError } = await supabase
+      .from('oc_medication_plans')
+      .select('*')
+      .eq('id', planId)
+      .eq('user_id', targetUserId)
+      .limit(1);
+    if (planError) {
+      console.error('[POST /medicine/records] 查询计划失败:', planError);
+      throw new ApiError(500, '校验用药计划失败');
+    }
+    if (!planRows || planRows.length === 0) {
+      throw new ApiError(404, '用药计划不存在或不属于该长辈');
+    }
+    const plan = planRows[0] as MedicationPlanRow;
+    const planTimes = (plan.schedule_times ?? []).map(normalizePlanTime);
+    if (!planTimes.includes(occurrence.time)) {
+      throw new ApiError(400, '该时间不属于用药计划');
+    }
+    if (plan.start_date > occurrence.date || (plan.end_date && plan.end_date < occurrence.date)) {
+      throw new ApiError(400, '该日期不在用药计划有效期内');
+    }
+    if (plan.repeat_days && !plan.repeat_days.includes(occurrence.weekday)) {
+      throw new ApiError(400, '该日期不在用药计划重复日内');
+    }
+
     // status 缺省 'pending'
     const status =
       typeof body.status === 'string' && body.status.trim() !== ''
         ? body.status
         : 'pending';
+    if (!ALLOWED_STATUSES.has(status)) {
+      throw new ApiError(400, 'status 必须为 pending、taken、skipped 或 delayed');
+    }
 
     // 可选字段
     const takenAtRaw =
@@ -109,7 +152,7 @@ export async function POST(request: NextRequest) {
       plan_id: planId,
       scheduled_time: scheduledTime,
       status,
-      created_at: now,
+      confirmed_by: currentUserId,
       ...(takenAt !== null ? { taken_at: takenAt } : {}),
       ...(delayedCount !== null ? { delayed_count: delayedCount } : {}),
       ...(notes !== null ? { notes } : {}),
@@ -117,7 +160,7 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('oc_medication_records')
-      .insert(record)
+      .upsert(record, { onConflict: 'plan_id,scheduled_time' })
       .select('*');
 
     if (error) {

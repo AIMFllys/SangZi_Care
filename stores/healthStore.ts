@@ -35,6 +35,7 @@ export interface LatestRecordsResponse {
 
 /** 创建健康记录请求体 */
 export interface HealthRecordCreate {
+  user_id?: string;
   record_type: string;
   values: Record<string, number>;
   measured_at: string;
@@ -115,11 +116,17 @@ interface HealthState {
   loading: boolean;
   /** 错误信息 */
   error: string | null;
+  /** 最新记录请求代次，防止切换长辈后的旧响应覆盖新数据 */
+  latestRequestId: number;
+  latestTargetKey: string | null;
+  /** 趋势请求代次，隔离不同长辈与不同指标 */
+  trendRequestId: number;
+  trendQueryKey: string | null;
 
   /** 拉取各类型最新记录 */
-  fetchLatest: () => Promise<void>;
+  fetchLatest: (userId?: string) => Promise<void>;
   /** 拉取趋势数据 */
-  fetchTrend: (recordType: string, days?: number) => Promise<void>;
+  fetchTrend: (recordType: string, days?: number, userId?: string) => Promise<void>;
   /** 创建健康记录 */
   createRecord: (data: HealthRecordCreate) => Promise<HealthRecordResponse>;
   /** 设置选中类型 */
@@ -128,21 +135,42 @@ interface HealthState {
   reset: () => void;
 }
 
-export const useHealthStore = create<HealthState>()((set) => ({
+export const useHealthStore = create<HealthState>()((set, get) => ({
   latestRecords: {},
   trendData: [],
   selectedType: 'blood_pressure',
   loading: false,
   error: null,
+  latestRequestId: 0,
+  latestTargetKey: null,
+  trendRequestId: 0,
+  trendQueryKey: null,
 
-  fetchLatest: async () => {
-    set({ loading: true, error: null });
+  fetchLatest: async (userId) => {
+    const targetKey = userId ?? 'self';
+    const requestId = get().latestRequestId + 1;
+    set((state) => ({
+      latestRequestId: requestId,
+      latestTargetKey: targetKey,
+      latestRecords:
+        state.latestTargetKey === targetKey ? state.latestRecords : {},
+      loading: true,
+      error: null,
+    }));
     try {
       const data = await fetchApi<LatestRecordsResponse>(
-        '/api/v1/health/records/latest',
+        `/api/v1/health/records/latest${userId ? `?user_id=${encodeURIComponent(userId)}` : ''}`,
       );
+      if (
+        get().latestRequestId !== requestId
+        || get().latestTargetKey !== targetKey
+      ) return;
       set({ latestRecords: data as unknown as Record<string, HealthRecordResponse | null>, loading: false });
     } catch (err) {
+      if (
+        get().latestRequestId !== requestId
+        || get().latestTargetKey !== targetKey
+      ) return;
       set({
         error: err instanceof Error ? err.message : '加载健康数据失败',
         loading: false,
@@ -150,14 +178,31 @@ export const useHealthStore = create<HealthState>()((set) => ({
     }
   },
 
-  fetchTrend: async (recordType: string, days = 7) => {
-    set({ loading: true, error: null });
+  fetchTrend: async (recordType: string, days = 7, userId) => {
+    const queryKey = `${userId ?? 'self'}:${recordType}:${days}`;
+    const requestId = get().trendRequestId + 1;
+    set((state) => ({
+      trendRequestId: requestId,
+      trendQueryKey: queryKey,
+      trendData: state.trendQueryKey === queryKey ? state.trendData : [],
+      selectedType: recordType,
+      loading: true,
+      error: null,
+    }));
     try {
       const data = await fetchApi<HealthRecordResponse[]>(
-        `/api/v1/health/records/trend?record_type=${recordType}&days=${days}`,
+        `/api/v1/health/records/trend?record_type=${recordType}&days=${days}${userId ? `&user_id=${encodeURIComponent(userId)}` : ''}`,
       );
+      if (
+        get().trendRequestId !== requestId
+        || get().trendQueryKey !== queryKey
+      ) return;
       set({ trendData: data, selectedType: recordType, loading: false });
     } catch (err) {
+      if (
+        get().trendRequestId !== requestId
+        || get().trendQueryKey !== queryKey
+      ) return;
       set({
         error: err instanceof Error ? err.message : '加载趋势数据失败',
         loading: false,
@@ -184,6 +229,10 @@ export const useHealthStore = create<HealthState>()((set) => ({
       selectedType: 'blood_pressure',
       loading: false,
       error: null,
+      latestRequestId: get().latestRequestId + 1,
+      latestTargetKey: null,
+      trendRequestId: get().trendRequestId + 1,
+      trendQueryKey: null,
     });
   },
 }));

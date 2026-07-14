@@ -21,7 +21,7 @@ const STATUS_CONFIG: Record<
 
 interface TimelineItemProps {
   item: TodayTimelineItem;
-  onConfirm?: (planId: string, scheduledTime: string) => void;
+  onConfirm?: (planId: string, scheduledAt: string) => void;
 }
 
 function TimelineItem({ item, onConfirm }: TimelineItemProps) {
@@ -29,8 +29,8 @@ function TimelineItem({ item, onConfirm }: TimelineItemProps) {
   const canConfirm = item.status === 'pending' || item.status === 'delayed';
 
   const handleConfirm = useCallback(() => {
-    onConfirm?.(item.plan.id, item.scheduled_time);
-  }, [onConfirm, item.plan.id, item.scheduled_time]);
+    onConfirm?.(item.plan.id, item.scheduled_at);
+  }, [onConfirm, item.plan.id, item.scheduled_at]);
 
   return (
     <div
@@ -79,7 +79,7 @@ function TimelineItem({ item, onConfirm }: TimelineItemProps) {
 
 interface PeriodGroupProps {
   group: TimelineGroup;
-  onConfirm?: (planId: string, scheduledTime: string) => void;
+  onConfirm?: (planId: string, scheduledAt: string) => void;
 }
 
 function PeriodGroup({ group, onConfirm }: PeriodGroupProps) {
@@ -105,7 +105,7 @@ function PeriodGroup({ group, onConfirm }: PeriodGroupProps) {
 
 export interface MedicineTimelineProps {
   items: TodayTimelineItem[];
-  onConfirm?: (planId: string, scheduledTime: string) => void;
+  onConfirm?: (planId: string, scheduledAt: string) => void;
 }
 
 export function MedicineTimeline({ items, onConfirm }: MedicineTimelineProps) {

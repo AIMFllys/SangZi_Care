@@ -30,9 +30,9 @@ export default function FamilyHomeView() {
 
   useEffect(() => {
     if (elder) {
-      fetchLatest();
-      fetchTodayTimeline();
-      fetchTrend('heart_rate', 7);
+      fetchLatest(elder.user.id);
+      fetchTodayTimeline(elder.user.id);
+      fetchTrend('heart_rate', 7, elder.user.id);
     }
   }, [elder, fetchLatest, fetchTodayTimeline, fetchTrend]);
 

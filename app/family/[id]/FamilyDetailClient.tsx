@@ -58,7 +58,8 @@ export default function FamilyDetailClient({ userId }: Props) {
   const router = useRouter();
   const currentUser = useUserStore((s) => s.user);
   const isElder = useUserStore((s) => s.isElder);
-  const binds = useFamilyStore((s) => s.binds);
+  const storedBinds = useFamilyStore((s) => s.binds);
+  const ownerUserId = useFamilyStore((s) => s.ownerUserId);
   const fetchBinds = useFamilyStore((s) => s.fetchBinds);
   const fetchElderHealthSummary = useFamilyStore((s) => s.fetchElderHealthSummary);
   const { latestRecords, fetchLatest } = useHealthStore();
@@ -66,6 +67,10 @@ export default function FamilyDetailClient({ userId }: Props) {
 
   const [aiConversations, setAiConversations] = useState<AiConversation[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
+
+  const binds = currentUser?.id && ownerUserId === currentUser.id
+    ? storedBinds
+    : [];
 
   // 找到对应的绑定关系
   const bind = binds.find(
@@ -76,18 +81,21 @@ export default function FamilyDetailClient({ userId }: Props) {
   const relation = bind?.bind.relation ?? '';
 
   useEffect(() => {
-    if (currentUser?.id && binds.length === 0) {
+    if (
+      currentUser?.id
+      && (ownerUserId !== currentUser.id || binds.length === 0)
+    ) {
       fetchBinds(currentUser.id);
     }
-  }, [binds.length, currentUser?.id, fetchBinds]);
+  }, [binds.length, currentUser?.id, fetchBinds, ownerUserId]);
 
   // 家属端：加载老人健康数据
   useEffect(() => {
     if (!isElder && userId) {
       fetchElderHealthSummary(userId);
       // 加载老人的健康记录和用药状态
-      fetchLatest();
-      fetchTodayTimeline();
+      fetchLatest(userId);
+      fetchTodayTimeline(userId);
       // 加载AI对话记录
       loadAiConversations();
     }

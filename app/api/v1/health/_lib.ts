@@ -66,19 +66,24 @@ export async function resolveHealthTarget(
   supabase: SupabaseClient<Database>,
   currentUserId: string,
   requestedUserId: string | null,
+  mode: 'view' | 'edit' = 'view',
 ): Promise<string> {
   if (!requestedUserId || requestedUserId === currentUserId) {
     return currentUserId;
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('oc_elder_family_binds')
     .select('id')
     .eq('family_id', currentUserId)
     .eq('elder_id', requestedUserId)
-    .eq('can_view_health', true)
-    .eq('status', 'active')
-    .limit(1);
+    .eq('status', 'active');
+
+  query = mode === 'edit'
+    ? query.eq('can_edit_health', true)
+    : query.or('can_view_health.eq.true,can_edit_health.eq.true');
+
+  const { data, error } = await query.limit(1);
 
   if (error) {
     console.error('[health] 校验家庭绑定失败:', error);
@@ -86,7 +91,10 @@ export async function resolveHealthTarget(
   }
 
   if (!data || data.length === 0) {
-    throwApiError(403, '无权查看该用户的健康数据');
+    throwApiError(
+      403,
+      mode === 'edit' ? '无权代为记录该长辈的健康数据' : '无权查看该用户的健康数据',
+    );
   }
 
   return requestedUserId;

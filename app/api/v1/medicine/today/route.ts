@@ -29,6 +29,12 @@ import {
   type TodayTimelineItem,
   type TodayTimelineResponse,
 } from '../_lib';
+import {
+  createScheduledAt,
+  getCareDateInfo,
+  getCareDayRange,
+  normalizePlanTime,
+} from '../_time';
 
 export const runtime = 'nodejs';
 
@@ -38,19 +44,6 @@ const VALID_STATUSES: ReadonlySet<string> = new Set([
   'skipped',
   'delayed',
 ]);
-
-/** 计算今日（服务器本地时区）的 YYYY-MM-DD 与 isoweekday(1=Mon..7=Sun)。 */
-function getTodayInfo(): { todayStr: string; todayWeekday: number } {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const todayStr = `${year}-${month}-${day}`;
-  // JS getDay: 0=Sun..6=Sat；ISO weekday: 1=Mon..7=Sun
-  const jsDay = now.getDay();
-  const todayWeekday = jsDay === 0 ? 7 : jsDay;
-  return { todayStr, todayWeekday };
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -66,14 +59,23 @@ export async function GET(request: NextRequest) {
       'view',
     );
 
-    const { todayStr, todayWeekday } = getTodayInfo();
+    const today = getCareDateInfo();
+    const { start, endExclusive } = getCareDayRange(today.date);
 
-    // 1. 拉取目标用户的活跃 plans
-    const plansResult = await supabase
-      .from('oc_medication_plans')
-      .select('*')
-      .eq('user_id', targetUserId)
-      .eq('is_active', true);
+    // 计划与已发生记录互不依赖，并行读取以缩短首屏等待。
+    const [plansResult, recordsResult] = await Promise.all([
+      supabase
+        .from('oc_medication_plans')
+        .select('*')
+        .eq('user_id', targetUserId)
+        .eq('is_active', true),
+      supabase
+        .from('oc_medication_records')
+        .select('*')
+        .eq('user_id', targetUserId)
+        .gte('scheduled_time', start)
+        .lt('scheduled_time', endExclusive),
+    ]);
 
     if (plansResult.error) {
       console.error('[GET /medicine/today] 查询 plans 失败:', plansResult.error);
@@ -85,21 +87,13 @@ export async function GET(request: NextRequest) {
     // 2. 过滤今日适用的 plans
     const todayPlans: MedicationPlanRow[] = [];
     for (const plan of plans) {
-      if (plan.start_date && plan.start_date > todayStr) continue;
-      if (plan.end_date && plan.end_date < todayStr) continue;
-      if (plan.repeat_days && !plan.repeat_days.includes(todayWeekday)) {
+      if (plan.start_date && plan.start_date > today.date) continue;
+      if (plan.end_date && plan.end_date < today.date) continue;
+      if (plan.repeat_days && !plan.repeat_days.includes(today.weekday)) {
         continue;
       }
       todayPlans.push(plan);
     }
-
-    // 3. 拉取当日 medication_records
-    const recordsResult = await supabase
-      .from('oc_medication_records')
-      .select('*')
-      .eq('user_id', targetUserId)
-      .gte('created_at', `${todayStr}T00:00:00`)
-      .lte('created_at', `${todayStr}T23:59:59`);
 
     if (recordsResult.error) {
       console.error(
@@ -114,7 +108,10 @@ export async function GET(request: NextRequest) {
     // 4. 建立 (plan_id, scheduled_time) -> record 查找表
     const recordLookup = new Map<string, MedicationRecordRow>();
     for (const rec of records) {
-      recordLookup.set(`${rec.plan_id}|${rec.scheduled_time}`, rec);
+      recordLookup.set(
+        `${rec.plan_id}|${new Date(rec.scheduled_time).toISOString()}`,
+        rec,
+      );
     }
 
     // 5. 组装 timeline items
@@ -122,14 +119,16 @@ export async function GET(request: NextRequest) {
     for (const plan of todayPlans) {
       const times = plan.schedule_times ?? [];
       for (const stime of times) {
-        const rec = recordLookup.get(`${plan.id}|${stime}`);
+        const scheduledAt = createScheduledAt(today.date, stime);
+        const rec = recordLookup.get(`${plan.id}|${scheduledAt}`);
         const rawStatus = rec?.status ?? 'pending';
         const status: MedicationStatus = VALID_STATUSES.has(rawStatus)
           ? (rawStatus as MedicationStatus)
           : 'pending';
         items.push({
           plan: toPlanResponse(plan),
-          scheduled_time: stime,
+          scheduled_time: normalizePlanTime(stime),
+          scheduled_at: scheduledAt,
           record: rec ? toRecordResponse(rec) : null,
           status,
         });
@@ -141,7 +140,7 @@ export async function GET(request: NextRequest) {
 
     return withPrivateNoStore(
       NextResponse.json<TodayTimelineResponse>({
-        date: todayStr,
+        date: today.date,
         items,
       }),
     );

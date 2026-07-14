@@ -33,6 +33,7 @@ function makeTimelineItem(
   return {
     plan: makePlan(),
     scheduled_time: '08:00',
+    scheduled_at: '2026-07-14T00:00:00.000Z',
     record: null,
     status: 'pending',
     ...overrides,
@@ -192,8 +193,14 @@ describe('ReminderModal', () => {
 
     // 应该为每个 pending 项调用 confirmMedication
     expect(mockConfirmMedication).toHaveBeenCalledTimes(2);
-    expect(mockConfirmMedication).toHaveBeenCalledWith('p1', '08:00');
-    expect(mockConfirmMedication).toHaveBeenCalledWith('p2', '08:00');
+    expect(mockConfirmMedication).toHaveBeenCalledWith(
+      'p1',
+      defaultItems[0].scheduled_at,
+    );
+    expect(mockConfirmMedication).toHaveBeenCalledWith(
+      'p2',
+      defaultItems[1].scheduled_at,
+    );
     expect(mockStop).toHaveBeenCalled();
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
@@ -265,7 +272,13 @@ describe('ReminderModal', () => {
 
     // 只确认 pending 和 delayed 的项
     expect(mockConfirmMedication).toHaveBeenCalledTimes(2);
-    expect(mockConfirmMedication).toHaveBeenCalledWith('p1', '08:00');
-    expect(mockConfirmMedication).toHaveBeenCalledWith('p3', '08:00');
+    expect(mockConfirmMedication).toHaveBeenCalledWith(
+      'p1',
+      mixedItems[0].scheduled_at,
+    );
+    expect(mockConfirmMedication).toHaveBeenCalledWith(
+      'p3',
+      mixedItems[2].scheduled_at,
+    );
   });
 });

@@ -6,6 +6,8 @@
 // ============================================================
 
 import type { Database } from '@/types/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { throwApiError } from '@/lib/server';
 
 export type FamilyBindRow =
   Database['public']['Tables']['oc_elder_family_binds']['Row'];
@@ -27,13 +29,33 @@ export interface FamilyBindResponse {
   can_receive_emergency: boolean;
   bound_at: string | null;
   created_at: string | null;
+  expires_at: string | null;
+  can_edit_health: boolean;
+  peer: FamilyPeer | null;
 }
+
+export interface FamilyPeer {
+  id: string;
+  name: string;
+  phone: string | null;
+  avatar_url: string | null;
+  last_active_at: string | null;
+  role: string;
+}
+
+export type FamilyPeerRow = Pick<
+  Database['public']['Tables']['oc_users']['Row'],
+  'id' | 'name' | 'phone' | 'avatar_url' | 'last_active_at' | 'role'
+>;
 
 /**
  * 将 elder_family_binds 行映射为 FamilyBindResponse。
  * 对齐 Python _db_row_to_response：null 退化为默认值（"" / false）。
  */
-export function toBindResponse(row: FamilyBindRow): FamilyBindResponse {
+export function toBindResponse(
+  row: FamilyBindRow,
+  peer: FamilyPeerRow | null = null,
+): FamilyBindResponse {
   return {
     id: row.id,
     elder_id: row.elder_id ?? '',
@@ -46,14 +68,47 @@ export function toBindResponse(row: FamilyBindRow): FamilyBindResponse {
     can_receive_emergency: row.can_receive_emergency ?? false,
     bound_at: row.bound_at ?? null,
     created_at: row.created_at ?? null,
+    expires_at: row.expires_at ?? null,
+    can_edit_health: row.can_edit_health ?? false,
+    peer,
   };
 }
 
-/** 生成 6 位数字绑定码。对齐 Python _generate_bind_code（非加密随机）。 */
-export function generateBindCode(): string {
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += Math.floor(Math.random() * 10).toString();
+export function assertExpectedRole(actualRole: string, expectedRole: 'elder' | 'family'): void {
+  if (actualRole !== expectedRole) {
+    throwApiError(
+      403,
+      expectedRole === 'elder' ? '仅长辈账号可执行此操作' : '仅家属账号可执行此操作',
+    );
   }
-  return code;
+}
+
+export function assertBindParticipant(row: FamilyBindRow, userId: string): void {
+  if (row.elder_id !== userId && row.family_id !== userId) {
+    throwApiError(403, '无权操作该绑定关系');
+  }
+}
+
+export function assertCanManagePermissions(row: FamilyBindRow, userId: string): void {
+  assertBindParticipant(row, userId);
+  if (row.elder_id !== userId) {
+    throwApiError(403, '只有长辈本人可以调整监护权限');
+  }
+}
+
+export async function getDatabaseUserRole(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<string> {
+  const { data, error } = await supabase
+    .from('oc_users')
+    .select('role')
+    .eq('id', userId)
+    .limit(1);
+  if (error) {
+    console.error('[family] 查询用户角色失败:', error);
+    throwApiError(500, '校验账号角色失败');
+  }
+  if (!data || data.length === 0) throwApiError(404, '用户不存在');
+  return data[0].role;
 }

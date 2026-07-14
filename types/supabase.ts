@@ -221,40 +221,46 @@ export type Database = {
         Row: {
           bind_code: string | null
           bound_at: string | null
+          can_edit_health: boolean
           can_edit_medication: boolean | null
           can_receive_emergency: boolean | null
           can_view_health: boolean | null
           created_at: string | null
           elder_id: string
+          expires_at: string | null
           family_id: string | null
           id: string
-          relation: string
+          relation: string | null
           status: string | null
         }
         Insert: {
           bind_code?: string | null
           bound_at?: string | null
+          can_edit_health?: boolean
           can_edit_medication?: boolean | null
           can_receive_emergency?: boolean | null
           can_view_health?: boolean | null
           created_at?: string | null
           elder_id: string
+          expires_at?: string | null
           family_id?: string | null
           id?: string
-          relation: string
+          relation?: string | null
           status?: string | null
         }
         Update: {
           bind_code?: string | null
           bound_at?: string | null
+          can_edit_health?: boolean
           can_edit_medication?: boolean | null
           can_receive_emergency?: boolean | null
           can_view_health?: boolean | null
           created_at?: string | null
           elder_id?: string
+          expires_at?: string | null
           family_id?: string | null
           id?: string
-          relation?: string
+          relation?: string | null
           status?: string | null
         }
         Relationships: [
@@ -269,6 +275,38 @@ export type Database = {
             foreignKeyName: "oc_elder_family_binds_family_id_fkey"
             columns: ["family_id"]
             isOneToOne: false
+            referencedRelation: "oc_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oc_family_bind_attempt_limits: {
+        Row: {
+          attempt_count: number
+          blocked_until: string | null
+          family_id: string
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          blocked_until?: string | null
+          family_id: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          blocked_until?: string | null
+          family_id?: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oc_family_bind_attempt_limits_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: true
             referencedRelation: "oc_users"
             referencedColumns: ["id"]
           },
@@ -543,6 +581,7 @@ export type Database = {
       }
       oc_medication_records: {
         Row: {
+          confirmed_by: string | null
           created_at: string | null
           delayed_count: number | null
           id: string
@@ -554,6 +593,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          confirmed_by?: string | null
           created_at?: string | null
           delayed_count?: number | null
           id?: string
@@ -565,6 +605,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          confirmed_by?: string | null
           created_at?: string | null
           delayed_count?: number | null
           id?: string
@@ -576,6 +617,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "oc_medication_records_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "oc_users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "oc_medication_records_plan_id_fkey"
             columns: ["plan_id"]
@@ -651,6 +699,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      oc_create_family_bind_code: {
+        Args: {
+          p_bind_code: string
+          p_elder_id: string
+          p_expires_at: string
+        }
+        Returns: string
+      }
       oc_auth_challenge_activate_otp: {
         Args: {
           p_lookup_key: string
@@ -696,6 +752,15 @@ export type Database = {
           p_version: string
         }
         Returns: boolean
+      }
+      oc_reserve_family_bind_attempt: {
+        Args: {
+          p_family_id: string
+          p_lock_seconds: number
+          p_max_attempts: number
+          p_window_seconds: number
+        }
+        Returns: Json
       }
     }
     Enums: {

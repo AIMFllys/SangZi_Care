@@ -37,6 +37,7 @@ function makeItem(overrides: Partial<TodayTimelineItem> = {}): TodayTimelineItem
   return {
     plan: makePlan(),
     scheduled_time: '08:00',
+    scheduled_at: '2026-07-14T00:00:00.000Z',
     record: null,
     status: 'pending',
     ...overrides,
@@ -84,7 +85,10 @@ describe('MedicineTimeline', () => {
     render(<MedicineTimeline items={items} onConfirm={onConfirm} />);
 
     fireEvent.click(screen.getByText('已吃药'));
-    expect(onConfirm).toHaveBeenCalledWith('p1', '08:00');
+    expect(onConfirm).toHaveBeenCalledWith(
+      'p1',
+      items[0].scheduled_at,
+    );
   });
 
   it('按时段分组渲染', () => {
