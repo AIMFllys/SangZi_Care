@@ -12,6 +12,9 @@ import { useVoiceStore } from '@/stores/voiceStore';
 
 const MAX_RECORDING_DURATION_MS = 60_000;
 const WEB_FINAL_RESULT_TIMEOUT_MS = 3_000;
+const BACKGROUND_CANCELLATION_MESSAGE = '录音已因页面进入后台而停止，请重新开始';
+const NATIVE_BACKGROUND_EVENT = 'sangzi:app-background';
+const ANDROID_SHELL_USER_AGENT_TOKEN = 'SangZiSmartCareAndroid/1.0';
 
 export type RecognitionPhase =
   | 'idle'
@@ -91,6 +94,11 @@ function isAbortError(error: unknown): boolean {
 function isPermissionError(error: unknown): boolean {
   return error instanceof DOMException
     && (error.name === 'NotAllowedError' || error.name === 'SecurityError');
+}
+
+function isAndroidShellRuntime(): boolean {
+  return typeof navigator !== 'undefined'
+    && navigator.userAgent.includes(ANDROID_SHELL_USER_AGENT_TOKEN);
 }
 
 function shouldUseWebOnNextAttempt(error: unknown): boolean {
@@ -412,16 +420,44 @@ export function useVoiceRecognition(): UseVoiceRecognitionReturn {
       current === 'success' || current === 'error' ? 'idle' : current);
   }, []);
 
+  const cancelForLifecycle = useCallback((): void => {
+    const operation = operationRef.current;
+    if (!operation) return;
+
+    cancelOperation(operation);
+    operationRef.current = null;
+    lastResultRef.current = null;
+    if (mountedRef.current) {
+      setTranscript('');
+      setError(BACKGROUND_CANCELLATION_MESSAGE);
+      setPhase('error');
+    }
+  }, [cancelOperation]);
+
   useEffect(() => {
     mountedRef.current = true;
+    const cancelWhenHidden = (): void => {
+      if (document.visibilityState === 'hidden' && !isAndroidShellRuntime()) {
+        cancelForLifecycle();
+      }
+    };
+    const cancelBeforePageHide = (): void => cancelForLifecycle();
+
+    document.addEventListener('visibilitychange', cancelWhenHidden);
+    window.addEventListener('pagehide', cancelBeforePageHide);
+    window.addEventListener(NATIVE_BACKGROUND_EVENT, cancelForLifecycle);
+
     return () => {
+      document.removeEventListener('visibilitychange', cancelWhenHidden);
+      window.removeEventListener('pagehide', cancelBeforePageHide);
+      window.removeEventListener(NATIVE_BACKGROUND_EVENT, cancelForLifecycle);
       mountedRef.current = false;
       const operation = operationRef.current;
       if (operation) cancelOperation(operation);
       operationRef.current = null;
       lastResultRef.current = null;
     };
-  }, [cancelOperation]);
+  }, [cancelForLifecycle, cancelOperation]);
 
   return {
     isListening: phase === 'requesting_permission' || phase === 'recording',

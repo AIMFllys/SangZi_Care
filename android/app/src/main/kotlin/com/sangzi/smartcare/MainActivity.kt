@@ -52,6 +52,9 @@ class MainActivity : AppCompatActivity() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val backDecisionGuard = BackDecisionGuard()
     private var backDecisionTimeout: Runnable? = null
+    private var webViewPauseGeneration = 0L
+    private var webViewPausePending = false
+    private var webViewPauseFallback: Runnable? = null
 
     private val microphonePermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -73,6 +76,8 @@ class MainActivity : AppCompatActivity() {
             settings.allowContentAccess = false
             settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
             settings.mediaPlaybackRequiresUserGesture = false
+            settings.userAgentString =
+                "${settings.userAgentString} $ANDROID_SHELL_USER_AGENT_TOKEN"
         }
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false)
 
@@ -264,6 +269,39 @@ class MainActivity : AppCompatActivity() {
         backDecisionGuard.cancelAll()
     }
 
+    private fun pauseWebViewAfterBackgroundSignal() {
+        val generation = ++webViewPauseGeneration
+        webViewPausePending = true
+        val fallback = Runnable { completeWebViewPause(generation) }
+        webViewPauseFallback = fallback
+        mainHandler.postDelayed(fallback, WEBVIEW_BACKGROUND_SIGNAL_TIMEOUT_MS)
+        webView.evaluateJavascript(PAGE_BACKGROUND_EVENT_SCRIPT) {
+            completeWebViewPause(generation)
+        }
+    }
+
+    private fun completeWebViewPause(generation: Long) {
+        if (generation != webViewPauseGeneration || !webViewPausePending) return
+        webViewPausePending = false
+        webViewPauseFallback?.let(mainHandler::removeCallbacks)
+        webViewPauseFallback = null
+        webView.onPause()
+        webView.pauseTimers()
+    }
+
+    private fun cancelPendingWebViewPause() {
+        webViewPauseGeneration += 1
+        webViewPausePending = false
+        webViewPauseFallback?.let(mainHandler::removeCallbacks)
+        webViewPauseFallback = null
+    }
+
+    private fun pauseWebViewImmediately() {
+        cancelPendingWebViewPause()
+        webView.onPause()
+        webView.pauseTimers()
+    }
+
     private fun handleWebPermissionRequest(request: PermissionRequest) {
         if (!activityStarted) {
             request.deny()
@@ -411,14 +449,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onResume() {
+        cancelPendingWebViewPause()
         super.onResume()
         webView.onResume()
         webView.resumeTimers()
     }
 
     override fun onPause() {
-        webView.onPause()
-        webView.pauseTimers()
+        if (microphonePermissionLaunchInFlight) {
+            pauseWebViewImmediately()
+        } else {
+            pauseWebViewAfterBackgroundSignal()
+        }
         super.onPause()
     }
 
@@ -432,6 +474,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         activityStarted = false
         cancelBackDecision()
+        cancelPendingWebViewPause()
         denyPendingMicrophoneRequest()
         webView.stopLoading()
         webView.removeAllViews()
@@ -441,5 +484,9 @@ class MainActivity : AppCompatActivity() {
 
     private companion object {
         const val BACK_DECISION_TIMEOUT_MS = 750L
+        const val WEBVIEW_BACKGROUND_SIGNAL_TIMEOUT_MS = 100L
+        const val ANDROID_SHELL_USER_AGENT_TOKEN = "SangZiSmartCareAndroid/1.0"
+        const val PAGE_BACKGROUND_EVENT_SCRIPT =
+            "window.dispatchEvent(new Event('sangzi:app-background'))"
     }
 }

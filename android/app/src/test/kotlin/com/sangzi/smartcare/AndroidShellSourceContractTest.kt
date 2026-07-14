@@ -59,6 +59,8 @@ class AndroidShellSourceContractTest {
             "settings.allowContentAccess = false",
             "WebSettings.MIXED_CONTENT_NEVER_ALLOW",
             "settings.mediaPlaybackRequiresUserGesture = false",
+            "settings.userAgentString =",
+            "ANDROID_SHELL_USER_AGENT_TOKEN",
             "setAcceptThirdPartyCookies(webView, false)",
             "ApplicationInfo.FLAG_DEBUGGABLE",
             "WebViewFeature.START_SAFE_BROWSING",
@@ -143,6 +145,34 @@ class AndroidShellSourceContractTest {
         required.forEach { token ->
             assertTrue("后台麦克风门禁缺少 $token", source.contains(token))
         }
+    }
+
+    @Test
+    fun signalsThePageBeforePausingAnActiveWebView() {
+        val source = projectFile(
+            "app/src/main/kotlin/com/sangzi/smartcare/MainActivity.kt",
+        ).readText(Charsets.UTF_8)
+        val onPause = source
+            .substringAfter("override fun onPause()")
+            .substringBefore("override fun onStop()")
+        val required = listOf(
+            "PAGE_BACKGROUND_EVENT_SCRIPT",
+            "window.dispatchEvent(new Event('sangzi:app-background'))",
+            "pauseWebViewAfterBackgroundSignal()",
+            "completeWebViewPause(",
+            "WEBVIEW_BACKGROUND_SIGNAL_TIMEOUT_MS",
+            "mainHandler.postDelayed(",
+            "microphonePermissionLaunchInFlight",
+        )
+
+        required.forEach { token ->
+            assertTrue("WebView 后台释放协议缺少 $token", source.contains(token))
+        }
+        assertTrue(
+            "必须先触发页面释放协议，再进入 Activity onPause",
+            onPause.indexOf("pauseWebViewAfterBackgroundSignal()") in
+                0 until onPause.indexOf("super.onPause()"),
+        )
     }
 
     @Test

@@ -281,6 +281,93 @@ describe('useVoiceRecognition MiMo state machine', () => {
     expect(hook.result.current.phase).toBe('idle');
   });
 
+  it('页面进入后台时立即中止录音并释放麦克风', async () => {
+    const visibilityDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      'visibilityState',
+    );
+    const { hook, session } = await startRecording();
+
+    try {
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        value: 'hidden',
+      });
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+
+      expect(session.abort).toHaveBeenCalledOnce();
+      expect(hook.result.current.phase).toBe('error');
+      expect(hook.result.current.isListening).toBe(false);
+      expect(hook.result.current.error).toContain('后台');
+      expect(mocks.fetchFormData).not.toHaveBeenCalled();
+    } finally {
+      if (visibilityDescriptor) {
+        Object.defineProperty(document, 'visibilityState', visibilityDescriptor);
+      } else {
+        delete (document as unknown as Record<string, unknown>).visibilityState;
+      }
+    }
+  });
+
+  it('页面被系统回收前的 pagehide 同样中止录音', async () => {
+    const { hook, session } = await startRecording();
+
+    act(() => window.dispatchEvent(new Event('pagehide')));
+
+    expect(session.abort).toHaveBeenCalledOnce();
+    expect(hook.result.current.phase).toBe('error');
+    expect(hook.result.current.isListening).toBe(false);
+    expect(hook.result.current.error).toContain('后台');
+  });
+
+  it('Android 壳的后台事件在 WebView 暂停前中止录音', async () => {
+    const { hook, session } = await startRecording();
+
+    act(() => window.dispatchEvent(new Event('sangzi:app-background')));
+
+    expect(session.abort).toHaveBeenCalledOnce();
+    expect(hook.result.current.phase).toBe('error');
+    expect(hook.result.current.isListening).toBe(false);
+    expect(hook.result.current.error).toContain('后台');
+  });
+
+  it('Android 系统权限弹窗只触发 visibility 时不误杀授权流程', async () => {
+    const userAgentDescriptor = Object.getOwnPropertyDescriptor(navigator, 'userAgent');
+    const visibilityDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      'visibilityState',
+    );
+
+    try {
+      Object.defineProperty(navigator, 'userAgent', {
+        configurable: true,
+        value: 'Mozilla/5.0 SangZiSmartCareAndroid/1.0',
+      });
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        value: 'hidden',
+      });
+      const { hook, session } = await startRecording();
+
+      act(() => document.dispatchEvent(new Event('visibilitychange')));
+      expect(session.abort).not.toHaveBeenCalled();
+      expect(hook.result.current.phase).toBe('recording');
+
+      act(() => window.dispatchEvent(new Event('sangzi:app-background')));
+      expect(session.abort).toHaveBeenCalledOnce();
+      expect(hook.result.current.phase).toBe('error');
+    } finally {
+      if (userAgentDescriptor) {
+        Object.defineProperty(navigator, 'userAgent', userAgentDescriptor);
+      }
+      if (visibilityDescriptor) {
+        Object.defineProperty(document, 'visibilityState', visibilityDescriptor);
+      } else {
+        delete (document as unknown as Record<string, unknown>).visibilityState;
+      }
+    }
+  });
+
   it('转写期间 cancel 中止请求，stop 结算为 null', async () => {
     mocks.fetchFormData.mockImplementation((_path, _body, options) =>
       new Promise((_resolve, reject) => {
