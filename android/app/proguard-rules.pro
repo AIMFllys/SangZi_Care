@@ -1,6 +1,2 @@
-# 桑梓智护 — ProGuard 规则
-# 保留 JSBridge 接口
--keepclassmembers class com.sangzi.smartcare.MainActivity$JSBridge {
-    public *;
-}
--keepattributes JavascriptInterface
+# 桑梓智护 — Release 压缩规则
+# 在线壳不注入原生 JavaScript 接口，无需桥接保留规则。

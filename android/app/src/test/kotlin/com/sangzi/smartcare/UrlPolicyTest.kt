@@ -96,11 +96,12 @@ class UrlPolicyTest {
     fun wiresUrlPolicyIntoModernAndLegacyNavigationCallbacks() {
         val source = mainActivitySource()
 
-        assertTrue(source.contains("val urlPolicy = UrlPolicy(baseUrl)"))
-        assertTrue(source.contains("request.isForMainFrame"))
+        assertTrue(source.contains("urlPolicy = UrlPolicy(baseUrl)"))
+        assertTrue(source.contains("val safeRequest = request ?: return true"))
+        assertTrue(source.contains("safeRequest.isForMainFrame"))
         assertTrue(
             source.contains(
-                "handleWebNavigation(rawUrl, request.isForMainFrame, urlPolicy)",
+                "handleWebNavigation(rawUrl, safeRequest.isForMainFrame, urlPolicy)",
             ),
         )
         assertTrue(source.contains("handleWebNavigation(rawUrl, true, urlPolicy)"))
@@ -144,7 +145,11 @@ class UrlPolicyTest {
         )
         assertTrue(handler.contains("UrlPolicy.Action.BLOCK -> Unit"))
         assertTrue(launcher.contains("try {"))
-        assertTrue(launcher.contains("startActivity(Intent(action, Uri.parse(rawUrl)))"))
+        assertTrue(
+            launcher.contains(
+                "startActivity(Intent(action, Uri.parse(rawUrl).normalizeScheme()))",
+            ),
+        )
         assertTrue(launcher.contains("catch (_: ActivityNotFoundException)"))
         assertTrue(launcher.contains("catch (_: SecurityException)"))
     }

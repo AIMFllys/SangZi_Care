@@ -4,77 +4,230 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
-import android.speech.RecognizerIntent
-import android.speech.tts.TextToSpeech
-import android.webkit.*
+import android.util.TypedValue
+import android.view.Gravity
+import android.view.View
+import android.webkit.CookieManager
+import android.webkit.PermissionRequest
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import java.util.Locale
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 
 /**
- * 智护银龄 — 桑梓智护项目主 Activity
- * 模式 B：WebView 加载线上 / 调试 https（或 http）基址，不内嵌静态 out/
- * 实现 JSBridge 原生端：电话拨打、TTS、ASR、存储
+ * 智护银龄线上壳：仅加载配置的可信源，语音统一走网页端 MiMo 链路。
  */
-class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
-
+class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
-    private var tts: TextToSpeech? = null
-    private val CALL_PHONE_REQUEST = 1001
-    private val RECORD_AUDIO_REQUEST = 1002
-    private var pendingPhoneNumber: String? = null
+    private lateinit var errorPanel: View
+    private lateinit var errorMessage: TextView
+    private lateinit var urlPolicy: UrlPolicy
+    private lateinit var microphonePermissionPolicy: MicrophonePermissionPolicy
+
+    private var pendingMicrophoneRequest: PermissionRequest? = null
+    private var microphonePermissionLaunchInFlight = false
+    private var mainFrameLoadFailed = false
+
+    private val microphonePermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            completePendingMicrophoneRequest(granted)
+        }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 初始化 TTS
-        tts = TextToSpeech(this, this)
+        val baseUrl = getString(R.string.app_base_url).trimEnd('/')
+        urlPolicy = UrlPolicy(baseUrl)
+        microphonePermissionPolicy = MicrophonePermissionPolicy(baseUrl)
 
-        // 创建 WebView
         webView = WebView(this).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
-            settings.allowFileAccess = true
-            settings.allowContentAccess = true
+            settings.allowFileAccess = false
+            settings.allowContentAccess = false
+            settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
             settings.mediaPlaybackRequiresUserGesture = false
-            settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        }
+        CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false)
+
+        if ((applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            WebView.setWebContentsDebuggingEnabled(true)
+        }
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.START_SAFE_BROWSING)) {
+            WebViewCompat.startSafeBrowsing(applicationContext) { }
         }
 
-        setContentView(webView)
+        configureWebViewClients()
+        errorPanel = createErrorPanel()
+        setContentView(
+            FrameLayout(this).apply {
+                addView(
+                    webView,
+                    FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                    ),
+                )
+                addView(
+                    errorPanel,
+                    FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                    ),
+                )
+            },
+        )
 
-        // 注入 JSBridge
-        webView.addJavascriptInterface(JSBridge(), "SangZiBridge")
+        webView.loadUrl("$baseUrl/")
+    }
 
-        // 模式 B：加载可配置的线上 / 调试基址（见 strings.xml app_base_url）
-        val baseUrl = getString(R.string.app_base_url).trimEnd('/')
-        val urlPolicy = UrlPolicy(baseUrl)
+    private fun configureWebViewClients() {
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onPermissionRequest(request: PermissionRequest) {
+                runOnUiThread { handleWebPermissionRequest(request) }
+            }
 
-        // 仅允许受信任源留在 WebView 内，其他导航按策略处理
+            override fun onPermissionRequestCanceled(request: PermissionRequest) {
+                runOnUiThread {
+                    if (pendingMicrophoneRequest === request) {
+                        denyPendingMicrophoneRequest()
+                    }
+                }
+            }
+        }
+
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(
                 view: WebView?,
-                request: WebResourceRequest?
+                request: WebResourceRequest?,
             ): Boolean {
-                val rawUrl = request?.url?.toString() ?: return true
-                return handleWebNavigation(rawUrl, request.isForMainFrame, urlPolicy)
+                val safeRequest = request ?: return true
+                val rawUrl = safeRequest.url?.toString() ?: return true
+                if (safeRequest.isForMainFrame) denyPendingMicrophoneRequest()
+                return handleWebNavigation(rawUrl, safeRequest.isForMainFrame, urlPolicy)
             }
 
             @Suppress("DEPRECATION")
             override fun shouldOverrideUrlLoading(
                 view: WebView?,
-                url: String?
+                url: String?,
             ): Boolean {
                 val rawUrl = url ?: return true
+                denyPendingMicrophoneRequest()
                 return handleWebNavigation(rawUrl, true, urlPolicy)
             }
+
+            override fun onPageStarted(view: WebView?, url: String, favicon: Bitmap?) {
+                denyPendingMicrophoneRequest()
+                mainFrameLoadFailed = false
+                hideMainFrameError()
+
+                if (!urlPolicy.isSameOrigin(url)) {
+                    view?.stopLoading()
+                    handleWebNavigation(url, true, urlPolicy)
+                    return
+                }
+                super.onPageStarted(view, url, favicon)
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                if (!mainFrameLoadFailed && url != null && urlPolicy.isSameOrigin(url)) {
+                    hideMainFrameError()
+                }
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest,
+                error: WebResourceError,
+            ) {
+                super.onReceivedError(view, request, error)
+                if (request.isForMainFrame) {
+                    showMainFrameError("网络连接暂时不可用，请检查网络后重试。")
+                }
+            }
+
+            override fun onReceivedHttpError(
+                view: WebView?,
+                request: WebResourceRequest,
+                errorResponse: WebResourceResponse,
+            ) {
+                super.onReceivedHttpError(view, request, errorResponse)
+                if (request.isForMainFrame) {
+                    showMainFrameError("页面暂时不可用，请稍后重试。")
+                }
+            }
+        }
+    }
+
+    private fun handleWebPermissionRequest(request: PermissionRequest) {
+        if (pendingMicrophoneRequest !== request) {
+            denyPendingMicrophoneRequest()
         }
 
-        webView.loadUrl("$baseUrl/")
+        if (!canGrantMicrophoneRequest(request)) {
+            request.deny()
+            return
+        }
+        pendingMicrophoneRequest = request
+
+        if (
+            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            completePendingMicrophoneRequest(true)
+            return
+        }
+
+        if (!microphonePermissionLaunchInFlight) {
+            microphonePermissionLaunchInFlight = true
+            microphonePermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    private fun completePendingMicrophoneRequest(androidPermissionGranted: Boolean) {
+        microphonePermissionLaunchInFlight = false
+        val request = pendingMicrophoneRequest ?: return
+        pendingMicrophoneRequest = null
+
+        if (androidPermissionGranted && canGrantMicrophoneRequest(request)) {
+            request.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE))
+        } else {
+            request.deny()
+        }
+    }
+
+    private fun canGrantMicrophoneRequest(request: PermissionRequest): Boolean =
+        microphonePermissionPolicy.canGrant(
+            requestOrigin = request.origin?.toString(),
+            requestedResources = request.resources?.toList().orEmpty(),
+            topLevelUrl = webView.url,
+        )
+
+    private fun denyPendingMicrophoneRequest() {
+        val request = pendingMicrophoneRequest ?: return
+        pendingMicrophoneRequest = null
+        request.deny()
     }
 
     private fun handleWebNavigation(
@@ -97,7 +250,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun launchSystemIntent(action: String, rawUrl: String) {
         try {
-            startActivity(Intent(action, Uri.parse(rawUrl)))
+            startActivity(Intent(action, Uri.parse(rawUrl).normalizeScheme()))
         } catch (_: ActivityNotFoundException) {
             // 设备没有可处理该链接的应用时保持在当前页面。
         } catch (_: SecurityException) {
@@ -105,45 +258,86 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
 
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            tts?.language = Locale.CHINESE
+    private fun createErrorPanel(): View {
+        errorMessage = TextView(this).apply {
+            text = "网络连接暂时不可用"
+            gravity = Gravity.CENTER
+            setTextColor(Color.rgb(38, 48, 58))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
         }
-    }
-
-    private fun makePhoneCall(number: String) {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
-            == PackageManager.PERMISSION_GRANTED
-        ) {
-            val intent = Intent(Intent.ACTION_CALL, Uri.parse("tel:$number"))
-            startActivity(intent)
-        } else {
-            pendingPhoneNumber = number
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.CALL_PHONE),
-                CALL_PHONE_REQUEST
+        val retryButton = Button(this).apply {
+            text = "重新加载"
+            minHeight = dp(56)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+            setOnClickListener {
+                mainFrameLoadFailed = false
+                hideMainFrameError()
+                webView.reload()
+            }
+        }
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(dp(32), dp(32), dp(32), dp(32))
+            setBackgroundColor(Color.WHITE)
+            visibility = View.GONE
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+            addView(
+                errorMessage,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ),
+            )
+            addView(
+                retryButton,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply { topMargin = dp(24) },
             )
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == CALL_PHONE_REQUEST &&
-            grantResults.isNotEmpty() &&
-            grantResults[0] == PackageManager.PERMISSION_GRANTED
-        ) {
-            pendingPhoneNumber?.let { makePhoneCall(it) }
-            pendingPhoneNumber = null
-        }
+    private fun showMainFrameError(message: String) {
+        mainFrameLoadFailed = true
+        errorMessage.text = message
+        errorPanel.visibility = View.VISIBLE
+        errorPanel.announceForAccessibility(message)
     }
 
+    private fun hideMainFrameError() {
+        if (::errorPanel.isInitialized) errorPanel.visibility = View.GONE
+    }
+
+    private fun dp(value: Int): Int =
+        TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            value.toFloat(),
+            resources.displayMetrics,
+        ).toInt()
+
+    override fun onResume() {
+        super.onResume()
+        webView.onResume()
+        webView.resumeTimers()
+    }
+
+    override fun onPause() {
+        webView.onPause()
+        webView.pauseTimers()
+        super.onPause()
+    }
+
+    override fun onStop() {
+        denyPendingMicrophoneRequest()
+        super.onStop()
+    }
+
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         if (webView.canGoBack()) {
+            denyPendingMicrophoneRequest()
             webView.goBack()
         } else {
             super.onBackPressed()
@@ -151,98 +345,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     override fun onDestroy() {
-        tts?.shutdown()
+        denyPendingMicrophoneRequest()
+        webView.stopLoading()
+        webView.removeAllViews()
         webView.destroy()
         super.onDestroy()
-    }
-
-    // ============================================================
-    // JSBridge — WebView 与原生层通信接口
-    // ============================================================
-
-    inner class JSBridge {
-
-        /** 拨打电话 */
-        @JavascriptInterface
-        fun makePhoneCall(number: String) {
-            runOnUiThread { this@MainActivity.makePhoneCall(number) }
-        }
-
-        /** 原生 TTS 语音合成 */
-        @JavascriptInterface
-        fun speak(text: String, rate: Float) {
-            tts?.setSpeechRate(rate)
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "sangzi_tts")
-        }
-
-        /** 停止 TTS */
-        @JavascriptInterface
-        fun stopSpeak() {
-            tts?.stop()
-        }
-
-        /** 检查 TTS 是否可用 */
-        @JavascriptInterface
-        fun isTTSAvailable(): Boolean {
-            return tts != null
-        }
-
-        /** 启动原生 ASR 语音识别 */
-        @JavascriptInterface
-        fun startASR() {
-            runOnUiThread {
-                if (ContextCompat.checkSelfPermission(
-                        this@MainActivity,
-                        Manifest.permission.RECORD_AUDIO
-                    ) == PackageManager.PERMISSION_GRANTED
-                ) {
-                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                        putExtra(
-                            RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                            RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-                        )
-                        putExtra(RecognizerIntent.EXTRA_LANGUAGE, "zh-CN")
-                    }
-                    startActivityForResult(intent, RECORD_AUDIO_REQUEST)
-                } else {
-                    ActivityCompat.requestPermissions(
-                        this@MainActivity,
-                        arrayOf(Manifest.permission.RECORD_AUDIO),
-                        RECORD_AUDIO_REQUEST
-                    )
-                }
-            }
-        }
-
-        /** 检查 ASR 是否可用 */
-        @JavascriptInterface
-        fun isASRAvailable(): Boolean {
-            val pm = packageManager
-            val activities = pm.queryIntentActivities(
-                Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0
-            )
-            return activities.isNotEmpty()
-        }
-
-        /** 本地存储 — 读取 */
-        @JavascriptInterface
-        fun getItem(key: String): String? {
-            val prefs = getSharedPreferences("sangzi_storage", MODE_PRIVATE)
-            return prefs.getString(key, null)
-        }
-
-        /** 本地存储 — 写入 */
-        @JavascriptInterface
-        fun setItem(key: String, value: String) {
-            val prefs = getSharedPreferences("sangzi_storage", MODE_PRIVATE)
-            prefs.edit().putString(key, value).apply()
-        }
-
-        /** 本地存储 — 删除 */
-        @JavascriptInterface
-        fun removeItem(key: String) {
-            val prefs = getSharedPreferences("sangzi_storage", MODE_PRIVATE)
-            prefs.edit().remove(key).apply()
-        }
     }
 }
