@@ -157,6 +157,7 @@ export default function LoginPage() {
 
   // --- Send code button label ---
   const sendCodeLabel = countdown > 0 ? `${countdown}秒后重发` : '发送验证码';
+  const compactSendCodeLabel = countdown > 0 ? `${countdown}秒` : '发送';
 
   return (
     <div className={styles.container}>
@@ -232,8 +233,12 @@ export default function LoginPage() {
               loading={sendingCode}
               onClick={handleSendCode}
               leftIcon={<Send size={20} />}
+              aria-label={sendCodeLabel}
             >
-              {sendCodeLabel}
+              <span className={styles.sendCodeLabelFull}>{sendCodeLabel}</span>
+              <span className={styles.sendCodeLabelCompact} aria-hidden="true">
+                {compactSendCodeLabel}
+              </span>
             </Button>
           }
         />

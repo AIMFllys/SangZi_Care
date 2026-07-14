@@ -53,6 +53,10 @@
   gap: var(--space-md);
 }
 
+.sendCodeLabelCompact {
+  display: none;
+}
+
 @media (max-width: 350px) {
   .captchaRow {
     display: grid;
@@ -66,6 +70,14 @@
   .captchaRow .captchaInput {
     max-width: none;
     min-width: 0;
+  }
+
+  .sendCodeLabelFull {
+    display: none;
+  }
+
+  .sendCodeLabelCompact {
+    display: inline;
   }
 }
 

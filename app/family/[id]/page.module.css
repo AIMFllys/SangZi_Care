@@ -6,7 +6,6 @@
   overscroll-behavior-y: contain;
   padding: 0 var(--page-gutter, 20px) calc(var(--space-xl) + var(--safe-bottom));
   background: var(--bg-base);
-  scrollbar-gutter: stable both-edges;
 }
 
 .container > header {

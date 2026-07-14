@@ -21,4 +21,13 @@ describe('家庭详情 CSS Module 合约', () => {
 
     expect([...new Set(used)].filter((className) => !defined.has(className))).toEqual([]);
   });
+
+  it('不为滚动条永久预留双侧空白', () => {
+    const css = readFileSync(
+      resolve(process.cwd(), 'app/family/[id]/page.module.css'),
+      'utf8',
+    );
+
+    expect(css).not.toMatch(/scrollbar-gutter\s*:\s*stable\s+both-edges/);
+  });
 });
