@@ -91,6 +91,70 @@ describe('authenticated API transports', () => {
     expect(localStorage.getItem('refresh_token')).toBe('refresh-two');
   });
 
+  it('refresh 服务 503 时抛出临时错误而不是原始 401', async () => {
+    localStorage.setItem('token', 'expired-access');
+    localStorage.setItem('refresh_token', 'refresh-one');
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/api/v1/auth/refresh')) {
+        return Promise.resolve(jsonResponse({ detail: '刷新服务暂不可用' }, 503));
+      }
+      return Promise.resolve(jsonResponse({ detail: 'expired' }, 401));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { fetchApi } = await import('../api');
+
+    await expect(fetchApi('/api/protected')).rejects.toMatchObject({
+      name: 'ApiError',
+      status: 503,
+      message: '刷新服务暂不可用',
+    });
+    expect(localStorage.getItem('token')).toBe('expired-access');
+    expect(localStorage.getItem('refresh_token')).toBe('refresh-one');
+  });
+
+  it('refresh 网络失败时抛出可恢复网络错误而不是原始 401', async () => {
+    localStorage.setItem('token', 'expired-access');
+    localStorage.setItem('refresh_token', 'refresh-one');
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/api/v1/auth/refresh')) {
+        return Promise.reject(new TypeError('network unavailable'));
+      }
+      return Promise.resolve(jsonResponse({ detail: 'expired' }, 401));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { fetchApi } = await import('../api');
+
+    await expect(fetchApi('/api/protected')).rejects.toMatchObject({
+      name: 'ApiError',
+      status: null,
+      message: '网络连接失败，请稍后重试',
+    });
+    expect(localStorage.getItem('token')).toBe('expired-access');
+    expect(localStorage.getItem('refresh_token')).toBe('refresh-one');
+  });
+
+  it('refresh 明确返回 401 时保留认证失效语义', async () => {
+    localStorage.setItem('token', 'expired-access');
+    localStorage.setItem('refresh_token', 'invalid-refresh');
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/api/v1/auth/refresh')) {
+        return Promise.resolve(jsonResponse({ detail: '无效的refresh token' }, 401));
+      }
+      return Promise.resolve(jsonResponse({ detail: 'expired' }, 401));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { fetchApi } = await import('../api');
+
+    await expect(fetchApi('/api/protected')).rejects.toMatchObject({
+      name: 'ApiError',
+      status: 401,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('并发 401 共享一次 refresh，两个请求各自重试', async () => {
     localStorage.setItem('token', 'expired-access');
     localStorage.setItem('refresh_token', 'refresh-one');

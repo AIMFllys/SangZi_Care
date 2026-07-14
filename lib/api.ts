@@ -38,7 +38,12 @@ export class ApiError extends Error {
   }
 }
 
-let refreshPromise: Promise<boolean> | null = null;
+type RefreshResult =
+  | { kind: 'refreshed' }
+  | { kind: 'invalid' }
+  | { kind: 'unavailable'; error: ApiError };
+
+let refreshPromise: Promise<RefreshResult> | null = null;
 
 function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError';
@@ -81,19 +86,33 @@ function waitWithAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T>
 }
 
 /** 用 refresh_token 换取新的 access + refresh token。 */
-async function refreshTokens(): Promise<boolean> {
-  if (typeof window === 'undefined') return false;
+async function refreshTokens(): Promise<RefreshResult> {
+  if (typeof window === 'undefined') return { kind: 'invalid' };
   const refreshToken = localStorage.getItem('refresh_token');
-  if (!refreshToken) return false;
+  if (!refreshToken) return { kind: 'invalid' };
 
+  let response: Response;
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
+    response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: refreshToken }),
     });
+  } catch (error) {
+    return {
+      kind: 'unavailable',
+      error: new ApiError('网络连接失败，请稍后重试', null, { cause: error }),
+    };
+  }
 
-    if (!response.ok) return false;
+  if (!response.ok) {
+    const error = await parseApiError(response);
+    return error.status === 401
+      ? { kind: 'invalid' }
+      : { kind: 'unavailable', error };
+  }
+
+  try {
     const data = await response.json() as {
       access_token?: unknown;
       refresh_token?: unknown;
@@ -102,18 +121,24 @@ async function refreshTokens(): Promise<boolean> {
       typeof data.access_token !== 'string'
       || typeof data.refresh_token !== 'string'
     ) {
-      return false;
+      return {
+        kind: 'unavailable',
+        error: new ApiError('会话刷新响应无效', null),
+      };
     }
 
     localStorage.setItem('token', data.access_token);
     localStorage.setItem('refresh_token', data.refresh_token);
-    return true;
-  } catch {
-    return false;
+    return { kind: 'refreshed' };
+  } catch (error) {
+    return {
+      kind: 'unavailable',
+      error: new ApiError('会话刷新响应无效', null, { cause: error }),
+    };
   }
 }
 
-function getRefreshPromise(): Promise<boolean> {
+function getRefreshPromise(): Promise<RefreshResult> {
   if (!refreshPromise) {
     refreshPromise = refreshTokens().finally(() => {
       refreshPromise = null;
@@ -191,10 +216,12 @@ async function fetchAuthenticatedResponse(
   let response = await performFetch(url, init, baseHeaders, skipAuth);
 
   if (response.status === 401 && !skipAuth && typeof window !== 'undefined') {
-    const refreshed = await waitWithAbort(getRefreshPromise(), signal);
+    const refreshResult = await waitWithAbort(getRefreshPromise(), signal);
     throwIfAborted(signal);
-    if (refreshed) {
+    if (refreshResult.kind === 'refreshed') {
       response = await performFetch(url, init, baseHeaders, skipAuth);
+    } else if (refreshResult.kind === 'unavailable') {
+      throw refreshResult.error;
     }
   }
 
