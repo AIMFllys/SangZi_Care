@@ -209,7 +209,7 @@ function parseIntentResponse(raw: string): IntentResult {
   try {
     parsed = JSON.parse(cleaned) as typeof parsed;
   } catch {
-    console.warn('[doubao] 意图 JSON 解析失败: %s', raw.slice(0, 200));
+    console.warn('[doubao] 意图 JSON 解析失败');
     return { intent: 'general_chat', entities: {}, confidence: 0 };
   }
 

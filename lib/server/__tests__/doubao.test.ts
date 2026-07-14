@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { chat } from '../doubao';
+import { chat, recognizeIntent } from '../doubao';
 
 const TEST_KEY = 'test-doubao-key';
 const USER_TEXT = '不应进入错误或日志的用户文本';
@@ -19,6 +19,7 @@ describe('server/doubao 生产边界', () => {
     process.env.VOLCANO_ARK_BASE_URL = 'https://ark.test/api/v3';
     vi.stubGlobal('fetch', vi.fn());
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -93,5 +94,24 @@ describe('server/doubao 生产边界', () => {
       status: 502,
       detail: '豆包LLM响应格式异常',
     });
+  });
+
+  it('意图 JSON 解析失败只记录事件，不记录模型原文', async () => {
+    const privateModelText = '老人血压 180/110，家庭住址与聊天正文';
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({
+      choices: [{ message: { content: privateModelText } }],
+    }));
+
+    await expect(recognizeIntent(USER_TEXT)).resolves.toEqual({
+      intent: 'general_chat',
+      entities: {},
+      confidence: 0,
+    });
+
+    const logged = JSON.stringify(vi.mocked(console.warn).mock.calls);
+    expect(logged).toContain('意图 JSON 解析失败');
+    expect(logged).not.toContain(privateModelText);
+    expect(logged).not.toContain(USER_TEXT);
+    expect(logged).not.toContain(TEST_KEY);
   });
 });

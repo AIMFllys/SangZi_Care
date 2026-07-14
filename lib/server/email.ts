@@ -106,10 +106,10 @@ export async function sendVerificationEmail(
       subject,
       html,
     });
-    console.info(`[email] 验证码邮件已发送至 ${toEmail}`);
+    console.info('[email] 验证码邮件已发送');
     return true;
-  } catch (err) {
-    console.error(`[email] 发送验证码邮件失败 (to=${toEmail}):`, err);
+  } catch {
+    console.error('[email] 发送验证码邮件失败');
     return false;
   }
 }
