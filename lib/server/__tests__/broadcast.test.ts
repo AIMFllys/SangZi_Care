@@ -2,7 +2,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+  chat: vi.fn(),
   synthesizeSpeech: vi.fn(),
+}));
+
+vi.mock('../doubao', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../doubao')>()),
+  chat: mocks.chat,
 }));
 
 vi.mock('../mimo', async (importOriginal) => ({
@@ -10,7 +16,23 @@ vi.mock('../mimo', async (importOriginal) => ({
   synthesizeSpeech: mocks.synthesizeSpeech,
 }));
 
-const { generateAudio } = await import('../broadcast');
+const { generateAudio, generateBroadcastText } = await import('../broadcast');
+
+describe('server/broadcast generateBroadcastText', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('将最终正文按 Unicode 字符安全限制在 300 字且不截断代理对', async () => {
+    const expected = `${'养'.repeat(299)}😀`;
+    mocks.chat.mockResolvedValue(`标题：安全广播\n内容：${expected}尾`);
+
+    const result = await generateBroadcastText({ category: '养生保健' });
+
+    expect(result.content).toBe(expected);
+    expect(Array.from(result.content)).toHaveLength(300);
+  });
+});
 
 describe('server/broadcast generateAudio', () => {
   beforeEach(() => {

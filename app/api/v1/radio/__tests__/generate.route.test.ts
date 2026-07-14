@@ -161,6 +161,47 @@ describe('POST /api/v1/radio/generate', () => {
     expect(database.insert).not.toHaveBeenCalled();
   });
 
+  it('允许恰好 5 MiB 的广播 MP3 继续上传并写入数据库', async () => {
+    const database = createDatabase();
+    const bytes = new Uint8Array(5 * 1024 * 1024);
+    mocks.getSupabaseServerClient.mockReturnValue(database.client);
+    mocks.generateAudio.mockResolvedValue({
+      bytes,
+      contentType: 'audio/mpeg',
+      duration: ROW.audio_duration,
+    });
+
+    const response = await POST(request());
+
+    expect(response.status).toBe(201);
+    expect(mocks.uploadVoiceObject).toHaveBeenCalledOnce();
+    const uploadCall = mocks.uploadVoiceObject.mock.calls[0];
+    expect(uploadCall?.[0]).toBe(database.client);
+    expect(uploadCall?.[1]).toBe(PATH);
+    expect(uploadCall?.[2]).toBe(bytes);
+    expect(uploadCall?.[3]).toBe('audio/mpeg');
+    expect(database.insert).toHaveBeenCalledOnce();
+  });
+
+  it('在上传前拒绝超过 5 MiB 的广播 MP3 并返回安全存储错误', async () => {
+    const database = createDatabase();
+    mocks.getSupabaseServerClient.mockReturnValue(database.client);
+    mocks.generateAudio.mockResolvedValue({
+      bytes: new Uint8Array(5 * 1024 * 1024 + 1),
+      contentType: 'audio/mpeg',
+      duration: ROW.audio_duration,
+    });
+
+    const response = await POST(request());
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      detail: '语音文件存储失败，请稍后重试',
+    });
+    expect(mocks.uploadVoiceObject).not.toHaveBeenCalled();
+    expect(database.insert).not.toHaveBeenCalled();
+  });
+
   it('数据库返回失败时补偿删除 MP3，并返回失败而非伪发布', async () => {
     const database = createDatabase({ data: null, error: new Error('db failed') });
     mocks.getSupabaseServerClient.mockReturnValue(database.client);

@@ -14,6 +14,8 @@
 import { chat, type LlmMessage } from './doubao';
 import { synthesizeSpeech, type SynthesizedSpeech } from './mimo';
 
+const MAX_BROADCAST_CONTENT_CODE_POINTS = 300;
+
 // ---------- 广播分类（对齐 Python BROADCAST_CATEGORIES） ----------
 
 export interface BroadcastCategory {
@@ -146,6 +148,10 @@ export async function generateBroadcastText(
       title = titlePart.slice(titleIdx + '标题：'.length).trim();
     }
   }
+
+  content = Array.from(content)
+    .slice(0, MAX_BROADCAST_CONTENT_CODE_POINTS)
+    .join('');
 
   return {
     title,

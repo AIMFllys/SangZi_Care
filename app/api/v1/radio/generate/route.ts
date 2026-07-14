@@ -34,6 +34,8 @@ import type {
 
 export const runtime = 'nodejs';
 
+const MAX_AUDIO_BYTES = 5 * 1024 * 1024;
+
 async function bestEffortRemove(
   client: ReturnType<typeof getSupabaseServerClient>,
   path: string,
@@ -72,6 +74,9 @@ export async function POST(request: NextRequest) {
     const { bytes, contentType, duration } = await generateAudio(
       textResult.content,
     );
+    if (bytes.byteLength > MAX_AUDIO_BYTES) {
+      throw new ApiError(503, '语音文件存储失败，请稍后重试');
+    }
 
     // 3. 先上传私有对象。上传失败时绝不写入已发布数据库记录。
     const supabase = getSupabaseServerClient();
