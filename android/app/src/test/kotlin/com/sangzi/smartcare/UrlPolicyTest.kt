@@ -105,6 +105,12 @@ class UrlPolicyTest {
             ),
         )
         assertTrue(source.contains("handleWebNavigation(rawUrl, true, urlPolicy)"))
+        assertTrue(
+            source.contains(
+                "@Deprecated(\"Legacy WebView callback\")\n" +
+                    "            override fun shouldOverrideUrlLoading",
+            ),
+        )
     }
 
     @Test

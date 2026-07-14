@@ -126,7 +126,7 @@ class MainActivity : AppCompatActivity() {
                 return handleWebNavigation(rawUrl, safeRequest.isForMainFrame, urlPolicy)
             }
 
-            @Suppress("DEPRECATION")
+            @Deprecated("Legacy WebView callback")
             override fun shouldOverrideUrlLoading(
                 view: WebView?,
                 url: String?,
