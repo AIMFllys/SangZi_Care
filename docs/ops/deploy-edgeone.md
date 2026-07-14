@@ -11,6 +11,7 @@
 - 仓库是**全栈 Next.js**，禁止配置 `output: 'export'`。
 - EdgeOne 安装 / 构建命令为 `npm ci` / `npm run build`，产物目录为 **`.next`**，不是 `out/`。
 - 浏览器、Android Release 壳与业务 API 使用同一正式源；生产环境保持 `NEXT_PUBLIC_API_BASE_URL` 未设置或为空，由页面访问同源 `/api/**`。
+- 全站 HTTPS 响应通过 Next 配置发送至少一年的 `Strict-Transport-Security`；正式域名仍需保持 HTTP→HTTPS 重定向与有效 TLS 证书。
 - redirects / rewrites 写在根目录 [edgeone.json](../../edgeone.json)，不要写进 `next.config.ts`。
 - `/api/ping` 在应用层和 EdgeOne 层都必须避免陈旧缓存：Route Handler 返回 `Cache-Control: no-store`，`edgeone.json` 同时配置响应头和 `cacheTtl: 0`。EdgeOne 的 Next SSR 适配层可能把最终浏览器头规范化为 `public,max-age=0,must-revalidate`；此时必须同时看到 `Eo-Cdn-Cache-Control: no-store`，才与直接 `no-store` 等价通过。
 - EdgeOne 必须监听实际发布分支。每次上线都要记录目标提交 SHA，不能仅把未连接的功能分支推到远端后宣称已经部署。

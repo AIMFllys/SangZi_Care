@@ -192,6 +192,19 @@ describe('生产构建门禁', () => {
     expect(nextConfig.env?.APP_GIT_REVISION).toMatch(/^[0-9a-f]{40}$/);
   });
 
+  it('Next 全站 HTTPS 响应启用至少一年的 HSTS', async () => {
+    const { default: nextConfig } = await import('../../next.config.ts');
+    const rules = await nextConfig.headers?.();
+    const headers = rules?.flatMap((rule) => rule.headers) ?? [];
+
+    expect(headers).toEqual(expect.arrayContaining([
+      {
+        key: 'Strict-Transport-Security',
+        value: 'max-age=31536000',
+      },
+    ]));
+  });
+
   it('首页按角色动态加载视图，避免两套看板同时进入首屏代码', () => {
     const source = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
 
