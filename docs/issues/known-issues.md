@@ -1,45 +1,49 @@
-# 已知问题（E2E / 迁移易红项）
+# 已知问题（E2E / 上线易红项）
 
-> Updated: 2026-07-12  
-> 供 Devin 与人工排障。修复跟踪见 [tech-debt.md](./tech-debt.md)。  
+> Updated: 2026-07-13
+>
+> 供自动化与人工排障。修复跟踪见 [tech-debt.md](./tech-debt.md)。
+>
 > 功能成熟度见 [详解/功能详解.md](../详解/功能详解.md)。
 
-## 环境与测试基建
+## 环境与上线前置
 
-| ID | 现象 | 影响 | 备注 |
+| ID | 现象 | 影响 | 排查 |
 |----|------|------|------|
-| KI-01 | `package.json` 无 `test` script | 单元测试不进默认 CI 心智 | 有 vitest 文件 |
-| KI-02 | 登录依赖真实 SMTP/邮箱 OTP | Devin 自动化易卡在收信 | 可用预置 token 跳过 P0-1 |
-| KI-03 | ~~过渡期可能需 Python :8000~~ | ~~双进程易漏起~~ | ✅ 已解决（2026-07 切流完成，前端同源 `/api/...`，无需 Python 进程） |
-| KI-04 | 旧 backend 测试与邮箱+验证码流可能不一致 | pytest 不能当现网真理 | backend 已归档 |
+| KI-01 | 目标 Supabase 未应用 `20260713230000_auth_challenges.sql` | CAPTCHA、发码与 OTP 校验安全返回 503 | 先应用 migration，再核验 `oc_auth_challenge_*` RPC；仓库中有文件不代表远端已执行 |
+| KI-02 | 登录依赖真实 SMTP 与可收信邮箱 | 无邮件环境的 E2E 会卡在 OTP | 核验 EdgeOne 生产环境的 `SMTP_*`；自动化使用受控测试邮箱 / 收件箱 |
+| KI-03 | `SUPABASE_VOICE_BUCKET` 缺失、bucket 不存在或被设为 public | 消息语音上传、鉴权播放和广播生成返回 503 | 预建 private bucket，并让本地与 EdgeOne 使用同名配置 |
+| KI-04 | EdgeOne 环境变量缺失，或修改变量后没有触发新部署 | 本地可用但线上认证、AI 或语音不可用 | 以 `.env.example` 的键名逐项核验；当前变量对所有环境生效，但变更只进入后续部署 |
 
-## 产品半成品（勿当回归）
-
-| ID | 现象 | 对应 |
-|----|------|------|
-| KI-10 | `/voice` ASR 为 Mock | TD-11 |
-| KI-11 | 紧急 SOS 无完整 UI / 无 FAB | TD-10 |
-| KI-12 | Realtime / offline 未挂载 | TD-12 |
-| KI-13 | PlanForm 无路由 | TD-13 |
-| KI-14 | 广播播放链路不完整 | TD-14 |
-| KI-15 | 首页天气/状态等硬编码文案 | 功能详解 |
-
-## Android / 桥
+## 产品未闭环项（勿误判为语音服务故障）
 
 | ID | 现象 | 对应 |
 |----|------|------|
-| KI-20 | 前端 `AndroidBridge` vs 原生 `SangZiBridge` | TD-20 |
-| KI-21 | `app_base_url` 需配真实域名 | TD-21 |
+| KI-10 | `/voice` 的 MiMo ASR/TTS 已接通，但 `intentHandlers` 动作分发仍未挂载 | TD-11 |
+| KI-11 | Elder 首页 SOS 已能发起应用内请求，但真实电话、短信或推送通道未接 | TD-10 |
+| KI-12 | Realtime / offline 基础设施未挂载 | TD-12 |
+| KI-13 | `PlanForm` 无页面路由 | TD-13 |
+| KI-14 | 健康广播生成与鉴权播放已接通，但当前没有 Tab 入口 | 功能详解 |
+| KI-15 | 首页天气、位置和状态等仍有硬编码文案 | 功能详解 |
+
+## Android 在线壳约束
+
+| ID | 约束 | 说明 |
+|----|------|------|
+| KI-20 | Release 固定加载 `https://sangzicare.husteread.com` | 正式 URL 已写入 Release 资源；Debug 才使用 `127.0.0.1:7742` |
+| KI-21 | 不存在业务 JSBridge 兜底 | 旧 `lib/jsbridge.ts` 已移除；录音走 `getUserMedia`，ASR/TTS 走同源 Next API 与服务端 MiMo |
+| KI-22 | APK 必须在站点部署验收后重建 | 仅交付与线上目标提交一致、工作树干净且签名校验通过的 Release APK |
 
 ## 数据与权限
 
 | ID | 现象 | 对应 |
 |----|------|------|
-| KI-30 | 旧 anon/service_role 与 publishable/secret 并存期 | TD-03 |
-| KI-31 | 家属跨用户读健康曾缺门控 | 迁移 04 应修 |
-| KI-32 | 紧急通知权限字段曾不一致 | 迁移 03/10 |
+| KI-30 | 客户端仍保留旧 anon 键名回退；服务端目标为 publishable / secret 新密钥 | TD-03 |
+| KI-31 | 家属跨用户读取健康数据的绑定与权限门控仍需收紧 | TD-04 |
+| KI-32 | 紧急通知权限存在布尔列与 `permissions` JSONB 两套读取方式 | TD-04 |
 
-## Devin 使用约定
+## 回归判定
 
-- 失败时先查本表：若命中 KI-1x，标 **known**，不阻塞「迁移域 API 契约」通过。  
-- P0 路径（登录、健康、用药、消息、绑定）失败且非本表 → **回归**，必须修。
+- `npm test`、`npm run lint`、`npm run tsc`、`npm run build` 是提交与部署前的基础门禁。
+- ASR/TTS 的云端主链路已经统一为 MiMo；若真实转写或合成失败，应检查鉴权、区域/Base URL、额度、网络与 EdgeOne 环境变量，不得再按“Mock 已知问题”跳过。
+- P0 路径（登录、健康、用药、消息、绑定）失败且未命中本表的上线前置条件时，按回归处理并修复。
