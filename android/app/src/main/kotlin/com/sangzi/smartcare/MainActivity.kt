@@ -2,6 +2,7 @@ package com.sangzi.smartcare
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -49,24 +50,59 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // 注入 JSBridge
         webView.addJavascriptInterface(JSBridge(), "SangZiBridge")
 
-        // 拦截 tel: 协议
+        // 模式 B：加载可配置的线上 / 调试基址（见 strings.xml app_base_url）
+        val baseUrl = getString(R.string.app_base_url).trimEnd('/')
+        val urlPolicy = UrlPolicy(baseUrl)
+
+        // 仅允许受信任源留在 WebView 内，其他导航按策略处理
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(
                 view: WebView?,
                 request: WebResourceRequest?
             ): Boolean {
-                val url = request?.url?.toString() ?: return false
-                if (url.startsWith("tel:")) {
-                    makePhoneCall(url.removePrefix("tel:"))
-                    return true
-                }
-                return false
+                val rawUrl = request?.url?.toString() ?: return true
+                return handleWebNavigation(rawUrl, request.isForMainFrame, urlPolicy)
+            }
+
+            @Suppress("DEPRECATION")
+            override fun shouldOverrideUrlLoading(
+                view: WebView?,
+                url: String?
+            ): Boolean {
+                val rawUrl = url ?: return true
+                return handleWebNavigation(rawUrl, true, urlPolicy)
             }
         }
 
-        // 模式 B：加载可配置的线上 / 调试基址（见 strings.xml app_base_url）
-        val baseUrl = getString(R.string.app_base_url).trimEnd('/')
         webView.loadUrl("$baseUrl/")
+    }
+
+    private fun handleWebNavigation(
+        rawUrl: String,
+        isForMainFrame: Boolean,
+        urlPolicy: UrlPolicy,
+    ): Boolean {
+        val action = urlPolicy.classify(rawUrl)
+        if (action == UrlPolicy.Action.ALLOW_IN_WEBVIEW) return false
+        if (!isForMainFrame) return true
+
+        when (action) {
+            UrlPolicy.Action.DIAL -> launchSystemIntent(Intent.ACTION_DIAL, rawUrl)
+            UrlPolicy.Action.OPEN_EXTERNAL -> launchSystemIntent(Intent.ACTION_VIEW, rawUrl)
+            UrlPolicy.Action.BLOCK -> Unit
+            UrlPolicy.Action.ALLOW_IN_WEBVIEW -> Unit
+        }
+        return true
+    }
+
+    private fun launchSystemIntent(action: String, rawUrl: String) {
+        try {
+            startActivity(Intent(action, Uri.parse(rawUrl)))
+        } catch (_: ActivityNotFoundException) {
+            // 设备没有可处理该链接的应用时保持在当前页面。
+        } catch (_: SecurityException) {
+            // 系统策略拒绝外部 Intent 时保持在当前页面。
+        }
     }
 
     override fun onInit(status: Int) {
