@@ -10,6 +10,8 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -26,6 +28,7 @@ import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -45,6 +48,10 @@ class MainActivity : AppCompatActivity() {
     private var pendingMicrophoneRequest: PermissionRequest? = null
     private var microphonePermissionLaunchInFlight = false
     private var mainFrameLoadFailed = false
+    private var activityStarted = false
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val backDecisionGuard = BackDecisionGuard()
+    private var backDecisionTimeout: Runnable? = null
 
     private val microphonePermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -77,6 +84,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         configureWebViewClients()
+        configureBackNavigation()
         errorPanel = createErrorPanel()
         setContentView(
             FrameLayout(this).apply {
@@ -137,6 +145,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onPageStarted(view: WebView?, url: String, favicon: Bitmap?) {
+                cancelBackDecision()
                 denyPendingMicrophoneRequest()
                 mainFrameLoadFailed = false
                 hideMainFrameError()
@@ -180,7 +189,86 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun configureBackNavigation() {
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (webView.canGoBack()) {
+                        denyPendingMicrophoneRequest()
+                        webView.goBack()
+                        return
+                    }
+
+                    val callback = this
+                    val ticket = backDecisionGuard.begin(webView.url) ?: return
+                    val timeout = Runnable {
+                        backDecisionTimeout = null
+                        when (backDecisionGuard.complete(ticket, webView.url)) {
+                            BackDecisionGuard.Completion.CURRENT -> {
+                                if (activityStarted && !isFinishing && !isDestroyed) {
+                                    performBackDecision(false, callback)
+                                }
+                            }
+                            BackDecisionGuard.Completion.PAGE_CHANGED,
+                            BackDecisionGuard.Completion.STALE,
+                            -> Unit
+                        }
+                    }
+                    backDecisionTimeout = timeout
+                    mainHandler.postDelayed(timeout, BACK_DECISION_TIMEOUT_MS)
+                    webView.evaluateJavascript(
+                        "Boolean(window.navigation && window.navigation.canGoBack)",
+                    ) { canGoBackInChromium ->
+                        if (backDecisionTimeout === timeout) {
+                            mainHandler.removeCallbacks(timeout)
+                            backDecisionTimeout = null
+                        }
+                        if (
+                            backDecisionGuard.complete(ticket, webView.url) !=
+                            BackDecisionGuard.Completion.CURRENT
+                        ) return@evaluateJavascript
+                        if (!activityStarted || isFinishing || isDestroyed) {
+                            return@evaluateJavascript
+                        }
+                        performBackDecision(canGoBackInChromium == "true", callback)
+                    }
+                }
+            },
+        )
+    }
+
+    private fun performBackDecision(
+        canGoBackInChromium: Boolean,
+        callback: OnBackPressedCallback,
+    ) {
+        if (webView.canGoBack()) {
+            denyPendingMicrophoneRequest()
+            webView.goBack()
+        } else if (canGoBackInChromium) {
+            denyPendingMicrophoneRequest()
+            webView.evaluateJavascript("history.back()", null)
+        } else {
+            callback.isEnabled = false
+            try {
+                onBackPressedDispatcher.onBackPressed()
+            } finally {
+                callback.isEnabled = true
+            }
+        }
+    }
+
+    private fun cancelBackDecision() {
+        backDecisionTimeout?.let(mainHandler::removeCallbacks)
+        backDecisionTimeout = null
+        backDecisionGuard.cancelAll()
+    }
+
     private fun handleWebPermissionRequest(request: PermissionRequest) {
+        if (!activityStarted) {
+            request.deny()
+            return
+        }
         if (pendingMicrophoneRequest !== request) {
             denyPendingMicrophoneRequest()
         }
@@ -210,7 +298,7 @@ class MainActivity : AppCompatActivity() {
         val request = pendingMicrophoneRequest ?: return
         pendingMicrophoneRequest = null
 
-        if (androidPermissionGranted && canGrantMicrophoneRequest(request)) {
+        if (androidPermissionGranted && activityStarted && canGrantMicrophoneRequest(request)) {
             request.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE))
         } else {
             request.deny()
@@ -317,6 +405,11 @@ class MainActivity : AppCompatActivity() {
             resources.displayMetrics,
         ).toInt()
 
+    override fun onStart() {
+        super.onStart()
+        activityStarted = true
+    }
+
     override fun onResume() {
         super.onResume()
         webView.onResume()
@@ -330,25 +423,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onStop() {
+        activityStarted = false
+        cancelBackDecision()
         denyPendingMicrophoneRequest()
         super.onStop()
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (webView.canGoBack()) {
-            denyPendingMicrophoneRequest()
-            webView.goBack()
-        } else {
-            super.onBackPressed()
-        }
-    }
-
     override fun onDestroy() {
+        activityStarted = false
+        cancelBackDecision()
         denyPendingMicrophoneRequest()
         webView.stopLoading()
         webView.removeAllViews()
         webView.destroy()
         super.onDestroy()
+    }
+
+    private companion object {
+        const val BACK_DECISION_TIMEOUT_MS = 750L
     }
 }

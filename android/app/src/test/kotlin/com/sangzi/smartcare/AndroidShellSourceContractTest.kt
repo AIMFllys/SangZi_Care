@@ -1,6 +1,7 @@
 package com.sangzi.smartcare
 
 import java.io.File
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -31,10 +32,20 @@ class AndroidShellSourceContractTest {
     fun keepsOnlyThePermissionsNeededByTheOnlineShell() {
         val manifest = projectFile("app/src/main/AndroidManifest.xml")
             .readText(Charsets.UTF_8)
+        val permissions = Regex(
+            """<uses-permission\s+android:name="([^"]+)"\s*/>""",
+        ).findAll(manifest).map { it.groupValues[1] }.toSet()
 
-        assertTrue(manifest.contains("android.permission.INTERNET"))
-        assertTrue(manifest.contains("android.permission.RECORD_AUDIO"))
-        assertTrue(manifest.contains("android.permission.ACCESS_NETWORK_STATE"))
+        assertEquals(
+            setOf(
+                "android.permission.INTERNET",
+                "android.permission.RECORD_AUDIO",
+                "android.permission.MODIFY_AUDIO_SETTINGS",
+                "android.permission.ACCESS_NETWORK_STATE",
+            ),
+            permissions,
+        )
+        assertTrue(manifest.contains("android:enableOnBackInvokedCallback=\"true\""))
         assertFalse(manifest.contains("android.permission.CALL_PHONE"))
     }
 
@@ -82,6 +93,56 @@ class AndroidShellSourceContractTest {
             .forEach { token ->
                 assertFalse("错误页不应使用 $token", source.contains(token))
             }
+    }
+
+    @Test
+    fun handlesModernSystemBackBeforeFinishingTheActivity() {
+        val source = projectFile(
+            "app/src/main/kotlin/com/sangzi/smartcare/MainActivity.kt",
+        ).readText(Charsets.UTF_8)
+        val required = listOf(
+            "OnBackPressedCallback(true)",
+            "onBackPressedDispatcher.addCallback(",
+            "override fun handleOnBackPressed()",
+            "if (webView.canGoBack())",
+            "webView.goBack()",
+            "BackDecisionGuard()",
+            "BACK_DECISION_TIMEOUT_MS",
+            "mainHandler.postDelayed(",
+            "mainHandler.removeCallbacks(",
+            "backDecisionGuard.complete(",
+            "BackDecisionGuard.Completion.PAGE_CHANGED",
+            "cancelBackDecision()",
+            "webView.evaluateJavascript(",
+            "window.navigation",
+            "history.back()",
+            "isEnabled = false",
+            "onBackPressedDispatcher.onBackPressed()",
+        )
+
+        required.forEach { token ->
+            assertTrue("现代返回链路缺少 $token", source.contains(token))
+        }
+        assertFalse(source.contains("override fun onBackPressed()"))
+    }
+
+    @Test
+    fun refusesLateMicrophoneRequestsAfterTheActivityStops() {
+        val source = projectFile(
+            "app/src/main/kotlin/com/sangzi/smartcare/MainActivity.kt",
+        ).readText(Charsets.UTF_8)
+        val required = listOf(
+            "private var activityStarted = false",
+            "override fun onStart()",
+            "activityStarted = true",
+            "activityStarted = false",
+            "if (!activityStarted)",
+            "androidPermissionGranted && activityStarted",
+        )
+
+        required.forEach { token ->
+            assertTrue("后台麦克风门禁缺少 $token", source.contains(token))
+        }
     }
 
     @Test
