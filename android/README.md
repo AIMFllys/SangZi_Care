@@ -1,57 +1,65 @@
-# 智护银龄 — Android 在线 WebView 壳
+# 智护银龄 Android 在线壳
 
-> 桑梓智护移动端 · **模式 B**：打开云端 https，不内嵌静态整站
+Android 端是一个薄 WebView 壳，Release 只加载
+`https://sangzicare.husteread.com`，不复制 Next.js 静态产物，也不维护第二套语音实现。
 
-## 应用信息
+## 变体
 
-- **APP 名称**: 智护银龄
-- **包名**: `com.sangzi.smartcare`
-- **加载方式**: WebView → `strings.xml` 中的 `app_base_url`
+| 变体 | 包名 | 页面来源 | 明文流量 |
+| --- | --- | --- | --- |
+| Release | `com.sangzi.smartcare` | `https://sangzicare.husteread.com` | 禁止 |
+| Debug | `com.sangzi.smartcare.debug` | `http://127.0.0.1:7742` | 仅回环地址 |
 
-## 环境要求
+Debug 访问本机开发服务：
 
-- Android SDK 34
-- Kotlin 1.9+
-- Gradle 8.2+
-- 最低 Android 8.0 (API 26)
-
-## 配置基址
-
-编辑 [`app/src/main/res/values/strings.xml`](app/src/main/res/values/strings.xml)：
-
-```xml
-<!-- 生产：EdgeOne 分配的 https 域名 -->
-<string name="app_base_url">https://your-edgeone-domain</string>
-
-<!-- 模拟器访问本机 Next：http://10.0.2.2:7742 -->
-<!-- 真机调试：http://<电脑局域网IP>:7742 -->
+```powershell
+npm run dev
+adb reverse tcp:7742 tcp:7742
+Set-Location android
+.\gradlew.bat assembleDebug
+adb install -r .\app\build\outputs\apk\debug\app-debug.apk
 ```
 
-## 构建 APK
+## 语音与权限边界
 
-```bash
-./gradlew assembleRelease
+- ASR/TTS 与浏览器使用同一套服务端 MiMo API；Android 不注入原生 JavaScript bridge。
+- Web 麦克风只对配置的精确同源页面开放，并且只授予
+  `RESOURCE_AUDIO_CAPTURE`。
+- Android 权限返回、页面导航、请求替换、取消、后台与销毁时都会重新验证或拒绝待处理请求。
+- 电话链接交给系统 `ACTION_DIAL`，应用不申请 `CALL_PHONE`。
+- Release 禁止文件访问、内容访问、混合内容、第三方 Cookie 与明文网络。
+
+## 签名配置
+
+需要 JDK 17、Android SDK 34 和 Gradle Wrapper 8.2.1。复制示例并填写本地值：
+
+```powershell
+Copy-Item .\keystore.properties.example .\keystore.properties
 ```
 
-**不要**再执行「`next build` → 拷贝 `out/` 到 `assets/web/`」——该流程已废弃。
+`keystore.properties` 的字段为 `storeFile`、`storePassword`、`keyAlias`、
+`keyPassword`。也可以改用同名环境变量：
 
-## JSBridge
+- `SANGZI_STORE_FILE`
+- `SANGZI_STORE_PASSWORD`
+- `SANGZI_KEY_ALIAS`
+- `SANGZI_KEY_PASSWORD`
 
-原生注入名：`window.SangZiBridge`
+keystore、`keystore.properties`、APK/AAB 和构建目录均被 Git 忽略。发布签名是后续升级
+APK 的唯一身份，必须离线备份并长期保存；不要把口令写入文档、命令日志或仓库。
 
-| 方法 | 说明 |
-|------|------|
-| `makePhoneCall(number)` | 拨打电话 |
-| `speak(text, rate)` | TTS |
-| `stopSpeak()` | 停止 TTS |
-| `isTTSAvailable()` | TTS 是否可用 |
-| `startASR()` | 启动语音识别 |
-| `isASRAvailable()` | ASR 是否可用 |
-| `getItem` / `setItem` / `removeItem` | 本地存储 |
+## 构建并验证 Release APK
 
-**已知问题**：前端 [`lib/jsbridge.ts`](../lib/jsbridge.ts) 仍期望 `AndroidBridge` 与不同 API 形态，Native 语音路径当前不可用（见 [docs/issues/tech-debt.md](../docs/issues/tech-debt.md) TD-20）。
+```powershell
+Set-Location android
+.\build_apk.ps1
+```
 
-## 相关
+脚本会运行 Release lint、单测、R8、签名与组装，再对源 APK 和复制后的交付 APK
+分别执行 zipalign、apksigner、包名、权限、明文策略和生产 URL 检查。最终文件位于被忽略的
+`android/app/release/`，控制台只输出路径、大小、提交、版本、签名证书摘要和 APK SHA-256。
+
+相关文档：
 
 - [目标架构](../docs/designs/target-architecture.md)
 - [EdgeOne 部署](../docs/ops/deploy-edgeone.md)

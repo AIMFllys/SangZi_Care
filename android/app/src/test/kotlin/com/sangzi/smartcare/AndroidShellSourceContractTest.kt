@@ -107,11 +107,12 @@ class AndroidShellSourceContractTest {
     }
 
     private fun repositoryRoot(): File {
-        val androidRoot = projectFile("app/build.gradle").parentFile.parentFile
+        val androidRoot = projectFile("app/build.gradle").parentFile?.parentFile
+            ?: error("找不到 Android 根目录")
         return if (File(androidRoot, "package.json").isFile) {
             androidRoot
         } else {
-            androidRoot.parentFile
+            androidRoot.parentFile ?: error("找不到仓库根目录")
         }
     }
 }

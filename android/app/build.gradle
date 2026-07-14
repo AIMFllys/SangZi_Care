@@ -1,8 +1,40 @@
 // 智护银龄 — 桑梓智护项目 Android WebView APK 模块构建配置
+import java.util.Properties
+
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
 }
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+if (keystorePropertiesFile.isFile()) {
+    keystorePropertiesFile.withInputStream { stream ->
+        keystoreProperties.load(stream)
+    }
+}
+
+def signingValue = { String propertyName, String environmentName ->
+    def propertyValue = keystoreProperties.getProperty(propertyName)?.trim()
+    propertyValue ?: System.getenv(environmentName)?.trim()
+}
+def releaseStorePath = signingValue('storeFile', 'SANGZI_STORE_FILE')
+def releaseStorePassword = signingValue('storePassword', 'SANGZI_STORE_PASSWORD')
+def releaseKeyAlias = signingValue('keyAlias', 'SANGZI_KEY_ALIAS')
+def releaseKeyPassword = signingValue('keyPassword', 'SANGZI_KEY_PASSWORD')
+def releaseSigningValues = [
+    storeFile: releaseStorePath,
+    storePassword: releaseStorePassword,
+    keyAlias: releaseKeyAlias,
+    keyPassword: releaseKeyPassword,
+]
+def missingReleaseSigningValues = releaseSigningValues.findAll { _, value -> !value }.keySet()
+def releaseSigningComplete = missingReleaseSigningValues.isEmpty()
+def releaseStoreFile = releaseStorePath
+    ? (new File(releaseStorePath).isAbsolute()
+        ? new File(releaseStorePath)
+        : rootProject.file(releaseStorePath))
+    : null
 
 android {
     namespace 'com.sangzi.smartcare'
@@ -16,6 +48,17 @@ android {
         versionName "1.0.0"
     }
 
+    signingConfigs {
+        if (releaseSigningComplete) {
+            release {
+                storeFile releaseStoreFile
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix ".debug"
@@ -24,6 +67,9 @@ android {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (releaseSigningComplete) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 
@@ -34,6 +80,28 @@ android {
 
     kotlinOptions {
         jvmTarget = '17'
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    def releaseArtifactRequested = graph.allTasks.any { task ->
+        task.name == 'assembleRelease' ||
+            task.name == 'bundleRelease' ||
+            task.name == 'validateSigningRelease' ||
+            task.name.startsWith('packageRelease')
+    }
+    if (!releaseArtifactRequested) return
+
+    if (!releaseSigningComplete) {
+        throw new GradleException(
+            "Release signing inputs are missing: ${missingReleaseSigningValues.join(', ')}. " +
+                'Configure android/keystore.properties or SANGZI_* environment variables.',
+        )
+    }
+    if (!releaseStoreFile.isFile()) {
+        throw new GradleException(
+            'Release signing keystore does not exist. Check storeFile or SANGZI_STORE_FILE.',
+        )
     }
 }
 
