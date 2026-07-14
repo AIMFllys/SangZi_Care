@@ -6,7 +6,7 @@
 
 ## 结论
 
-当前生产构建通过仓库内的静态资源与 EdgeOne 单文件预算。Tailwind 扫描范围收窄并完成本轮布局修复后，构建 CSS 从 `170,543 B` 降至 `120,095 B`，减少 `50,448 B`（约 `29.6%`）；最终静态 JavaScript 为 `937,600 B`。构建仍输出 `.next`，没有启用静态导出。
+当前生产构建通过仓库内的静态资源与 EdgeOne 单文件预算。Tailwind 扫描范围收窄并完成本轮布局修复后，构建 CSS 从 `170,543 B` 降至 `120,095 B`，减少 `50,448 B`（约 `29.6%`）；最终静态 JavaScript 为 `937,600 B`。构建仍输出 `.next`，没有启用静态导出。EdgeOne 注入服务端 `MIMO_API_KEY` 并重新部署后，生产同源 TTS → ASR 真实回环也已通过。
 
 ## 可复现预算
 
@@ -62,15 +62,24 @@
 
 ## 2026-07-14 生产移动端与认证证据
 
-- GitHub `main`、本地源码与 EdgeOne `/api/ping` 均为 `80a657fd826e15a07d050b4da2553061a98fdad5`。
+- UI 与认证审计采样 revision 为 `80a657fd826e15a07d050b4da2553061a98fdad5`；经 `git diff --name-status` 复核，从该 revision 到语音验证基线 `df0adeb0037134e9549534f1d3a5f76559e2d349` 的唯一文件差异是本审计文档，Android 与 Web 运行时输入没有改变。
 - 公网探针返回 `Strict-Transport-Security: max-age=31536000`；浏览器缓存头为 `public,max-age=0,must-revalidate`，同时带 `Eo-Cdn-Cache-Control: no-store, durable`，连续请求为 `Cache Miss`。
 - 在真实生产会话的 `390 × 844` 视口审计 `/`、`/health`、`/medicine`、`/messages`、`/radio`、`/settings`：文档宽度均为 `390px`，无横向溢出、无小于 `44px` 的可见触控目标，页面根节点不产生多余滚动。
 - 六个主页面的底栏均固定在 `y=780—844`；5 个导航项的上下边界完全一致，中间“功能”项不再凸出。`/voice` 是有明确返回入口的沉浸式会话页，刻意不重复主底栏，全部核心控制仍在一屏内。
 - 登录会话重载后 `/api/v1/users/me` 返回 200 并进入首页；退出登录后稳定停留 `/login`。测试随后仅在同源页面内恢复原会话，再次进入首页时 `/users/me` 仍为 200。
 
-## Android Release 候选证据
+## 2026-07-14 生产 MiMo 与 Supabase 证据
 
-当前候选只证明 Android 壳与已部署网页可用；审计文档最终提交会改变 revision，因此它不是最终交付包。
+- EdgeOne `/api/ping` 已切换到部署 revision `df0adeb0037134e9549534f1d3a5f76559e2d349` 后才开始语音测试，排除了命中旧实例的可能。
+- 在真实生产登录会话中，`POST /api/v1/voice/tts` 返回 200 和 `audio/mpeg`，生成 `23,928 B` MP3；请求 ID 为 `80370aff-d24a-4bab-9f13-66624ec2f59f`。
+- 将上述 MP3 原样作为 `file` 提交给 `POST /api/v1/voice/transcribe`，返回 200；请求 ID 为 `54c1959f-50b1-4a7c-ab79-c3d731d88dc7`。
+- 测试短语为“桑梓智护语音服务生产回环测试。”，ASR 返回“桑子智护语音服务生产回环测试。”；专名同音字存在单字偏差，但音频生成、鉴权、上传、格式校验、MiMo ASR 和响应链路全部成功。测试过程没有输出访问令牌或 MiMo 密钥。
+- 通过 Supabase MCP 复核：`voice-audio` bucket 为 private，单对象上限 5 MiB，仅允许 `audio/wav` / `audio/mpeg`，审计时无遗留对象；6 个 `oc_auth_challenge_*` RPC 仅授予 `postgres` / `service_role`，客户端角色没有挑战表权限；没有测试样式账号或未过期 challenge。
+- 同一 Supabase 项目还承载其他应用的 16 张未启用 RLS 的表。它们不属于桑梓智护本轮授权范围，本轮没有擅自修改；共享项目管理员应单独确认这些表是否应隔离或启用 RLS。
+
+## Android Release 预验收证据
+
+当前候选证明 Android 壳、正式签名流程与已部署网页可用。本次审计更新提交并部署后，以该部署 revision 作为一次性的 Release 构建基线，重新构建并安装 APK。最终 APK 哈希仅写入交付记录，不再修改本文件；审计记录提交本身不触发下一轮 APK 重建。
 
 - 源码与部署 revision：`80a657fd826e15a07d050b4da2553061a98fdad5`
 - APK：`sangzi-smart-care-1.0.0-1-release.apk`，`767,103 B`
@@ -79,12 +88,11 @@
 - 正式签名、Release lint、单元测试、R8 与安装均通过；Android 15 模拟器冷启动后约 `7.85s` 出现完整登录内容，没有 FATAL、TLS 或主文档网络错误。
 - 清空壳数据并断网冷启动时出现原生“网络连接暂时不可用”重试页；恢复公网后点击“重新加载”，同一 Activity 成功回到完整登录页。
 
-## 尚需生产环境证明的项目
+## 最终设备验收边界
 
-不把外部状态伪装成成功。当前尚未完成的是：
+生产同源 MiMo TTS → ASR 已完成。仍需在交付阶段完成或由真实设备持有人确认的是：
 
-- EdgeOne 生产 `POST /api/v1/voice/tts` 仍返回 `503` 与安全错误 `MiMo 语音服务未配置`；同一密钥的本地付费实时回环已通过，故当前根因是 EdgeOne 尚未注入服务端变量 `MIMO_API_KEY`，不是模型、音频格式或代码链路失败。
-- EdgeOne 增加该变量并重新部署后，必须通过线上同源路由完成一次非敏感 MiMo TTS → ASR 冒烟。
-- 生产语音通过、最终审计提交部署后，必须从该最终 revision 再次构建、安装并记录 Release APK 哈希；物理手机上的真实麦克风授权仍是最终设备验收项。
+- 从上述一次性 Release 构建基线重新构建、安装并记录 APK 哈希。
+- Android 模拟器可验证安装、冷启动、联网与断网恢复；物理手机上的真实麦克风采集、系统授权弹窗和扬声器听感仍须在目标设备上做一次人工验收。
 
-这些外部验证完成前，不能仅凭本地构建或候选 APK 宣称生产语音与 APK 端到端验收完成。
+完成最终 APK 构建与模拟器复测前，不能把上述预验收候选当作最终交付包。
