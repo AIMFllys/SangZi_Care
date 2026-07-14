@@ -1,45 +1,30 @@
 @echo off
 chcp 65001 >nul
+setlocal
+set "REPO_ROOT=%~dp0..\.."
+cd /d "%REPO_ROOT%"
 
 echo.
-echo ╔════════════════════════════════════════╗
-echo ║     桑梓智护 - 服务状态检查工具     ║
-echo ╚════════════════════════════════════════╝
+echo ========================================
+echo 桑梓智护 - Next.js 服务状态
+echo ========================================
 echo.
 
-echo [检查服务状态]
-echo.
-
-REM 检查前端服务 (端口 3000)
-echo 📱 前端服务 (端口 3000):
-netstat -ano | findstr ":3000" >nul 2>nul
-if %ERRORLEVEL% EQU 0 (
-    echo    ✓ 运行中
-    for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3000" ^| findstr "LISTENING"') do (
-        echo    进程 ID: %%a
-    )
-) else (
-    echo    ✗ 未运行
+netstat -ano | findstr ":7742" | findstr "LISTENING" >nul 2>nul
+if errorlevel 1 (
+    echo [未运行] 本地服务未监听 7742 端口
+    echo 请运行 scripts\dev\dev.bat 或 npm run dev
+    exit /b 1
 )
-echo.
 
-REM 检查后端服务 (端口 8000)
-echo 🔧 后端服务 (端口 8000):
-netstat -ano | findstr ":8000" >nul 2>nul
-if %ERRORLEVEL% EQU 0 (
-    echo    ✓ 运行中
-    for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8000" ^| findstr "LISTENING"') do (
-        echo    进程 ID: %%a
-    )
-) else (
-    echo    ✗ 未运行
+echo [运行中] 本地服务正在监听 7742 端口
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":7742" ^| findstr "LISTENING"') do echo 进程 ID: %%a
+
+curl --fail --silent --show-error http://localhost:7742/api/ping >nul
+if errorlevel 1 (
+    echo [异常] 端口已监听，但 Next.js 探针不可用
+    exit /b 1
 )
-echo.
 
-echo ════════════════════════════════════════
-echo.
-echo 💡 提示:
-echo    - 如需启动服务，运行: scripts\dev.bat
-echo    - 如需停止服务，运行: scripts\stop-dev.bat
-echo.
-pause
+echo [正常] http://localhost:7742/api/ping
+exit /b 0

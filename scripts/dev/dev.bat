@@ -1,91 +1,48 @@
 @echo off
 chcp 65001 >nul
-setlocal enabledelayedexpansion
-
-REM ========================================
-REM 桑梓智护 - 本地开发环境一键启动
-REM ========================================
+setlocal EnableExtensions
+set "REPO_ROOT=%~dp0..\.."
+cd /d "%REPO_ROOT%"
 
 title 桑梓智护 - 开发环境启动
-
 echo.
-echo ╔════════════════════════════════════════╗
-echo ║   桑梓智护 - 本地开发环境启动工具   ║
-echo ╚════════════════════════════════════════╝
-echo.
+echo ========================================
+echo 桑梓智护 - 本地开发环境
+echo ========================================
 
-REM 检查 Node.js
-echo [1/3] 检查 Node.js...
 where node >nul 2>nul
-if %ERRORLEVEL% NEQ 0 (
-    echo ❌ 未找到 Node.js，请先安装 Node.js 22.x
-    echo    下载地址: https://nodejs.org/
-    pause
+if errorlevel 1 (
+    echo [错误] 未找到 Node.js，请安装 Node.js 22.x
     exit /b 1
 )
-for /f "tokens=*" %%i in ('node --version') do set NODE_VERSION=%%i
-echo ✓ Node.js 已安装: !NODE_VERSION!
 
-REM 检查前端依赖
-echo [2/3] 检查前端依赖...
+call node scripts\check-node-version.mjs
+if errorlevel 1 exit /b 1
+
 if not exist "node_modules\" (
-    echo ⚠ 依赖未安装，正在安装...
+    echo [准备] 正在使用 npm install 安装依赖...
     call npm install
-    if %ERRORLEVEL% NEQ 0 (
-        echo ❌ 依赖安装失败
-        pause
-        exit /b 1
-    )
-    echo ✓ 依赖安装完成
-) else (
-    echo ✓ 依赖已安装
+    if errorlevel 1 exit /b 1
 )
 
-REM 检查配置文件
-echo [3/3] 检查配置文件...
 if not exist ".env.local" (
-    if not exist ".env" (
-        echo ❌ 未找到 .env.local 文件
-        echo    请复制 .env.example 为 .env.local 并填写密钥
-        pause
-        exit /b 1
-    )
+    echo [错误] 未找到 .env.local
+    echo 请复制 .env.example，并只在本地填写真实密钥
+    exit /b 1
 )
-echo ✓ 配置文件已就绪
 
-echo.
-echo ════════════════════════════════════════
-echo 正在启动 Next.js 开发服务（端口 7742）...
-echo ════════════════════════════════════════
-echo.
-
-start "桑梓智护 - 开发服务" cmd /k "cd /d %~dp0.. && echo 开发服务启动中... && npm run dev"
-
-REM 等待服务启动
-echo    等待开发服务启动...
+echo [启动] http://localhost:7742
+start "桑梓智护 - Next.js 7742" cmd /k "npm run dev"
 timeout /t 5 /nobreak >nul
 
-echo.
-echo ════════════════════════════════════════
-echo ✅ 服务启动完成！
-echo ════════════════════════════════════════
-echo.
-echo 📱 应用地址: http://localhost:7742
-echo 🔍 探针地址: http://localhost:7742/api/ping
-echo.
-echo 💡 提示:
-echo    - 关闭此窗口不会停止服务
-echo    - 要停止服务，请关闭「桑梓智护 - 开发服务」窗口
-echo    - 或在该窗口按 Ctrl+C
-echo.
-
-REM 询问是否打开浏览器
-choice /C YN /M "是否打开浏览器访问应用"
-if %ERRORLEVEL% EQU 1 (
-    echo 正在打开浏览器...
-    start http://localhost:7742
+curl --fail --silent http://localhost:7742/api/ping >nul 2>nul
+if errorlevel 1 (
+    echo [提示] 服务仍在启动，请稍后访问 http://localhost:7742/api/ping
+) else (
+    echo [正常] Next.js 页面与同源 API 已启动
 )
 
-echo.
-echo 按任意键退出启动工具（服务将继续运行）...
-pause >nul
+choice /C YN /M "是否打开应用"
+if errorlevel 2 exit /b 0
+start "" http://localhost:7742
+exit /b 0

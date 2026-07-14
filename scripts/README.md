@@ -30,10 +30,11 @@ npm run dev                  # http://localhost:7742
 
 | 脚本 | 说明 |
 |------|------|
-| `dev/dev.bat` | 历史一键启停（可能仍尝试双开前后端；以 npm 单进程为准逐步简化） |
-| `dev/start-dev.bat` / `stop-dev.bat` | 启停 |
-| `dev/check-status.bat` | 状态检查 |
-| `dev/test-all.bat` / `test-api.bat` | 测试相关 |
+| `dev/dev.bat` | 从仓库根目录启动 7742 端口的 Next.js 单进程开发服务 |
+| `dev/start-dev.bat` / `stop-dev.bat` | 启动 / 停止 7742 端口服务 |
+| `dev/check-status.bat` | 检查监听状态与同源 `/api/ping` |
+| `dev/test-all.bat` | 运行 test、lint、tsc、build 四项交付门禁 |
+| `dev/test-api.bat` | 检查本地 Next.js 同源 API 探针 |
 | `setup/test-env.bat` | 环境变量检查 |
 
 **端口以 7742 为准**（不是旧文档中的 3000）。
