@@ -7,6 +7,15 @@
   "redirects": [],
   "headers": [
     {
+      "source": "/api/ping",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        }
+      ]
+    },
+    {
       "source": "/_next/static/*",
       "headers": [
         {
@@ -14,6 +23,12 @@
           "value": "public, max-age=31536000, immutable"
         }
       ]
+    }
+  ],
+  "caches": [
+    {
+      "source": "/api/ping",
+      "cacheTtl": 0
     }
   ],
   "cloudFunctions": {

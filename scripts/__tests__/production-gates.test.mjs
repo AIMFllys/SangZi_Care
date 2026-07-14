@@ -136,6 +136,21 @@ describe('生产构建门禁', () => {
     expect(edgeone.outputDirectory).toBe('.next');
   });
 
+  it('EdgeOne 对部署 revision 探针同时禁用浏览器与边缘缓存', () => {
+    const edgeone = JSON.parse(readFileSync(resolve(root, 'edgeone.json'), 'utf8'));
+    const pingHeaders = edgeone.headers?.find((rule) => rule.source === '/api/ping');
+
+    expect(pingHeaders?.headers).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        key: 'Cache-Control',
+        value: expect.stringContaining('no-store'),
+      }),
+    ]));
+    expect(edgeone.caches).toEqual(expect.arrayContaining([
+      { source: '/api/ping', cacheTtl: 0 },
+    ]));
+  });
+
   it('环境模板只列当前全栈服务，并让生产必需键可直接导入', () => {
     const template = readFileSync(resolve(root, '.env.example'), 'utf8');
     const agents = readFileSync(resolve(root, 'AGENTS.md'), 'utf8');

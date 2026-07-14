@@ -4,7 +4,7 @@
 >
 > 正式站点：`https://sangzicare.husteread.com`
 >
-> 官方参考：[Next.js 框架指南](https://pages.edgeone.ai/zh/document/framework-nextjs)
+> 官方参考：[Next.js 框架指南](https://pages.edgeone.ai/zh/document/framework-nextjs) · [edgeone.json 配置](https://edgeone.ai/document/162316940299157504)
 
 ## 部署契约
 
@@ -12,6 +12,7 @@
 - EdgeOne 安装 / 构建命令为 `npm ci` / `npm run build`，产物目录为 **`.next`**，不是 `out/`。
 - 浏览器、Android Release 壳与业务 API 使用同一正式源；生产环境保持 `NEXT_PUBLIC_API_BASE_URL` 未设置或为空，由页面访问同源 `/api/**`。
 - redirects / rewrites 写在根目录 [edgeone.json](../../edgeone.json)，不要写进 `next.config.ts`。
+- `/api/ping` 在应用层和 EdgeOne 层都必须禁用缓存：Route Handler 返回 `Cache-Control: no-store`，`edgeone.json` 同时配置响应头和 `cacheTtl: 0`，避免平台默认缓存策略覆盖部署 revision 探针。
 - EdgeOne 必须监听实际发布分支。每次上线都要记录目标提交 SHA，不能仅把未连接的功能分支推到远端后宣称已经部署。
 
 ## 1. Supabase 上线前置
@@ -50,7 +51,7 @@
 3. 确认 `edgeone.json` 使用官方预装的 Node.js `22.17.1`，再依次运行 `npm ci`、`npm test`、`npm run lint`、`npm run tsc`、`npm run build`。
 4. 确认 `next.config.ts` 没有 `output: 'export'`，构建产物仍为 `.next`。
 5. 提交并推送 EdgeOne 实际监听的生产分支，记录 `git rev-parse HEAD`。
-6. 等待 EdgeOne 将**该提交**标记为部署成功，并确认正式站点 `/api/ping` 返回的 `revision` 与 `git rev-parse HEAD` 完全一致；若不同，不得继续生产验收。
+6. 等待 EdgeOne 将**该提交**标记为部署成功，并确认正式站点 `/api/ping` 返回的 `revision` 与 `git rev-parse HEAD` 完全一致、最终响应头仍含 `Cache-Control: no-store`；任一不满足都不得继续生产验收。
 
 ## 4. 线上验收
 
