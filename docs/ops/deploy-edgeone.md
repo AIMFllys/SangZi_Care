@@ -12,7 +12,7 @@
 - EdgeOne 安装 / 构建命令为 `npm ci` / `npm run build`，产物目录为 **`.next`**，不是 `out/`。
 - 浏览器、Android Release 壳与业务 API 使用同一正式源；生产环境保持 `NEXT_PUBLIC_API_BASE_URL` 未设置或为空，由页面访问同源 `/api/**`。
 - redirects / rewrites 写在根目录 [edgeone.json](../../edgeone.json)，不要写进 `next.config.ts`。
-- `/api/ping` 在应用层和 EdgeOne 层都必须禁用缓存：Route Handler 返回 `Cache-Control: no-store`，`edgeone.json` 同时配置响应头和 `cacheTtl: 0`，避免平台默认缓存策略覆盖部署 revision 探针。
+- `/api/ping` 在应用层和 EdgeOne 层都必须避免陈旧缓存：Route Handler 返回 `Cache-Control: no-store`，`edgeone.json` 同时配置响应头和 `cacheTtl: 0`。EdgeOne 的 Next SSR 适配层可能把最终浏览器头规范化为 `public,max-age=0,must-revalidate`；此时必须同时看到 `Eo-Cdn-Cache-Control: no-store`，才与直接 `no-store` 等价通过。
 - EdgeOne 必须监听实际发布分支。每次上线都要记录目标提交 SHA，不能仅把未连接的功能分支推到远端后宣称已经部署。
 
 ## 1. Supabase 上线前置
@@ -51,13 +51,13 @@
 3. 确认 `edgeone.json` 使用官方预装的 Node.js `22.17.1`，再依次运行 `npm ci`、`npm test`、`npm run lint`、`npm run tsc`、`npm run build`。
 4. 确认 `next.config.ts` 没有 `output: 'export'`，构建产物仍为 `.next`。
 5. 提交并推送 EdgeOne 实际监听的生产分支，记录 `git rev-parse HEAD`。
-6. 等待 EdgeOne 将**该提交**标记为部署成功，并确认正式站点 `/api/ping` 返回的 `revision` 与 `git rev-parse HEAD` 完全一致、最终响应头仍含 `Cache-Control: no-store`；任一不满足都不得继续生产验收。
+6. 等待 EdgeOne 将**该提交**标记为部署成功，并确认正式站点 `/api/ping` 返回的 `revision` 与 `git rev-parse HEAD` 完全一致；缓存策略必须是直接 `Cache-Control: no-store`，或浏览器 `max-age=0,must-revalidate` 与边缘 `Eo-Cdn-Cache-Control: no-store` 的组合。任一不满足都不得继续生产验收。
 
 ## 4. 线上验收
 
 对 `https://sangzicare.husteread.com` 至少验证：
 
-- DNS / TLS、首页与 `GET /api/ping` 正常；探针响应为 `no-store`，40 位 `revision` 等于目标提交。
+- DNS / TLS、首页与 `GET /api/ping` 正常；探针满足上述不可陈旧缓存策略，40 位 `revision` 等于目标提交。对同一 URL 连续请求时应保持 `Age: 0` / `Cache Miss` 且时间戳更新。
 - CAPTCHA → SMTP OTP → 登录 → 刷新令牌主路径可用，错误响应不泄露邮箱、验证码或服务端异常正文。
 - `/voice` 真实录音可完成 MiMo ASR，回复可完成 MiMo MP3 TTS；不要只测文本聊天。
 - 消息语音可上传、列表不暴露 Storage 内部路径、鉴权播放可用。

@@ -205,9 +205,10 @@ foreach ($tool in @($zipalign, $apksigner, $aapt)) {
 
 $pingUri = "https://sangzicare.husteread.com/api/ping?release-check=$sourceCommit"
 try {
-    $ping = Invoke-RestMethod -Uri $pingUri -Method Get -Headers @{
+    $pingResponse = Invoke-WebRequest -Uri $pingUri -Method Get -UseBasicParsing -Headers @{
         'Cache-Control' = 'no-cache'
     } -TimeoutSec 20
+    $ping = $pingResponse.Content | ConvertFrom-Json
 } catch {
     throw 'Unable to verify the deployed EdgeOne revision before building the Release APK.'
 }
@@ -222,6 +223,18 @@ if (!$revisionProperty -or [string]::IsNullOrWhiteSpace([string]$revisionPropert
 $deployedRevision = ([string]$revisionProperty.Value).Trim().ToLowerInvariant()
 if ($deployedRevision -ne $sourceCommit) {
     throw 'The EdgeOne deployed revision does not match the local source commit.'
+}
+
+$cacheControl = ([string]$pingResponse.Headers['Cache-Control']).Trim()
+$edgeCacheControl = ([string]$pingResponse.Headers['Eo-Cdn-Cache-Control']).Trim()
+$browserNoStore = $cacheControl -match '(?i)(?:^|,)\s*no-store\s*(?:,|$)'
+$browserMustRevalidate = (
+    $cacheControl -match '(?i)(?:^|,)\s*max-age=0\s*(?:,|$)' -and
+    $cacheControl -match '(?i)(?:^|,)\s*must-revalidate\s*(?:,|$)'
+)
+$edgeNoStore = $edgeCacheControl -match '(?i)(?:^|,)\s*no-store\s*(?:,|$)'
+if (!$browserNoStore -and !($browserMustRevalidate -and $edgeNoStore)) {
+    throw 'The production probe returned an unsafe caching policy.'
 }
 
 Push-Location $androidRoot
@@ -265,6 +278,7 @@ Write-Output "APK path: $($apkFile.FullName)"
 Write-Output "APK size: $($apkFile.Length) bytes"
 Write-Output "Source commit: $sourceCommit"
 Write-Output "Deployed revision: $deployedRevision"
+Write-Output "Probe cache policy: Cache-Control=$cacheControl; Edge=$edgeCacheControl"
 Write-Output "versionCode: $($copiedMetadata.versionCode)"
 Write-Output "versionName: $($copiedMetadata.versionName)"
 Write-Output "signer certificate SHA-256: $($copiedMetadata.signer)"

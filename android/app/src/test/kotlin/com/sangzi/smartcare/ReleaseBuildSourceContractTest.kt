@@ -73,15 +73,21 @@ class ReleaseBuildSourceContractTest {
     @Test
     fun rejectsReleaseWhenEdgeOneRevisionDoesNotMatchSourceCommit() {
         val script = androidFile("build_apk.ps1").readText(Charsets.UTF_8)
-        val deploymentCheck = script.indexOf("Invoke-RestMethod")
+        val deploymentCheck = script.indexOf("Invoke-WebRequest")
         val gradleStart = script.indexOf("Invoke-Native -FilePath \$gradleWrapper")
 
         assertTrue("Release 构建必须读取正式站点探针", deploymentCheck >= 0)
         assertTrue("部署一致性检查必须发生在 Gradle 之前", deploymentCheck < gradleStart)
         assertTrue(script.contains("https://sangzicare.husteread.com/api/ping"))
+        assertTrue(script.contains("ConvertFrom-Json"))
         assertTrue(script.contains("Properties['revision']"))
         assertTrue(script.contains("\$sourceCommit"))
         assertTrue(script.contains("does not match the local source commit"))
+        assertTrue(script.contains("Headers['Cache-Control']"))
+        assertTrue(script.contains("Headers['Eo-Cdn-Cache-Control']"))
+        assertTrue(script.contains("must-revalidate"))
+        assertTrue(script.contains("no-store"))
+        assertTrue(script.contains("unsafe caching policy"))
     }
 
     @Test
