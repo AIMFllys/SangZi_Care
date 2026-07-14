@@ -1,4 +1,31 @@
 import type { NextConfig } from 'next';
+import { execFileSync } from 'node:child_process';
+
+const REVISION_PATTERN = /^[0-9a-f]{40}$/;
+
+function resolveGitRevision(): string {
+  const environmentRevision = [
+    process.env.APP_GIT_REVISION,
+    process.env.GITHUB_SHA,
+  ].find((value) => REVISION_PATTERN.test(value?.trim() ?? ''));
+  if (environmentRevision) return environmentRevision.trim().toLowerCase();
+
+  try {
+    const revision = execFileSync('git', ['rev-parse', 'HEAD'], {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim().toLowerCase();
+    return REVISION_PATTERN.test(revision) ? revision : 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
+const appGitRevision = resolveGitRevision();
+if (!REVISION_PATTERN.test(appGitRevision)) {
+  throw new Error('A 40-character Git revision is required for production traceability.');
+}
 
 const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
@@ -20,6 +47,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
+  },
+  env: {
+    APP_GIT_REVISION: appGitRevision,
   },
   images: {
     unoptimized: true,

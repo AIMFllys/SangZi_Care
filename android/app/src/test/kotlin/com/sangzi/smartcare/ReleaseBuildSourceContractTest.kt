@@ -71,6 +71,20 @@ class ReleaseBuildSourceContractTest {
     }
 
     @Test
+    fun rejectsReleaseWhenEdgeOneRevisionDoesNotMatchSourceCommit() {
+        val script = androidFile("build_apk.ps1").readText(Charsets.UTF_8)
+        val deploymentCheck = script.indexOf("Invoke-RestMethod")
+        val gradleStart = script.indexOf("Invoke-Native -FilePath \$gradleWrapper")
+
+        assertTrue("Release 构建必须读取正式站点探针", deploymentCheck >= 0)
+        assertTrue("部署一致性检查必须发生在 Gradle 之前", deploymentCheck < gradleStart)
+        assertTrue(script.contains("https://sangzicare.husteread.com/api/ping"))
+        assertTrue(script.contains("Properties['revision']"))
+        assertTrue(script.contains("\$sourceCommit"))
+        assertTrue(script.contains("does not match the local source commit"))
+    }
+
+    @Test
     fun keepsSigningSecretsAndArtifactsOutsideGit() {
         val example = androidFile("keystore.properties.example")
             .readLines(Charsets.UTF_8)

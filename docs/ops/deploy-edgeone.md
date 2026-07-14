@@ -50,13 +50,13 @@
 3. 确认 `edgeone.json` 使用官方预装的 Node.js `22.17.1`，再依次运行 `npm ci`、`npm test`、`npm run lint`、`npm run tsc`、`npm run build`。
 4. 确认 `next.config.ts` 没有 `output: 'export'`，构建产物仍为 `.next`。
 5. 提交并推送 EdgeOne 实际监听的生产分支，记录 `git rev-parse HEAD`。
-6. 等待 EdgeOne 将**该提交**标记为部署成功；若控制台显示的提交不同，不得继续生产验收。
+6. 等待 EdgeOne 将**该提交**标记为部署成功，并确认正式站点 `/api/ping` 返回的 `revision` 与 `git rev-parse HEAD` 完全一致；若不同，不得继续生产验收。
 
 ## 4. 线上验收
 
 对 `https://sangzicare.husteread.com` 至少验证：
 
-- DNS / TLS、首页与 `GET /api/ping` 正常。
+- DNS / TLS、首页与 `GET /api/ping` 正常；探针响应为 `no-store`，40 位 `revision` 等于目标提交。
 - CAPTCHA → SMTP OTP → 登录 → 刷新令牌主路径可用，错误响应不泄露邮箱、验证码或服务端异常正文。
 - `/voice` 真实录音可完成 MiMo ASR，回复可完成 MiMo MP3 TTS；不要只测文本聊天。
 - 消息语音可上传、列表不暴露 Storage 内部路径、鉴权播放可用。
@@ -68,7 +68,7 @@
 
 ## 5. APK 顺序
 
-只有在线站点通过上述验收后，才按 [Android 在线壳说明](../../android/README.md) 重建 Release APK。APK 必须来自与线上目标提交一致的干净工作树；构建脚本会在 Gradle 启动前检查 tracked 与 untracked 文件并拒绝非干净工作树。EdgeOne 当前部署 SHA 不一致时不得交付。
+只有在线站点通过上述验收后，才按 [Android 在线壳说明](../../android/README.md) 重建 Release APK。APK 必须来自与线上目标提交一致的干净工作树；构建脚本会在 Gradle 启动前检查 tracked / untracked 文件，并请求正式 `/api/ping` 比较线上 `revision` 与本地 `HEAD`。任一检查失败都会在编译前终止。
 
 ## 其他注意事项
 

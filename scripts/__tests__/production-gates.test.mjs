@@ -174,6 +174,7 @@ describe('生产构建门禁', () => {
 
     expect(nextConfig.turbopack).toEqual({ root });
     expect(nextConfig).not.toHaveProperty('output');
+    expect(nextConfig.env?.APP_GIT_REVISION).toMatch(/^[0-9a-f]{40}$/);
   });
 
   it('首页按角色动态加载视图，避免两套看板同时进入首屏代码', () => {

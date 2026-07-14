@@ -64,7 +64,7 @@
 本审计只证明可复现的本地构建与预算，不把外部状态伪装成成功。以下项目必须在推送后单独记录：
 
 - EdgeOne 实际构建并运行精确 Git commit（Node 22.17.1）。
-- `sangzicare.husteread.com` 的公共 DNS、TLS、`/api/ping` 与安全/缓存响应头。
+- `sangzicare.husteread.com` 的公共 DNS、TLS、`/api/ping` 与安全/缓存响应头；探针的 `revision` 必须等于目标 Git SHA。
 - EdgeOne 控制台已配置的 Supabase、SMTP 与 MiMo 服务端变量。
 - 通过线上同源路由完成一次非敏感 MiMo TTS → ASR 冒烟。
 - Android Release WebView 的启动、网络恢复和麦克风链路。

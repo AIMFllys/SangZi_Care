@@ -203,6 +203,27 @@ foreach ($tool in @($zipalign, $apksigner, $aapt)) {
     }
 }
 
+$pingUri = "https://sangzicare.husteread.com/api/ping?release-check=$sourceCommit"
+try {
+    $ping = Invoke-RestMethod -Uri $pingUri -Method Get -Headers @{
+        'Cache-Control' = 'no-cache'
+    } -TimeoutSec 20
+} catch {
+    throw 'Unable to verify the deployed EdgeOne revision before building the Release APK.'
+}
+$serviceProperty = $ping.PSObject.Properties['service']
+$revisionProperty = $ping.PSObject.Properties['revision']
+if (!$serviceProperty -or [string]$serviceProperty.Value -ne 'sangzi-smart-care') {
+    throw 'The production probe did not identify the SangZi Care service.'
+}
+if (!$revisionProperty -or [string]::IsNullOrWhiteSpace([string]$revisionProperty.Value)) {
+    throw 'The production probe did not return a deployed revision.'
+}
+$deployedRevision = ([string]$revisionProperty.Value).Trim().ToLowerInvariant()
+if ($deployedRevision -ne $sourceCommit) {
+    throw 'The EdgeOne deployed revision does not match the local source commit.'
+}
+
 Push-Location $androidRoot
 try {
     Invoke-Native -FilePath $gradleWrapper -Arguments @(
@@ -243,6 +264,7 @@ $apkFile = Get-Item -LiteralPath $destinationApk
 Write-Output "APK path: $($apkFile.FullName)"
 Write-Output "APK size: $($apkFile.Length) bytes"
 Write-Output "Source commit: $sourceCommit"
+Write-Output "Deployed revision: $deployedRevision"
 Write-Output "versionCode: $($copiedMetadata.versionCode)"
 Write-Output "versionName: $($copiedMetadata.versionName)"
 Write-Output "signer certificate SHA-256: $($copiedMetadata.signer)"

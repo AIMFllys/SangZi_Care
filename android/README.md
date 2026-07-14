@@ -58,8 +58,8 @@ Release APK 是在线壳，必须先保证它加载的正式站点已经部署�
 
 1. 推送 EdgeOne 实际监听的生产分支，等待目标提交部署到 `https://sangzicare.husteread.com`。
 2. 按 [EdgeOne 部署说明](../docs/ops/deploy-edgeone.md) 完成登录、MiMo ASR/TTS、私有语音上传 / 播放和移动端页面验收。
-3. 回到与 EdgeOne 目标提交一致的源码，确认 `git rev-parse HEAD` 与控制台部署 SHA 相同，且 `git status --short` 无输出。
-4. 再从该干净工作树构建签名 Release APK。脚本会在启动 Gradle 前检查完整 `git status --porcelain`；存在 tracked 或 untracked 变更时直接终止，不会生成 dirty Release。
+3. 回到目标提交，确认 `git status --short` 无输出。
+4. 从该工作树构建签名 Release APK。脚本会在启动 Gradle 前检查完整 `git status --porcelain`，并请求正式 `/api/ping`；线上 `revision` 不等于本地 `HEAD` 时直接终止，不会生成过期或 dirty Release。
 
 ## 构建并验证 Release APK
 
@@ -68,7 +68,7 @@ Set-Location android
 .\build_apk.ps1
 ```
 
-脚本会运行 Release lint、单测、R8、签名与组装，再对源 APK 和复制后的交付 APK
+脚本会先验证线上部署 revision，再运行 Release lint、单测、R8、签名与组装，并对源 APK 和复制后的交付 APK
 分别执行 zipalign、apksigner、包名、权限、明文策略和生产 URL 检查。最终文件位于被忽略的
 `android/app/release/`，控制台只输出路径、大小、提交、版本、签名证书摘要和 APK SHA-256。
 
