@@ -87,8 +87,8 @@
 
 ### Android
 
-- 加载 `strings.xml` / 配置中的 `app_base_url`（https）
-- 前端 `lib/jsbridge.ts` 与原生 `SangZiBridge` 命名不一致 — 见 tech-debt，修复前勿假设 Native ASR/TTS 可用
+- Release 加载 `strings.xml` 中的正式 HTTPS `app_base_url`，Debug 资源独立覆盖为本机回环地址
+- 旧 `lib/jsbridge.ts` 已移除；Android 不注入业务 JSBridge，录音走 `getUserMedia`，ASR/TTS 走同源 Next API 与服务端 MiMo
 
 ## EdgeOne 约束（摘要）
 

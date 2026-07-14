@@ -133,6 +133,32 @@ describe('生产构建门禁', () => {
     expect(edgeone.outputDirectory).toBe('.next');
   });
 
+  it('环境模板只列当前全栈服务，并让生产必需键可直接导入', () => {
+    const template = readFileSync(resolve(root, '.env.example'), 'utf8');
+    const agents = readFileSync(resolve(root, 'AGENTS.md'), 'utf8');
+
+    for (const key of [
+      'NEXT_PUBLIC_SUPABASE_URL',
+      'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
+      'SUPABASE_SECRET_KEY',
+      'SUPABASE_VOICE_BUCKET',
+      'JWT_SECRET',
+      'SMTP_USER',
+      'SMTP_PASS',
+      'MIMO_API_KEY',
+      'VOLCANO_ARK_API_KEY',
+      'VOLCANO_ARK_MODEL_ENDPOINT',
+    ]) {
+      expect(template).toMatch(new RegExp(`^${key}=$`, 'm'));
+    }
+
+    expect(template).not.toContain('localhost:8000');
+    expect(template).not.toContain('VOLCANO_APP_ID');
+    expect(template).not.toContain('VOLCANO_ACCESS_TOKEN');
+    expect(agents).toContain('旧 `lib/jsbridge.ts` 已移除');
+    expect(agents).not.toContain('SangZiBridge` 命名不一致');
+  });
+
   it('Turbopack 锁定当前工作区，且没有重新启用静态导出', async () => {
     const { default: nextConfig } = await import('../../next.config.ts');
 
