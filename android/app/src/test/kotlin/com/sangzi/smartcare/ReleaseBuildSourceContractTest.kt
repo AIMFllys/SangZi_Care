@@ -55,6 +55,22 @@ class ReleaseBuildSourceContractTest {
     }
 
     @Test
+    fun rejectsTrackedAndUntrackedChangesBeforeStartingGradle() {
+        val script = androidFile("build_apk.ps1").readText(Charsets.UTF_8)
+        val cleanStatusCheck = script.indexOf("'status', '--porcelain'")
+        val gradleStart = script.indexOf("Invoke-Native -FilePath \$gradleWrapper")
+
+        assertTrue("Release 构建必须检查完整 git status --porcelain", cleanStatusCheck >= 0)
+        assertFalse("Release 构建不能忽略未跟踪文件", script.contains("--untracked-files=no"))
+        assertTrue("源码清洁检查必须发生在 Gradle 之前", cleanStatusCheck < gradleStart)
+        assertTrue(
+            "源码非干净时必须明确终止 Release 构建",
+            script.contains("throw 'Release APK builds require a clean Git working tree"),
+        )
+        assertFalse("Release 构建不能用 -dirty 标记后继续", script.contains("\$sourceCommit-dirty"))
+    }
+
+    @Test
     fun keepsSigningSecretsAndArtifactsOutsideGit() {
         val example = androidFile("keystore.properties.example")
             .readLines(Charsets.UTF_8)

@@ -148,6 +148,15 @@ if (!$env:ANDROID_HOME -or !(Test-Path -LiteralPath $env:ANDROID_HOME -PathType 
 }
 $java = (Get-Command java.exe -ErrorAction Stop).Source
 $git = (Get-Command git.exe -ErrorAction Stop).Source
+$sourceStatus = @(Invoke-Native -FilePath $git -Arguments @(
+    '-C', $repositoryRoot, 'status', '--porcelain'
+) -Capture)
+if ($sourceStatus.Count -gt 0) {
+    throw 'Release APK builds require a clean Git working tree, including tracked and untracked files.'
+}
+$sourceCommit = @(Invoke-Native -FilePath $git -Arguments @(
+    '-C', $repositoryRoot, 'rev-parse', 'HEAD'
+) -Capture)[0].Trim()
 $javaVersion = @(Invoke-Native -FilePath $java -Arguments @('-version') -Capture) -join "`n"
 if ($javaVersion -notmatch 'version "17\.') {
     throw 'Release APK builds require JDK 17.'
@@ -228,19 +237,12 @@ if ($copiedMetadata.signer -ne $sourceMetadata.signer) {
     throw 'Copied APK signer digest changed.'
 }
 
-$sourceCommit = @(Invoke-Native -FilePath $git -Arguments @(
-    '-C', $repositoryRoot, 'rev-parse', 'HEAD'
-) -Capture)[0].Trim()
-$trackedChanges = @(Invoke-Native -FilePath $git -Arguments @(
-    '-C', $repositoryRoot, 'status', '--porcelain', '--untracked-files=no'
-) -Capture)
-$sourceState = if ($trackedChanges.Count -gt 0) { "$sourceCommit-dirty" } else { $sourceCommit }
 $apkHash = (Get-FileHash -LiteralPath $destinationApk -Algorithm SHA256).Hash.ToLowerInvariant()
 $apkFile = Get-Item -LiteralPath $destinationApk
 
 Write-Output "APK path: $($apkFile.FullName)"
 Write-Output "APK size: $($apkFile.Length) bytes"
-Write-Output "Source commit: $sourceState"
+Write-Output "Source commit: $sourceCommit"
 Write-Output "versionCode: $($copiedMetadata.versionCode)"
 Write-Output "versionName: $($copiedMetadata.versionName)"
 Write-Output "signer certificate SHA-256: $($copiedMetadata.signer)"
