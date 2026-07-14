@@ -4,7 +4,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { fetchApi } from '@/lib/api';
+import { ApiError, fetchApi } from '@/lib/api';
 import type { Tables } from '@/types/supabase';
 
 type User = Tables<'oc_users'>;
@@ -133,8 +133,13 @@ export const useUserStore = create<UserState>()(
           // 同步角色到 layout
           localStorage.setItem('user_role', user.role);
           return true;
-        } catch {
-          // Token 无效或过期 — 清除一切
+        } catch (error) {
+          // 只有服务端明确判定凭证无效时才退出登录。网络中断、页面卸载
+          // 取消请求或临时 5xx 不得销毁仍可续期的本地会话。
+          if (!(error instanceof ApiError) || error.status !== 401) {
+            return get().user !== null;
+          }
+
           set({ user: null, isElder: true, token: null });
           localStorage.removeItem('token');
           localStorage.removeItem('refresh_token');

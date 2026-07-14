@@ -2,11 +2,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useUserStore } from '../userStore';
 
 // Mock fetchApi
-vi.mock('@/lib/api', () => ({
-  fetchApi: vi.fn(),
-}));
+vi.mock('@/lib/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/api')>();
+  return { ...actual, fetchApi: vi.fn() };
+});
 
-import { fetchApi } from '@/lib/api';
+import { ApiError, fetchApi } from '@/lib/api';
 
 const mockFetchApi = fetchApi as ReturnType<typeof vi.fn>;
 
@@ -186,7 +187,7 @@ describe('useUserStore', () => {
 
     it('token 无效时清除状态', async () => {
       storage._store['token'] = 'invalid-jwt';
-      mockFetchApi.mockRejectedValue(new Error('Unauthorized'));
+      mockFetchApi.mockRejectedValue(new ApiError('Unauthorized', 401));
 
       const result = await useUserStore.getState().initialize();
 
@@ -194,6 +195,25 @@ describe('useUserStore', () => {
       expect(useUserStore.getState().user).toBeNull();
       expect(storage.removeItem).toHaveBeenCalledWith('token');
       expect(storage.removeItem).toHaveBeenCalledWith('refresh_token');
+    });
+
+    it('临时网络错误时保留可恢复会话', async () => {
+      const user = makeUser();
+      storage._store['token'] = 'valid-jwt';
+      storage._store['refresh_token'] = 'valid-refresh';
+      storage._store['user_role'] = 'elder';
+      storage._store['user-store'] = '{"state":{}}';
+      useUserStore.setState({ user, isElder: true, token: 'valid-jwt' });
+      mockFetchApi.mockRejectedValue(new ApiError('网络连接失败，请稍后重试', null));
+
+      const result = await useUserStore.getState().initialize();
+
+      expect(result).toBe(true);
+      expect(useUserStore.getState().user).toEqual(user);
+      expect(storage._store['token']).toBe('valid-jwt');
+      expect(storage._store['refresh_token']).toBe('valid-refresh');
+      expect(storage.removeItem).not.toHaveBeenCalledWith('token');
+      expect(storage.removeItem).not.toHaveBeenCalledWith('refresh_token');
     });
 
     it('仅有 refresh_token 时尝试初始化', async () => {
