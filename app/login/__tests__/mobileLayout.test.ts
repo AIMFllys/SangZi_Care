@@ -23,4 +23,12 @@ describe('登录页窄屏布局合约', () => {
       /@media\s*\(max-width:\s*350px\)[\s\S]*\.sendCodeLabelCompact\s*\{[^}]*display:\s*inline/,
     );
   });
+
+  it('登录成功后整页导航，确保根级认证上下文重新读取新会话', () => {
+    expect(page).toMatch(
+      /replaceDocument\(res\.is_new_user \? '\/onboarding' : '\/'\)/,
+    );
+    expect(page).not.toContain("router.push('/onboarding')");
+    expect(page).not.toContain("router.push('/')");
+  });
 });

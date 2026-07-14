@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUserStore } from '@/stores/userStore';
 import {
@@ -16,6 +15,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import PageHeader from '@/components/layout/PageHeader';
+import { replaceDocument } from '@/lib/browserNavigation';
 import { ROUTES } from '@/lib/constants';
 import styles from './page.module.css';
 
@@ -68,7 +68,6 @@ function ConfirmModal({
 }
 
 export default function SettingsPage() {
-  const router = useRouter();
   const user = useUserStore((s) => s.user);
   const isElder = useUserStore((s) => s.isElder);
   const logout = useUserStore((s) => s.logout);
@@ -80,7 +79,7 @@ export default function SettingsPage() {
 
   const handleLogout = () => {
     logout();
-    router.replace(ROUTES.LOGIN);
+    replaceDocument(ROUTES.LOGIN);
   };
 
   const handleRoleSwitch = async () => {

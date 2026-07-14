@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button, Input, Card, IconButton } from '@/components/ui';
 import { fetchApi } from '@/lib/api';
+import { replaceDocument } from '@/lib/browserNavigation';
 import { HeartPulse, Mail, Calculator, RefreshCw, KeyRound, Send } from 'lucide-react';
 import styles from './login.module.css';
 
@@ -29,8 +29,6 @@ const CODE_LENGTH = 6;
 const COUNTDOWN_SECONDS = 60;
 
 export default function LoginPage() {
-  const router = useRouter();
-
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -138,11 +136,7 @@ export default function LoginPage() {
       localStorage.setItem('token', res.access_token);
       localStorage.setItem('refresh_token', res.refresh_token);
 
-      if (res.is_new_user) {
-        router.push('/onboarding');
-      } else {
-        router.push('/');
-      }
+      replaceDocument(res.is_new_user ? '/onboarding' : '/');
     } catch (err) {
       const msg = err instanceof Error ? err.message : '登录失败';
       if (msg.includes('过期')) {

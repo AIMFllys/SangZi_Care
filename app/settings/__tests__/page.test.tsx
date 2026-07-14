@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 // ---------- Mock 依赖 ----------
 
@@ -13,6 +15,11 @@ vi.mock('next/navigation', () => ({
 let mockIsElder = true;
 const mockSetRole = vi.fn();
 const mockLogout = vi.fn();
+const mockReplaceDocument = vi.fn();
+
+vi.mock('@/lib/browserNavigation', () => ({
+  replaceDocument: (path: string) => mockReplaceDocument(path),
+}));
 
 vi.mock('@/stores/userStore', () => ({
   useUserStore: (selector: (s: Record<string, unknown>) => unknown) => {
@@ -38,6 +45,11 @@ const { default: SettingsPage } = await import('../page');
 // ---------- 测试 ----------
 
 describe('SettingsPage 设置主页', () => {
+  const pageSource = readFileSync(
+    resolve(process.cwd(), 'app/settings/page.tsx'),
+    'utf8',
+  );
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsElder = true;
@@ -98,7 +110,12 @@ describe('SettingsPage 设置主页', () => {
     const buttons = screen.getAllByText('退出登录');
     fireEvent.click(buttons[buttons.length - 1]);
     expect(mockLogout).toHaveBeenCalled();
-    expect(mockReplace).toHaveBeenCalledWith('/login');
+    expect(mockReplaceDocument).toHaveBeenCalledWith('/login');
+  });
+
+  it('退出登录使用整页导航，确保根级认证上下文不保留旧会话', () => {
+    expect(pageSource).toContain('replaceDocument(ROUTES.LOGIN)');
+    expect(pageSource).not.toContain('router.replace(ROUTES.LOGIN)');
   });
 
   it('个人信息链接指向正确路由', () => {
