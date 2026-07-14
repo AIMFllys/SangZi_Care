@@ -36,7 +36,7 @@ export interface IntentHandlerResult {
 
 export async function handleHealthRecordIntent(
   result: IntentResult,
-  context: IntentHandlerContext,
+  _context: IntentHandlerContext,
 ): Promise<IntentHandlerResult> {
   const { systolic, diastolic, blood_sugar, heart_rate, weight, temperature } = result.entities;
 

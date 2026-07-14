@@ -237,8 +237,6 @@ export function PlanForm({ elderId, plan, onSuccess, onCancel }: PlanFormProps) 
     [onCancel],
   );
 
-  const hasErrors = Object.keys(errors).length > 0;
-
   return (
     <div
       className={styles.overlay}

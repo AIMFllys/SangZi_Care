@@ -10,6 +10,8 @@ module.exports = [
       'node_modules/**',
       'dist/**',
       'out/**',
+      'coverage/**',
+      'android/**/build/**',
       '.trae/**',
       'eslint.config.js',
     ],

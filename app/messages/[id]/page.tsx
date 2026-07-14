@@ -1,19 +1,9 @@
 // ============================================================
-// 桑梓智护 — 聊天详情页（服务端入口）
-// Server Component wrapper for static export with generateStaticParams
+// 桑梓智护 — 聊天详情页（全栈动态路由入口）
 // ============================================================
 
 import ChatDetailPage from './ChatDetail';
 
-export function generateStaticParams() {
-  return [{ id: 'placeholder' }];
-}
-
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
+export default function Page() {
   return <ChatDetailPage />;
 }

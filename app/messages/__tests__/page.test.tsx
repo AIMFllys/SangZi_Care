@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { isValidElement } from 'react';
 import { getRelationIcon, formatMessageTime, getMessagePreview } from '@/lib/messageUtils';
-import type { MessageResponse } from '@/stores/messageStore';
 
 // ============================================================
 // 纯函数单元测试

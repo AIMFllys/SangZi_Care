@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { isValidTime, validateForm } from '../PlanForm';
-import type { PlanFormData, FormErrors } from '../PlanForm';
+import type { PlanFormData } from '../PlanForm';
 
 // ---------- 纯函数测试 ----------
 

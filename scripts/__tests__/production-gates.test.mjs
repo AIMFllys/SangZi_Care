@@ -159,6 +159,13 @@ describe('生产构建门禁', () => {
     expect(agents).not.toContain('SangZiBridge` 命名不一致');
   });
 
+  it('ESLint 不扫描 Android 与测试工具生成的 JavaScript 报告', () => {
+    const config = readFileSync(resolve(root, 'eslint.config.js'), 'utf8');
+
+    expect(config).toContain("'android/**/build/**'");
+    expect(config).toContain("'coverage/**'");
+  });
+
   it('Turbopack 锁定当前工作区，且没有重新启用静态导出', async () => {
     const { default: nextConfig } = await import('../../next.config.ts');
 
@@ -173,5 +180,16 @@ describe('生产构建门禁', () => {
     expect(source).toContain("dynamic(() => import('@/components/home/FamilyHomeView'))");
     expect(source).not.toMatch(/import ElderHomeView from/);
     expect(source).not.toMatch(/import FamilyHomeView from/);
+  });
+
+  it('全栈动态详情路由不再生成静态 placeholder 参数', () => {
+    for (const page of [
+      'app/messages/[id]/page.tsx',
+      'app/family/[id]/page.tsx',
+    ]) {
+      const source = readFileSync(resolve(root, page), 'utf8');
+      expect(source).not.toContain('generateStaticParams');
+      expect(source).not.toContain("id: 'placeholder'");
+    }
   });
 });

@@ -15,12 +15,12 @@ describe('登录页窄屏布局合约', () => {
     expect(page).toContain('styles.sendCodeLabelFull');
     expect(page).toContain('styles.sendCodeLabelCompact');
     expect(css).toMatch(/@media\s*\(max-width:\s*350px\)/);
-    expect(css).toMatch(/\.sendCodeLabelCompact\s*\{[^}]*display:\s*none/s);
+    expect(css).toMatch(/\.sendCodeLabelCompact\s*\{[^}]*display:\s*none/);
     expect(css).toMatch(
-      /@media\s*\(max-width:\s*350px\)[\s\S]*\.sendCodeLabelFull\s*\{[^}]*display:\s*none/s,
+      /@media\s*\(max-width:\s*350px\)[\s\S]*\.sendCodeLabelFull\s*\{[^}]*display:\s*none/,
     );
     expect(css).toMatch(
-      /@media\s*\(max-width:\s*350px\)[\s\S]*\.sendCodeLabelCompact\s*\{[^}]*display:\s*inline/s,
+      /@media\s*\(max-width:\s*350px\)[\s\S]*\.sendCodeLabelCompact\s*\{[^}]*display:\s*inline/,
     );
   });
 });
