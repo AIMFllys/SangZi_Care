@@ -105,9 +105,12 @@ describe('生产构建门禁', () => {
     expect(pkg.scripts?.postbuild).toBe('node scripts/check-build-budget.mjs');
     expect(pkg.scripts?.start).toBe('next start -p 7742');
     expect(pkg.devDependencies?.postcss).toBe('^8.5.19');
+    expect(pkg.devDependencies?.vitest).toBe('^4.1.10');
     expect(pkg.overrides).toMatchObject({
       ws: '8.21.0',
       postcss: '$postcss',
+      undici: '7.28.0',
+      vite: '7.3.6',
     });
   });
 
