@@ -102,6 +102,7 @@ vitest-report.json
 
 # Temp audit / scratch files
 .tmp_*
+.playwright-cli/
 
 # Trae IDE workspace
 .trae/
