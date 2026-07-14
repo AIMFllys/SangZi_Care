@@ -52,4 +52,17 @@ describe('Windows 本地开发脚本', () => {
       expect(content).toContain(command);
     }
   });
+
+  it('环境检查只验证当前 Next.js 单进程工具链', () => {
+    const content = readFileSync(
+      resolve(root, 'scripts', 'setup', 'test-env.bat'),
+      'utf8',
+    );
+
+    expect(content).toContain('set "REPO_ROOT=%~dp0..\\.."');
+    expect(content).toContain('.env.local');
+    expect(content).toContain('scripts\\check-node-version.mjs');
+    expect(content.toLowerCase()).not.toContain('python');
+    expect(content).not.toContain('if exist ".env"');
+  });
 });

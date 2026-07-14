@@ -1,68 +1,53 @@
 @echo off
 chcp 65001 >nul
+setlocal
+set "REPO_ROOT=%~dp0..\.."
+cd /d "%REPO_ROOT%"
 
 echo.
-echo ╔════════════════════════════════════════╗
-echo ║     桑梓智护 - 环境测试工具         ║
-echo ╚════════════════════════════════════════╝
-echo.
+echo ========================================
+echo 桑梓智护 - 本地环境检查
+echo ========================================
 
-echo [测试开发环境]
-echo.
-
-REM 测试 Node.js
-echo 1. Node.js 环境:
 where node >nul 2>nul
-if %ERRORLEVEL% EQU 0 (
-    node --version
-    echo    ✓ Node.js 可用
-) else (
-    echo    ✗ Node.js 未安装
+if errorlevel 1 (
+    echo [错误] 未找到 Node.js
+    exit /b 1
 )
-echo.
 
-REM 测试 Python
-echo 2. Python 环境:
-where python >nul 2>nul
-if %ERRORLEVEL% EQU 0 (
-    python --version
-    echo    ✓ Python 可用
-) else (
-    echo    ✗ Python 未安装
+call node scripts\check-node-version.mjs
+if errorlevel 1 exit /b 1
+
+where npm >nul 2>nul
+if errorlevel 1 (
+    echo [错误] 未找到 npm
+    exit /b 1
 )
-echo.
 
-REM 测试前端依赖
-echo 3. 前端依赖:
-if exist "node_modules\" (
-    echo    ✓ node_modules 已安装
-) else (
-    echo    ✗ node_modules 未安装
-    echo    运行: npm install
+if not exist "package-lock.json" (
+    echo [错误] 缺少 package-lock.json
+    exit /b 1
 )
-echo.
 
-REM 测试配置文件
-echo 4. 配置文件:
-if exist ".env" (
-    echo    ✓ .env 文件存在
+if not exist "node_modules\" (
+    echo [提示] 尚未安装依赖，请运行 npm install
 ) else (
-    echo    ✗ .env 文件不存在
+    echo [正常] node_modules 已存在
 )
-echo.
 
-REM 测试端口占用
-echo 5. 端口状态:
-netstat -ano | findstr ":7742" >nul 2>nul
-if %ERRORLEVEL% EQU 0 (
-    echo    ⚠ 端口 7742 已被占用
+if not exist ".env.local" (
+    echo [提示] 缺少 .env.local；页面可构建，但登录、AI 与语音服务不可用
+    echo 请复制 .env.example，并在本地填写真实值
 ) else (
-    echo    ✓ 端口 7742 可用
+    echo [正常] .env.local 已存在且不会提交到 Git
 )
-echo.
 
-echo ════════════════════════════════════════
-echo 测试完成
-echo ════════════════════════════════════════
-echo.
-pause
+netstat -ano | findstr ":7742" | findstr "LISTENING" >nul 2>nul
+if errorlevel 1 (
+    echo [正常] 7742 端口当前可用于开发服务
+) else (
+    echo [提示] 7742 端口已有服务监听
+)
+
+echo [完成] 当前项目只需要 Node.js + npm 单进程工具链
+exit /b 0
