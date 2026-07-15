@@ -11,6 +11,8 @@ import {
   Info,
   ChevronRight,
   RefreshCcw,
+  ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -20,12 +22,12 @@ import { ROUTES } from '@/lib/constants';
 import styles from './page.module.css';
 
 const SETTING_ITEMS = [
-  { label: '个人信息', icon: User, href: ROUTES.SETTINGS_PROFILE },
-  { label: '绑定管理', icon: LinkIcon, href: ROUTES.SETTINGS_BIND },
-  { label: '无障碍设置', icon: Accessibility, href: ROUTES.SETTINGS_ACCESSIBILITY },
-  { label: '消息通知', icon: Bell, href: '', comingSoon: true },
-  { label: '关于我们', icon: Info, href: '', comingSoon: true },
-];
+  { label: '个人信息', icon: User, href: ROUTES.SETTINGS_PROFILE, tone: 'blue' },
+  { label: '绑定管理', icon: LinkIcon, href: ROUTES.SETTINGS_BIND, tone: 'green' },
+  { label: '无障碍设置', icon: Accessibility, href: ROUTES.SETTINGS_ACCESSIBILITY, tone: 'violet' },
+  { label: '消息通知', icon: Bell, href: ROUTES.NOTIFICATIONS, tone: 'orange' },
+  { label: '关于我们', icon: Info, href: ROUTES.SETTINGS_ABOUT, tone: 'blue' },
+] as const;
 
 interface ConfirmModalProps {
   open: boolean;
@@ -102,14 +104,21 @@ export default function SettingsPage() {
 
         <Link href={ROUTES.SETTINGS_PROFILE} className={styles.userCardLink}>
           <Card variant="glass" className={styles.userCard}>
+            <span className={styles.userCardWatermark} aria-hidden="true">
+              <Sparkles size={108} />
+            </span>
             <div className={styles.avatar}>
-              <User size={40} color="var(--accent)" />
+              <ShieldCheck size={28} />
             </div>
             <div className={styles.userInfo}>
+              <span className={styles.identityLabel}>CARE PROFILE</span>
               <div className={styles.userName}>{user?.name || '用户'}</div>
-              <div className={styles.userRole}>{roleLabel}</div>
+              <div className={styles.userRole}>
+                <span>{roleLabel}</span>
+                <span className={styles.profileHint}>完善个人资料</span>
+              </div>
             </div>
-            <ChevronRight size={24} color="var(--text-muted)" />
+            <ChevronRight className={styles.userCardArrow} size={22} aria-hidden="true" />
           </Card>
         </Link>
 
@@ -119,25 +128,14 @@ export default function SettingsPage() {
             {SETTING_ITEMS.map((item, index) => {
               const Icon = item.icon;
               const isLast = index === SETTING_ITEMS.length - 1;
-              if (item.comingSoon) {
-                return (
-                  <div
-                    key={item.label}
-                    className={`${styles.menuItem} ${styles.menuItemDisabled}`}
-                    aria-disabled="true"
-                  >
-                    <Icon size={24} color="var(--accent)" />
-                    <span className={styles.menuLabel}>{item.label}</span>
-                    <span className={styles.comingSoonBadge}>即将推出</span>
-                  </div>
-                );
-              }
               return (
                 <Link key={item.label} href={item.href} className={styles.menuItemLink}>
                   <div className={`${styles.menuItem} ${!isLast ? styles.menuItemBordered : ''}`}>
-                    <Icon size={24} color="var(--accent)" />
+                    <span className={`${styles.menuIcon} ${styles[item.tone]}`} aria-hidden="true">
+                      <Icon size={20} />
+                    </span>
                     <span className={styles.menuLabel}>{item.label}</span>
-                    <ChevronRight size={24} color="var(--text-muted)" />
+                    <ChevronRight size={20} color="var(--text-muted)" aria-hidden="true" />
                   </div>
                 </Link>
               );
@@ -154,7 +152,9 @@ export default function SettingsPage() {
               onClick={() => setShowRoleSwitch(true)}
               aria-label={`点击切换到${targetRoleLabel}`}
             >
-              <RefreshCcw size={24} color="var(--accent)" />
+              <span className={`${styles.menuIcon} ${styles.violet}`} aria-hidden="true">
+                <RefreshCcw size={20} />
+              </span>
               <span className={styles.menuLabel}>角色切换</span>
               <span className={styles.roleHint}>{targetRoleLabel}</span>
             </button>
@@ -172,7 +172,7 @@ export default function SettingsPage() {
           退出登录
         </Button>
 
-        <p className={styles.version}>桑梓智护 v0.1.0</p>
+        <p className={styles.version}>桑梓智护 v1.1.0</p>
 
         <ConfirmModal
           open={showLogout}

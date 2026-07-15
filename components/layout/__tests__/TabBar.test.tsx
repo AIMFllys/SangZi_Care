@@ -104,6 +104,19 @@ describe('TabBar', () => {
     expect(tabBarRule).toMatch(/inset\s+0\s+1px\s+0/);
   });
 
+  it('当前项不使用局部圆形高亮并把镂空图标填色', () => {
+    const css = readFileSync(
+      resolve(process.cwd(), 'components/layout/TabBar.module.css'),
+      'utf8',
+    );
+    const activeRule = css.match(/\.tabActive\s*\{([\s\S]*?)\}/)?.[1] ?? '';
+    const activeIconRule =
+      css.match(/\.tabActive\s+\.tabIcon\s+svg\s*\{([\s\S]*?)\}/)?.[1] ?? '';
+
+    expect(activeRule).toContain('background-color: transparent');
+    expect(activeIconRule).toContain('fill: currentColor');
+  });
+
   it.each([
     ['elder', '/radio', '功能'],
     ['family', '/radio', '语音'],

@@ -6,6 +6,8 @@ const DETAIL = [
   '/medicine/history',
   '/health/input',
   '/family/',
+  '/notifications',
+  '/settings/about',
   '/settings/profile',
   '/settings/bind',
   '/settings/accessibility',

@@ -66,12 +66,17 @@
 }
 
 .tabActive {
-  background-color: var(--accent-soft);
+  background-color: transparent;
   color: var(--accent-action);
 }
 
 .tabActive .tabIcon {
   background-color: transparent;
+}
+
+.tabActive .tabIcon svg {
+  fill: currentColor;
+  stroke: currentColor;
 }
 
 @media (hover: hover) {

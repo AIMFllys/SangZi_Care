@@ -98,56 +98,12 @@
   justify-content: space-between;
   min-height: 52px;
   padding: 4px 0;
-  cursor: pointer;
 }
 
 .permissionLabel {
   font-size: var(--font-body);
   color: var(--text-secondary);
   font-weight: 500;
-}
-
-/* Toggle */
-.toggle {
-  position: relative;
-  width: 52px;
-  min-width: 52px;
-  height: 44px;
-  min-height: 44px;
-  border-radius: var(--radius-full);
-  border: none;
-  cursor: pointer;
-  transition: background var(--duration-normal) var(--ease-out-smooth);
-  flex-shrink: 0;
-}
-
-.toggleOn {
-  background: var(--accent);
-}
-
-.toggleOff {
-  background: var(--divider);
-}
-
-.toggle:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.toggleThumb {
-  position: absolute;
-  top: 10px;
-  left: 4px;
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-full);
-  background: var(--bg-card-solid);
-  box-shadow: var(--shadow-sm);
-  transition: transform var(--duration-normal) var(--ease-spring);
-}
-
-.toggleOn .toggleThumb {
-  transform: translateX(20px);
 }
 
 /* Generate code */

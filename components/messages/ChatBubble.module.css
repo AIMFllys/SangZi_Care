@@ -31,7 +31,6 @@
   border-bottom-right-radius: 5px;
   background: var(--accent-action);
   color: var(--text-inverse);
-  box-shadow: 0 4px 12px var(--accent-soft);
 }
 
 .bubbleOther {
@@ -39,7 +38,6 @@
   border-bottom-left-radius: 5px;
   background: var(--bg-card-solid);
   color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
 }
 
 .textContent {

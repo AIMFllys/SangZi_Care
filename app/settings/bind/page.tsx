@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { Switch } from '@/components/ui/Switch';
 import PageHeader from '@/components/layout/PageHeader';
 import {
   displayElderRelation,
@@ -172,7 +173,7 @@ export default function BindManagementPage() {
   const handlePermissionToggle = async (
     bindId: string,
     permKey: string,
-    currentValue: boolean,
+    nextValue: boolean,
   ) => {
     const loadingKey = `${bindId}-${permKey}`;
     setUpdatingPermission(loadingKey);
@@ -181,7 +182,7 @@ export default function BindManagementPage() {
         `/api/v1/family/binds/${bindId}`,
         {
           method: 'PATCH',
-          body: { [permKey]: !currentValue },
+          body: { [permKey]: nextValue },
         },
       );
       setBindList((prev) => prev.map((b) => (b.id === bindId ? updated : b)));
@@ -262,28 +263,28 @@ export default function BindManagementPage() {
                         const value = bind[permKey as keyof FamilyBindResponse] as boolean;
                         const isUpdating = updatingPermission === `${bind.id}-${permKey}`;
                         return (
-                          <label key={permKey} className={styles.permissionRow}>
-                            <span className={styles.permissionLabel}>
+                          <div key={permKey} className={styles.permissionRow}>
+                            <span
+                              id={`permission-${bind.id}-${permKey}`}
+                              className={styles.permissionLabel}
+                            >
                               {PERMISSION_LABELS[permKey]}
                             </span>
                             {isElder ? (
-                              <button
-                                type="button"
-                                role="switch"
-                                aria-checked={value}
-                                aria-label={`${PERMISSION_LABELS[permKey]} ${value ? '已开启' : '已关闭'}`}
-                                className={`${styles.toggle} ${value ? styles.toggleOn : styles.toggleOff}`}
+                              <Switch
+                                checked={value}
+                                aria-labelledby={`permission-${bind.id}-${permKey}`}
                                 disabled={isUpdating}
-                                onClick={() => handlePermissionToggle(bind.id, permKey, value)}
-                              >
-                                <span className={styles.toggleThumb} />
-                              </button>
+                                onCheckedChange={(nextValue) =>
+                                  handlePermissionToggle(bind.id, permKey, nextValue)
+                                }
+                              />
                             ) : (
                               <Badge variant={value ? 'success' : 'normal'}>
                                 {value ? '已授权' : '未授权'}
                               </Badge>
                             )}
-                          </label>
+                          </div>
                         );
                       },
                     )}

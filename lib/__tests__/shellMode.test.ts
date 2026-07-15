@@ -13,6 +13,8 @@ describe('getShellMode', () => {
     ['/medicine/history', 'detail'],
     ['/health/input', 'detail'],
     ['/family/family-1', 'detail'],
+    ['/notifications', 'detail'],
+    ['/settings/about', 'detail'],
     ['/settings/profile', 'detail'],
     ['/settings/bind', 'detail'],
     ['/settings/accessibility', 'detail'],

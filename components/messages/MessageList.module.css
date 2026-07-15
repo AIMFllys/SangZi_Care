@@ -7,7 +7,7 @@
   overscroll-behavior-y: contain;
   scroll-padding-bottom: 16px;
   padding: var(--space-md) var(--page-gutter);
-  background: linear-gradient(180deg, var(--bg-base), var(--bg-elevated));
+  background: var(--bg-base);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -15,13 +15,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: var(--space-sm);
   padding: var(--space-sm) 0;
 }
 
+.dateSeparator::before,
+.dateSeparator::after {
+  width: min(64px, 18vw);
+  height: 1px;
+  content: '';
+  background: var(--divider);
+}
+
 .dateText {
-  padding: 3px var(--space-sm);
-  border-radius: var(--radius-full);
-  background: var(--bg-card-solid);
+  padding: 0 3px;
+  background: transparent;
   color: var(--text-muted);
   font-size: 11px;
+  font-weight: 650;
 }

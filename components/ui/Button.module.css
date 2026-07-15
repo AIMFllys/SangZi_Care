@@ -7,7 +7,7 @@
   gap: var(--space-sm);
   min-width: 0;
   max-width: 100%;
-  min-height: 52px;
+  min-height: 48px;
   padding: var(--space-sm) var(--space-lg);
   font-size: var(--font-body);
   font-weight: 700;
@@ -103,17 +103,17 @@
 
 /* 尺寸 */
 .sm {
-  min-height: 48px;
+  min-height: 44px;
   padding: var(--space-xs) var(--space-md);
   font-size: var(--font-caption);
   border-radius: var(--radius-md);
 }
 
 .lg {
-  min-height: 56px;
-  padding: var(--space-md) var(--space-xl);
-  font-size: var(--font-heading);
-  border-radius: var(--radius-xl);
+  min-height: 52px;
+  padding: var(--space-sm) var(--space-xl);
+  font-size: var(--font-body);
+  border-radius: var(--radius-lg);
 }
 
 /* 状态 */
