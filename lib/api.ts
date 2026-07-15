@@ -44,6 +44,7 @@ type RefreshResult =
   | { kind: 'unavailable'; error: ApiError };
 
 let refreshPromise: Promise<RefreshResult> | null = null;
+const inFlightJsonGets = new Map<string, Promise<unknown>>();
 
 function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError';
@@ -248,15 +249,41 @@ export async function fetchApi<T = unknown>(
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetchAuthenticatedResponse(path, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-    signal,
-  }, { skipAuth });
+  const requestJson = async (): Promise<T> => {
+    const response = await fetchAuthenticatedResponse(path, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal,
+    }, { skipAuth });
 
-  if (response.status === 204) return undefined as T;
-  return response.json() as Promise<T>;
+    if (response.status === 204) return undefined as T;
+    return response.json() as Promise<T>;
+  };
+
+  // 同一账号、路径和请求头的并发 GET 共用一次网络请求；只合并无 AbortSignal
+  // 的纯读取，避免一个页面取消请求时影响另一个页面，也不缓存已完成结果。
+  if (method === 'GET' && body === undefined && !signal) {
+    const authScope = skipAuth
+      ? 'public'
+      : typeof window === 'undefined'
+        ? 'server'
+        : localStorage.getItem('token') ?? 'anonymous';
+    const headerKey = JSON.stringify(
+      Array.from(headers.entries()).sort(([left], [right]) => left.localeCompare(right)),
+    );
+    const key = `${authScope}\n${path}\n${headerKey}`;
+    const existing = inFlightJsonGets.get(key);
+    if (existing) return existing as Promise<T>;
+
+    const pending = requestJson().finally(() => {
+      if (inFlightJsonGets.get(key) === pending) inFlightJsonGets.delete(key);
+    });
+    inFlightJsonGets.set(key, pending);
+    return pending;
+  }
+
+  return requestJson();
 }
 
 /** 上传 FormData；不得手工设置 Content-Type，以保留浏览器生成的 boundary。 */

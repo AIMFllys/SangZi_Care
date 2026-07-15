@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { User, Users, Heart, Baby, UsersRound, Handshake, Stethoscope, Home, Mic, Image as ImageIcon } from 'lucide-react';
+import { User, Users, Heart, UserRound, UsersRound, Handshake, Stethoscope, Home, Mic, Image as ImageIcon } from 'lucide-react';
 
 /**
  * 消息相关工具函数
@@ -9,11 +9,17 @@ import { User, Users, Heart, Baby, UsersRound, Handshake, Stethoscope, Home, Mic
 /** 关系类型对应 icon */
 export function getRelationIcon(relation: string): ReactNode {
     const map: Record<string, ReactNode> = {
-        '子女': <User size={28} />,
+        '家属': <Users size={28} />,
         '配偶': <Heart size={28} />,
         '父母': <Users size={28} />,
+        '父亲': <Users size={28} />,
+        '母亲': <Users size={28} />,
+        '爷爷': <UserRound size={28} />,
+        '奶奶': <UserRound size={28} />,
+        '外公': <UserRound size={28} />,
+        '外婆': <UserRound size={28} />,
+        '其他长辈': <UserRound size={28} />,
         '兄弟姐妹': <UsersRound size={28} />,
-        '孙辈': <Baby size={28} />,
         '朋友': <Handshake size={28} />,
         '护工': <Stethoscope size={28} />,
         '邻居': <Home size={28} />,

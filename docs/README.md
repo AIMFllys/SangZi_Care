@@ -2,7 +2,7 @@
 
 桑梓智护（智护银龄）项目内部文档。
 
-> 最后更新: 2026-07-10  
+> 最后更新: 2026-07-14
 > 架构方向: 腾讯云 EdgeOne 全栈 Next.js · Android 在线 WebView 壳  
 > AI 操作规范见根目录 [AGENTS.md](../AGENTS.md)
 

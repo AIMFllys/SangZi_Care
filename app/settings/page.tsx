@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import PageHeader from '@/components/layout/PageHeader';
 import { replaceDocument } from '@/lib/browserNavigation';
-import { ROUTES } from '@/lib/constants';
+import { APP_VERSION, ROUTES } from '@/lib/constants';
 import styles from './page.module.css';
 
 const SETTING_ITEMS = [
@@ -172,7 +172,7 @@ export default function SettingsPage() {
           退出登录
         </Button>
 
-        <p className={styles.version}>桑梓智护 v1.1.0</p>
+        <p className={styles.version}>桑梓智护 v{APP_VERSION}</p>
 
         <ConfirmModal
           open={showLogout}

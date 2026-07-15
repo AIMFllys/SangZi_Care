@@ -56,6 +56,12 @@ export interface UnreadCountResponse {
   count: number;
 }
 
+export interface ConversationOverviewResponse {
+  peer_id: string;
+  last_message: MessageResponse | null;
+  unread_count: number;
+}
+
 // ---------- Store ----------
 
 interface MessageState {
@@ -111,35 +117,31 @@ export const useMessageStore = create<MessageState>()((set) => ({
       // 后端与前端都只接受明确活跃的绑定，未知或待确认状态不能暴露联系人。
       const activeBinds = binds.filter((b) => b.bind.status === 'active');
 
-      // 为每个联系人获取最新消息
-      const contactPromises = activeBinds.map(async (bind) => {
-        const contact: ContactInfo = {
+      if (!currentUserId || activeBinds.length === 0) {
+        set({ contacts: [], unreadTotal: 0, loading: false });
+        return;
+      }
+
+      // 服务端一次聚合全部联系人的最新消息与未读数，避免联系人数量放大 HTTP 请求。
+      const overview = await fetchApi<ConversationOverviewResponse[]>(
+        '/api/v1/messages/overview',
+      );
+      const overviewByPeer = new Map(
+        overview.map((item) => [item.peer_id, item]),
+      );
+
+      const contacts = activeBinds.map((bind) => {
+        const summary = overviewByPeer.get(bind.user.id);
+        return {
           userId: bind.user.id,
           name: bind.user.name,
           avatarUrl: bind.user.avatar_url ?? undefined,
-          relationship: bind.bind.relation,
-          unreadCount: 0,
+          relationship:
+            bind.bind.elder_id === currentUserId ? '家属' : bind.bind.relation,
+          lastMessage: summary?.last_message ?? undefined,
+          unreadCount: summary?.unread_count ?? 0,
         };
-
-        try {
-          // 单次加载即可同时得到最新消息与未读数，避免每位联系人重复请求。
-          const allMsgs = await fetchApi<MessageResponse[]>(
-            `/api/v1/messages/${bind.user.id}?limit=50&offset=0`,
-          );
-          if (allMsgs.length > 0) {
-            contact.lastMessage = allMsgs[allMsgs.length - 1];
-          }
-          contact.unreadCount = allMsgs.filter(
-            (m) => m.sender_id === bind.user.id && m.receiver_id === currentUserId && !m.is_read,
-          ).length;
-        } catch {
-          // 静默失败 — 单个联系人消息获取失败不影响整体
-        }
-
-        return contact;
       });
-
-      const contacts = await Promise.all(contactPromises);
 
       // 按最新消息时间排序（有消息的排前面）
       contacts.sort((a, b) => {

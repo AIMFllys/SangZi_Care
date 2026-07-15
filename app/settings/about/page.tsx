@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { GraduationCap, HeartHandshake, ShieldCheck, Sparkles } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
+import { APP_VERSION } from '@/lib/constants';
 import styles from './page.module.css';
 
 const PROJECT_NAME = '华中科技大学基础医学院“慧老智治医心为民”AI智慧医养暑期实践项目';
@@ -33,7 +34,7 @@ export default function AboutPage() {
             <h2 id="brand-title">智护银龄</h2>
             <p>科技有温度，守护有回应。</p>
           </div>
-          <strong>v1.1.0</strong>
+          <strong>v{APP_VERSION}</strong>
         </section>
 
         <section className={styles.projectCard} aria-labelledby="project-title">

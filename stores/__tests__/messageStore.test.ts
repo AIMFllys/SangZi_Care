@@ -48,9 +48,9 @@ function makeMessage(overrides: Partial<MessageResponse> = {}): MessageResponse 
 function makeBind(overrides: Record<string, any> = {}) {
   return {
     bind: {
-      elder_id: 'elder-1',
-      family_id: 'family-1',
-      relation: '女儿',
+      elder_id: 'user-contact',
+      family_id: 'me',
+      relation: '母亲',
       status: 'active' as string | null,
       ...overrides.bind,
     },
@@ -312,14 +312,21 @@ describe('useMessageStore', () => {
       const bind = makeBind();
       const latestMsg = makeMessage({ sender_id: 'user-contact', receiver_id: 'me' });
 
-      mockFetchApi.mockResolvedValueOnce([latestMsg]);
+      mockFetchApi.mockResolvedValueOnce([{
+        peer_id: 'user-contact',
+        last_message: latestMsg,
+        unread_count: 1,
+      }]);
 
       await useMessageStore.getState().fetchContacts([bind], 'me');
 
       const state = useMessageStore.getState();
       expect(state.contacts).toHaveLength(1);
       expect(state.contacts[0].name).toBe('小红');
-      expect(state.contacts[0].relationship).toBe('女儿');
+      expect(state.contacts[0].relationship).toBe('母亲');
+      expect(state.contacts[0].lastMessage).toEqual(latestMsg);
+      expect(state.contacts[0].unreadCount).toBe(1);
+      expect(mockFetchApi).toHaveBeenCalledWith('/api/v1/messages/overview');
       expect(state.loading).toBe(false);
     });
 
@@ -368,7 +375,7 @@ describe('useMessageStore', () => {
   describe('reset', () => {
     it('重置所有状态', () => {
       useMessageStore.setState({
-        contacts: [{ userId: 'u1', name: '测试', relationship: '儿子', unreadCount: 1 }],
+        contacts: [{ userId: 'u1', name: '测试', relationship: '父亲', unreadCount: 1 }],
         messages: [makeMessage()],
         unreadTotal: 3,
         error: '错误',

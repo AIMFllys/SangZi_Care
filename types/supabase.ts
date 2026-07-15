@@ -746,6 +746,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      oc_get_message_overview: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: Json
+      }
       oc_share_ai_murmur: {
         Args: {
           p_elder_id: string

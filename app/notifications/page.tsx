@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
+import { APP_VERSION } from '@/lib/constants';
 import styles from './page.module.css';
 
 const UPDATES = [
@@ -62,7 +63,7 @@ export default function NotificationsPage() {
           </div>
           <div className={styles.releaseCopy}>
             <span className={styles.eyebrow}>PRODUCT UPDATE</span>
-            <h2 id="release-title">智护银龄 v1.1.0</h2>
+            <h2 id="release-title">智护银龄 v{APP_VERSION}</h2>
             <p>让长辈更安心，让家属更清楚。</p>
           </div>
           <span className={styles.versionBadge}>本次更新</span>

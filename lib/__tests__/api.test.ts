@@ -61,6 +61,32 @@ describe('authenticated API transports', () => {
       .toEqual([0xff, 0xfb, 0x90, 0]);
   });
 
+  it('合并同账号同路径的并发 GET，完成后不保留陈旧缓存', async () => {
+    localStorage.setItem('token', 'access-one');
+    let release!: (response: Response) => void;
+    const pendingResponse = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    const fetchMock = vi.fn().mockReturnValueOnce(pendingResponse)
+      .mockResolvedValueOnce(jsonResponse({ value: 2 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { fetchApi } = await import('../api');
+
+    const first = fetchApi<{ value: number }>('/api/dashboard');
+    const second = fetchApi<{ value: number }>('/api/dashboard');
+    expect(fetchMock).toHaveBeenCalledOnce();
+
+    release(jsonResponse({ value: 1 }));
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      { value: 1 },
+      { value: 1 },
+    ]);
+
+    await expect(fetchApi<{ value: number }>('/api/dashboard'))
+      .resolves.toEqual({ value: 2 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('401 后单次刷新 token 并用新 token 重试', async () => {
     localStorage.setItem('token', 'expired-access');
     localStorage.setItem('refresh_token', 'refresh-one');

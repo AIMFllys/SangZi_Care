@@ -8,7 +8,7 @@
 
 当前生产构建通过仓库内的静态资源与 EdgeOne 单文件预算。Tailwind 扫描范围收窄并完成本轮布局修复后，构建 CSS 从 `170,543 B` 降至 `120,095 B`，减少 `50,448 B`（约 `29.6%`）；最终静态 JavaScript 为 `937,600 B`。构建仍输出 `.next`，没有启用静态导出。EdgeOne 注入服务端 `MIMO_API_KEY` 并重新部署后，生产同源 TTS → ASR 真实回环也已通过。
 
-## 可复现预算
+## 可复现预算（v1.0 基线）
 
 `npm run build` 的 `postbuild` 会自动执行 [`scripts/check-build-budget.mjs`](../../scripts/check-build-budget.mjs)，失败即阻断构建。
 
@@ -34,6 +34,26 @@
 - 语音与 AI 请求具备流式读取上限和上游截止时间：TTS JSON 8 KiB、ASR multipart 6 MiB / 音频 5 MiB、聊天 64 KiB、意图 8 KiB；MiMo 与豆包均在 EdgeOne 60 秒函数时限前结束。
 - AuthProvider 复用全局会话，路由切换不再重复调用 `/users/me`。
 - 生产依赖审计在本轮处理后为 0 个已知漏洞；依赖安装保持 `npm ci` 和仓库 lockfile。
+
+## v1.1.0 候选优化与预算（2026-07-14）
+
+- `lib/api.ts` 对同一账号、路径和请求头的**并发纯 GET**做在途合并；请求完成即释放，不形成陈旧数据缓存，带 `AbortSignal` 的读取不合并。
+- 联系人页从早期“每位联系人 2 次 HTTP”收敛为一次 `/api/v1/messages/overview`。服务端通过 `oc_get_message_overview` 一次得到所有 active 家庭联系人的最新消息和精确未读数。
+- 概览 RPC 在数据库内使用窗口函数聚合并新增双向会话索引；响应固定移除私有音频对象路径。RPC 仅 `service_role` 可执行，`anon` / `authenticated` 无权限。
+- 打开会话后由 `/api/v1/messages/read-all` 一次标记该联系人的全部未读消息，替代逐条 PATCH。
+- 家属首页继续使用 `oc_get_care_dashboard_snapshot` 单 RPC 返回健康、用药与趋势最小统计集；消息与看板都避免随卡片数量线性放大请求。
+
+| 指标 | 预算 | v1.1.0 候选实测 | 结果 |
+|---|---:|---:|---|
+| CSS 单文件 | ≤ 100 KiB | 最大 83,241 B | 通过 |
+| CSS 总量 | ≤ 200 KiB | 149,051 B（8 个文件） | 通过 |
+| JS 单文件 | ≤ 250 KiB | 最大 227,538 B | 通过 |
+| JS 总量 | ≤ 1,100 KiB | 1,027,728 B（34 个文件） | 通过 |
+| EdgeOne 单文件 | ≤ 25 MiB | 最大 1,219,268 B | 通过 |
+| 静态文件合计 | 观察值 | 1,176,779 B（42 个文件） | 通过 |
+| 部署文件数量 | 观察值 | 1,102 | 已检查 |
+
+以上数据来自 `sangzi-smart-care@1.1.0` 执行 `npm run build` 后的 `.next/static` 与 `postbuild` 预算门禁；构建仍输出 `.next`，没有静态导出。
 
 ## EdgeOne 生产契约
 
