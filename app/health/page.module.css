@@ -223,7 +223,8 @@
   }
 }
 
-@media (min-width: 720px) {
+/* 设备壳在普通宽屏中仍固定为 480px；仅横屏展开壳时切换三列。 */
+@media (orientation: landscape) and (min-width: 720px) and (max-height: 600px) {
   .cards {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

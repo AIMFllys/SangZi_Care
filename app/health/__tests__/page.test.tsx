@@ -217,4 +217,16 @@ describe('HealthPage', () => {
     expect(valueRule).toMatch(/white-space:\s*nowrap/);
     expect(valueRule).not.toMatch(/overflow-wrap:\s*anywhere/);
   });
+
+  it('普通宽屏仍按 480px 设备壳使用两列，仅在紧凑横屏展开壳时切换三列', () => {
+    const css = readFileSync(
+      resolve(process.cwd(), 'app/health/page.module.css'),
+      'utf8',
+    );
+
+    expect(css).not.toContain('@media (min-width: 720px)');
+    expect(css).toMatch(
+      /@media \(orientation: landscape\) and \(min-width: 720px\) and \(max-height: 600px\)[\s\S]*?\.cards\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3,/,
+    );
+  });
 });
