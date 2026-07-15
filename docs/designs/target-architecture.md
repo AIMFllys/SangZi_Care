@@ -55,6 +55,13 @@
 - `oc_get_care_dashboard_snapshot` 由 Next 服务端以 `service_role` 调用，一次返回最小统计集；客户端角色无执行权
 - Supabase migration 进入仓库并已在当前目标项目验证，其他环境仍按文件顺序部署
 
+### 阶段 D（已完成 2026-07）— AI 陪伴与家庭消息闭环
+
+- 语音对话固定使用服务端 `mimo-v2.5-pro`，浏览器只接触同源 Next API
+- MiMo 工具调用可在完整数值下写入健康记录，并将值得留存的内容私密保存为 `oc_ai_murmurs`
+- 家庭分享使用服务端二次同意校验；只有长辈明确同意后，`oc_share_ai_murmur` 才原子写入 `murmur` 分类消息
+- `oc_ai_murmurs` 强制 RLS，客户端角色无表权限；分享 RPC 仅 `service_role` 可执行
+
 ## 明确不做（本阶段及原则）
 
 - 不把 TS 业务 1:1 重写成 Kotlin 原生 App

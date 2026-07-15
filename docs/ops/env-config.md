@@ -16,12 +16,12 @@
 | `SUPABASE_VOICE_BUCKET` | 仅服务端 | 必填；预先创建的私有语音 bucket，用于消息录音与广播音频；不得设为 public |
 | `NEXT_PUBLIC_APP_URL` | 客户端 | 生产/预览站点 URL（Android 壳可对齐） |
 | `NEXT_PUBLIC_API_BASE_URL` | 客户端 | API 已迁入 Next 同源；本地与生产默认留空，不得指向第二个服务 |
-| `MIMO_API_KEY` | 仅服务端 | Xiaomi MiMo ASR / TTS 密钥；禁止加 `NEXT_PUBLIC_` |
+| `MIMO_API_KEY` | 仅服务端 | Xiaomi MiMo 对话 / ASR / TTS 共用密钥；陪伴对话固定 `mimo-v2.5-pro`，禁止加 `NEXT_PUBLIC_` |
 | `MIMO_API_BASE_URL` | 仅服务端 | 可选；默认 `https://api.xiaomimimo.com/v1`。必须与控制台发放的 Key、账号区域和计费类型成对使用 |
 | `MIMO_TTS_MODEL` / `MIMO_ASR_MODEL` | 仅服务端 | 可选；默认 `mimo-v2.5-tts` / `mimo-v2.5-asr` |
 | `MIMO_TTS_VOICE` | 仅服务端 | 可选；默认中文女声 `冰糖`，只接受官方内置音色 |
 | `MIMO_TIMEOUT_MS` | 仅服务端 | 可选；单次上游请求超时，默认 45000ms，需早于 EdgeOne 60 秒函数上限 |
-| `JWT_SECRET` / `VOLCANO_ARK_*` / `SMTP_*` | 仅服务端 | 鉴权、AI 文本和邮件；勿加 `NEXT_PUBLIC_` |
+| `JWT_SECRET` / `VOLCANO_ARK_*` / `SMTP_*` | 仅服务端 | 鉴权、遗留意图/摘要能力和邮件；勿加 `NEXT_PUBLIC_` |
 
 ## 规则
 

@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   fetchMessages: vi.fn(),
   sendTextMessage: vi.fn(),
   sendVoiceMessage: vi.fn(),
-  markAsRead: vi.fn(),
+  markConversationAsRead: vi.fn(),
   fetchBlob: vi.fn(),
   startListening: vi.fn(),
   stopListening: vi.fn(),
@@ -29,7 +29,7 @@ vi.mock('@/stores/messageStore', () => ({
       fetchMessages: mocks.fetchMessages,
       sendTextMessage: mocks.sendTextMessage,
       sendVoiceMessage: mocks.sendVoiceMessage,
-      markAsRead: mocks.markAsRead,
+      markConversationAsRead: mocks.markConversationAsRead,
     };
     return selector ? selector(state) : state;
   },
@@ -141,7 +141,7 @@ describe('ChatDetailPage 真实语音消息', () => {
     mocks.fetchMessages.mockResolvedValue(undefined);
     mocks.sendTextMessage.mockResolvedValue({});
     mocks.sendVoiceMessage.mockResolvedValue({});
-    mocks.markAsRead.mockResolvedValue(undefined);
+    mocks.markConversationAsRead.mockResolvedValue(undefined);
     mocks.fetchBlob.mockResolvedValue(WAV);
     mocks.startListening.mockResolvedValue(undefined);
     mocks.stopListening.mockResolvedValue({
@@ -393,7 +393,7 @@ describe('ChatDetailPage 真实语音消息', () => {
   it('返回消息列表并标记收到的未读消息', () => {
     mocks.messages = [voiceMessage({ is_read: false })];
     render(<ChatDetailPage />);
-    expect(mocks.markAsRead).toHaveBeenCalledWith('voice-1');
+    expect(mocks.markConversationAsRead).toHaveBeenCalledWith('contact-1');
     fireEvent.click(screen.getByLabelText('返回消息列表'));
     expect(mocks.push).toHaveBeenCalledWith('/messages');
   });

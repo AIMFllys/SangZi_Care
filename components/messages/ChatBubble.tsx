@@ -40,6 +40,7 @@ export interface ChatBubbleProps {
 export default function ChatBubble({ message, isMine, onPlayVoice }: ChatBubbleProps) {
   const isVoice = message.type === 'voice';
   const isAI = message.is_ai_generated;
+  const isMurmur = message.category === 'murmur';
 
   return (
     <div
@@ -50,7 +51,11 @@ export default function ChatBubble({ message, isMine, onPlayVoice }: ChatBubbleP
         className={`${styles.bubble} ${isMine ? styles.bubbleMine : styles.bubbleOther}`}
       >
         {/* AI 生成标记 */}
-        {isAI && <span className={styles.aiBadge}>AI</span>}
+        {isMurmur ? (
+          <span className={styles.murmurBadge}>碎碎念</span>
+        ) : isAI ? (
+          <span className={styles.aiBadge}>AI</span>
+        ) : null}
 
         {/* 文字消息 */}
         {!isVoice && (

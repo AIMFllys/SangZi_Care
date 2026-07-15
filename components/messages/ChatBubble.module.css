@@ -58,6 +58,25 @@
   line-height: 1.4;
 }
 
+.murmurBadge {
+  display: inline-block;
+  margin-bottom: 5px;
+  padding: 3px 7px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-full);
+  color: var(--color-warning-dark);
+  background: var(--color-warning-soft);
+  font-size: 10px;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.bubbleMine .murmurBadge {
+  border-color: rgb(255 255 255 / 45%);
+  background: rgb(255 255 255 / 16%);
+  color: var(--text-inverse);
+}
+
 .voiceBar {
   display: grid;
   grid-template-columns: 44px minmax(24px, 1fr) auto;

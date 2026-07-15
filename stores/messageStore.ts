@@ -7,6 +7,8 @@ import { fetchApi, fetchFormData } from '@/lib/api';
 
 // ---------- 类型定义（对齐后端响应） ----------
 
+export type MessageCategory = 'chat' | 'murmur' | 'system';
+
 export interface MessageResponse {
   id: string;
   sender_id: string;
@@ -15,6 +17,7 @@ export interface MessageResponse {
   content: string | null;
   audio_url: string | null;
   audio_duration: number | null;
+  category: MessageCategory;
   is_ai_generated: boolean | null;
   is_read: boolean | null;
   read_at: string | null;
@@ -87,6 +90,8 @@ interface MessageState {
   ) => Promise<MessageResponse>;
   /** 标记消息已读 */
   markAsRead: (messageId: string) => Promise<void>;
+  /** 一次标记与某联系人的全部未读消息 */
+  markConversationAsRead: (userId: string) => Promise<void>;
   /** 获取未读消息总数 */
   fetchUnreadCount: () => Promise<void>;
   /** 清空状态 */
@@ -117,18 +122,13 @@ export const useMessageStore = create<MessageState>()((set) => ({
         };
 
         try {
-          // 获取最新一条消息
-          const msgs = await fetchApi<MessageResponse[]>(
-            `/api/v1/messages/${bind.user.id}?limit=1&offset=0`,
-          );
-          if (msgs.length > 0) {
-            contact.lastMessage = msgs[msgs.length - 1];
-          }
-
-          // 计算未读数：获取所有消息中对方发给我的未读消息
+          // 单次加载即可同时得到最新消息与未读数，避免每位联系人重复请求。
           const allMsgs = await fetchApi<MessageResponse[]>(
             `/api/v1/messages/${bind.user.id}?limit=50&offset=0`,
           );
+          if (allMsgs.length > 0) {
+            contact.lastMessage = allMsgs[allMsgs.length - 1];
+          }
           contact.unreadCount = allMsgs.filter(
             (m) => m.sender_id === bind.user.id && m.receiver_id === currentUserId && !m.is_read,
           ).length;
@@ -229,6 +229,28 @@ export const useMessageStore = create<MessageState>()((set) => ({
         m.id === messageId ? { ...m, is_read: true, read_at: new Date().toISOString() } : m,
       ),
     }));
+  },
+
+  markConversationAsRead: async (userId) => {
+    const result = await fetchApi<{ count: number }>('/api/v1/messages/read-all', {
+      method: 'PATCH',
+      body: { peer_id: userId },
+    });
+    if (result.count <= 0) return;
+
+    const readAt = new Date().toISOString();
+    set((state) => {
+      const contacts = state.contacts.map((contact) =>
+        contact.userId === userId ? { ...contact, unreadCount: 0 } : contact);
+      return {
+        messages: state.messages.map((message) =>
+          message.sender_id === userId && !message.is_read
+            ? { ...message, is_read: true, read_at: readAt }
+            : message),
+        contacts,
+        unreadTotal: contacts.reduce((sum, contact) => sum + contact.unreadCount, 0),
+      };
+    });
   },
 
   fetchUnreadCount: async () => {

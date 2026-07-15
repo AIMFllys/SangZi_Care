@@ -5,7 +5,8 @@ import type { NextRequest } from 'next/server';
 const mocks = vi.hoisted(() => ({
   requireUser: vi.fn(),
   getSupabaseServerClient: vi.fn(),
-  chat: vi.fn(),
+  completeMimoChat: vi.fn(),
+  executeCompanionToolCall: vi.fn(),
   recognizeIntent: vi.fn(),
   generateSummary: vi.fn(),
 }));
@@ -14,13 +15,18 @@ vi.mock('@/lib/server', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/server')>()),
   requireUser: mocks.requireUser,
   getSupabaseServerClient: mocks.getSupabaseServerClient,
+  completeMimoChat: mocks.completeMimoChat,
 }));
 
 vi.mock('@/lib/server/doubao', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/server/doubao')>()),
-  chat: mocks.chat,
   recognizeIntent: mocks.recognizeIntent,
   generateSummary: mocks.generateSummary,
+}));
+
+vi.mock('@/lib/server/companion-tools', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/server/companion-tools')>()),
+  executeCompanionToolCall: mocks.executeCompanionToolCall,
 }));
 
 const { POST: postChat } = await import('../chat/route');
@@ -64,7 +70,15 @@ describe('AI API 生产边界', () => {
     vi.clearAllMocks();
     mocks.requireUser.mockResolvedValue({ user_id: 'user-1', role: 'elder' });
     mocks.getSupabaseServerClient.mockReturnValue(createChatDatabase().client);
-    mocks.chat.mockResolvedValue('请记得按时吃药。');
+    mocks.completeMimoChat.mockResolvedValue({
+      content: '请记得按时吃药。',
+      toolCalls: [],
+    });
+    mocks.executeCompanionToolCall.mockResolvedValue({
+      toolCallId: 'call-1',
+      content: '{"ok":true,"message":"已记录"}',
+      actions: [{ type: 'health_recorded', label: '已记录心率', success: true }],
+    });
     mocks.recognizeIntent.mockResolvedValue({
       intent: 'medication_confirm',
       entities: {},
@@ -90,7 +104,7 @@ describe('AI API 生产边界', () => {
 
       expect(response.status).toBe(413);
       expect(request.bodyUsed).toBe(false);
-      expect(mocks.chat).not.toHaveBeenCalled();
+      expect(mocks.completeMimoChat).not.toHaveBeenCalled();
     });
 
     it('Content-Length 不可信时仍按实际 JSON 字节数返回 413', async () => {
@@ -103,7 +117,7 @@ describe('AI API 生产边界', () => {
       const response = await postChat(request);
 
       expect(response.status).toBe(413);
-      expect(mocks.chat).not.toHaveBeenCalled();
+      expect(mocks.completeMimoChat).not.toHaveBeenCalled();
     });
 
     it('解析后拒绝超过 50 条消息', async () => {
@@ -115,7 +129,7 @@ describe('AI API 生产边界', () => {
       }));
 
       expect(response.status).toBe(400);
-      expect(mocks.chat).not.toHaveBeenCalled();
+      expect(mocks.completeMimoChat).not.toHaveBeenCalled();
     });
 
     it('解析后拒绝单条超过 4000 个 Unicode 字符的消息', async () => {
@@ -124,7 +138,7 @@ describe('AI API 生产边界', () => {
       }));
 
       expect(response.status).toBe(400);
-      expect(mocks.chat).not.toHaveBeenCalled();
+      expect(mocks.completeMimoChat).not.toHaveBeenCalled();
     });
 
     it('解析后把非对象消息项作为 400 而不是 500', async () => {
@@ -133,7 +147,7 @@ describe('AI API 生产边界', () => {
       }));
 
       expect(response.status).toBe(400);
-      expect(mocks.chat).not.toHaveBeenCalled();
+      expect(mocks.completeMimoChat).not.toHaveBeenCalled();
     });
 
     it('成功响应与校验错误都私有不缓存', async () => {
@@ -148,6 +162,37 @@ describe('AI API 生产边界', () => {
       expect(failure.status).toBe(400);
       expectPrivateNoStore(success);
       expectPrivateNoStore(failure);
+    });
+
+    it('执行 MiMo 工具后把真实结果回传模型并返回动作状态', async () => {
+      mocks.completeMimoChat
+        .mockResolvedValueOnce({
+          content: '',
+          toolCalls: [{
+            id: 'call-1',
+            type: 'function',
+            function: {
+              name: 'record_health_metric',
+              arguments: '{"record_type":"heart_rate","value":72}',
+            },
+          }],
+        })
+        .mockResolvedValueOnce({ content: '已经替您记录心率 72 次/分。', toolCalls: [] });
+
+      const response = await postChat(jsonRequest('/api/v1/ai/chat', {
+        messages: [{ role: 'user', content: '我心率七十二' }],
+      }));
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toMatchObject({
+        reply: '已经替您记录心率 72 次/分。',
+        actions: [{ type: 'health_recorded', success: true }],
+      });
+      expect(mocks.executeCompanionToolCall).toHaveBeenCalledOnce();
+      expect(mocks.completeMimoChat).toHaveBeenCalledTimes(2);
+      expect(mocks.completeMimoChat.mock.calls[1][0]).toContainEqual(
+        expect.objectContaining({ role: 'tool', tool_call_id: 'call-1' }),
+      );
     });
   });
 

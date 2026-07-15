@@ -70,6 +70,50 @@ export type Database = {
           },
         ]
       }
+      oc_ai_murmurs: {
+        Row: {
+          created_at: string
+          elder_id: string
+          id: string
+          share_status: string
+          shared_at: string | null
+          shared_message_ids: string[]
+          source_text: string
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          elder_id: string
+          id?: string
+          share_status?: string
+          shared_at?: string | null
+          shared_message_ids?: string[]
+          source_text: string
+          summary: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          elder_id?: string
+          id?: string
+          share_status?: string
+          shared_at?: string | null
+          shared_message_ids?: string[]
+          source_text?: string
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oc_ai_murmurs_elder_id_fkey"
+            columns: ["elder_id"]
+            isOneToOne: false
+            referencedRelation: "oc_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oc_auth_challenges: {
         Row: {
           activated_at: string | null
@@ -164,6 +208,7 @@ export type Database = {
         Row: {
           audio_duration: number | null
           audio_url: string | null
+          category: string
           content: string | null
           created_at: string | null
           id: string
@@ -177,6 +222,7 @@ export type Database = {
         Insert: {
           audio_duration?: number | null
           audio_url?: string | null
+          category?: string
           content?: string | null
           created_at?: string | null
           id?: string
@@ -190,6 +236,7 @@ export type Database = {
         Update: {
           audio_duration?: number | null
           audio_url?: string | null
+          category?: string
           content?: string | null
           created_at?: string | null
           id?: string
@@ -699,6 +746,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      oc_share_ai_murmur: {
+        Args: {
+          p_elder_id: string
+          p_murmur_id: string
+          p_summary: string
+        }
+        Returns: string[]
+      }
       oc_get_care_dashboard_snapshot: {
         Args: {
           p_end: string

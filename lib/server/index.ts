@@ -43,10 +43,16 @@ export {
 
 export {
   MimoError,
+  completeMimoChat,
   synthesizeSpeech,
   transcribeSpeech,
+  type MimoChatMessage,
+  type MimoChatRole,
+  type MimoChatTurn,
   type MimoAudioFormat,
   type MimoErrorKind,
+  type MimoFunctionTool,
+  type MimoToolCall,
   type MimoVoice,
   type SynthesizedSpeech,
 } from './mimo';

@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  completeMimoChat,
   MimoError,
   synthesizeSpeech,
   transcribeSpeech,
@@ -121,6 +122,65 @@ describe('server/mimo', () => {
     expect(body.messages[0].content[0].input_audio.data).toMatch(
       /^data:audio\/mpeg;base64,/,
     );
+  });
+
+  it('陪伴对话固定使用 mimo-v2.5-pro 并解析工具调用', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({
+      choices: [{
+        message: {
+          role: 'assistant',
+          content: null,
+          tool_calls: [{
+            id: 'call-health',
+            type: 'function',
+            function: {
+              name: 'record_health_metric',
+              arguments: '{"record_type":"heart_rate","value":72}',
+            },
+          }],
+        },
+      }],
+    }));
+
+    const tools = [{
+      type: 'function' as const,
+      function: {
+        name: 'record_health_metric',
+        description: '记录健康',
+        parameters: { type: 'object' },
+      },
+    }];
+    const result = await completeMimoChat(
+      [{ role: 'user', content: '心率七十二' }],
+      tools,
+    );
+
+    expect(result.toolCalls[0]).toMatchObject({
+      id: 'call-health',
+      function: { name: 'record_health_metric' },
+    });
+    const body = JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body));
+    expect(body).toMatchObject({
+      model: 'mimo-v2.5-pro',
+      tool_choice: 'auto',
+      tools,
+      stream: false,
+    });
+  });
+
+  it('工具执行后的收尾对话不再暴露工具选择', async () => {
+    vi.mocked(fetch).mockResolvedValue(asrResponse('已经替您记好了。'));
+
+    const result = await completeMimoChat([
+      { role: 'user', content: '心率七十二' },
+      { role: 'tool', tool_call_id: 'call-health', content: '{"ok":true}' },
+    ]);
+
+    expect(result.content).toBe('已经替您记好了。');
+    const body = JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body));
+    expect(body.model).toBe('mimo-v2.5-pro');
+    expect(body).not.toHaveProperty('tools');
+    expect(body).not.toHaveProperty('tool_choice');
   });
 
   it('缺少服务端密钥时在发起网络请求前失败', async () => {

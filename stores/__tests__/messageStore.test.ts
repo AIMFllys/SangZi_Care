@@ -36,6 +36,7 @@ function makeMessage(overrides: Partial<MessageResponse> = {}): MessageResponse 
     content: '你好',
     audio_url: null,
     audio_duration: null,
+    category: 'chat',
     is_ai_generated: null,
     is_read: false,
     read_at: null,
@@ -196,6 +197,35 @@ describe('useMessageStore', () => {
     });
   });
 
+  describe('markConversationAsRead', () => {
+    it('一次请求更新会话消息、联系人和总未读数', async () => {
+      useMessageStore.setState({
+        messages: [
+          makeMessage({ id: 'm-1', sender_id: 'user-b', is_read: false }),
+          makeMessage({ id: 'm-2', sender_id: 'user-c', is_read: false }),
+        ],
+        contacts: [
+          { userId: 'user-b', name: '小红', relationship: '母亲', unreadCount: 2 },
+          { userId: 'user-c', name: '小明', relationship: '父亲', unreadCount: 1 },
+        ],
+        unreadTotal: 3,
+      });
+      mockFetchApi.mockResolvedValue({ count: 2 });
+
+      await useMessageStore.getState().markConversationAsRead('user-b');
+
+      expect(mockFetchApi).toHaveBeenCalledWith('/api/v1/messages/read-all', {
+        method: 'PATCH',
+        body: { peer_id: 'user-b' },
+      });
+      const state = useMessageStore.getState();
+      expect(state.messages[0].is_read).toBe(true);
+      expect(state.messages[1].is_read).toBe(false);
+      expect(state.contacts.map((contact) => contact.unreadCount)).toEqual([0, 1]);
+      expect(state.unreadTotal).toBe(1);
+    });
+  });
+
   describe('fetchMessages', () => {
     it('成功获取消息列表', async () => {
       const msgs = [makeMessage({ id: 'msg-1' }), makeMessage({ id: 'msg-2' })];
@@ -282,10 +312,7 @@ describe('useMessageStore', () => {
       const bind = makeBind();
       const latestMsg = makeMessage({ sender_id: 'user-contact', receiver_id: 'me' });
 
-      // 第一次调用获取最新消息，第二次获取所有消息计算未读
-      mockFetchApi
-        .mockResolvedValueOnce([latestMsg])  // limit=1
-        .mockResolvedValueOnce([latestMsg]); // limit=50
+      mockFetchApi.mockResolvedValueOnce([latestMsg]);
 
       await useMessageStore.getState().fetchContacts([bind], 'me');
 
@@ -303,9 +330,7 @@ describe('useMessageStore', () => {
         user: { id: 'user-inactive', name: '小明' },
       });
 
-      mockFetchApi
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+      mockFetchApi.mockResolvedValueOnce([]);
 
       await useMessageStore.getState().fetchContacts([activeBind, inactiveBind], 'me');
 
@@ -327,9 +352,7 @@ describe('useMessageStore', () => {
       const missingBind = makeBind({ user: { id: 'user-missing', name: '缺少状态' } });
       delete missingBind.bind.status;
 
-      mockFetchApi
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+      mockFetchApi.mockResolvedValueOnce([]);
 
       await useMessageStore.getState().fetchContacts(
         [activeBind, pendingBind, nullBind, missingBind],
@@ -338,7 +361,7 @@ describe('useMessageStore', () => {
 
       expect(useMessageStore.getState().contacts.map((contact) => contact.name))
         .toEqual(['小红']);
-      expect(mockFetchApi).toHaveBeenCalledTimes(2);
+      expect(mockFetchApi).toHaveBeenCalledOnce();
     });
   });
 

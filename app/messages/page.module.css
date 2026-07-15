@@ -98,6 +98,18 @@
   font-size: var(--font-small);
 }
 
+.murmurPreviewTag {
+  display: inline-block;
+  margin-right: 5px;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-dark);
+  font-size: 9px;
+  font-weight: 850;
+  vertical-align: 1px;
+}
+
 .contactMeta {
   display: flex;
   align-items: flex-end;

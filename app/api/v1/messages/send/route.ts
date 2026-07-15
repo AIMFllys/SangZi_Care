@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
       sender_id: currentUserId,
       receiver_id: receiverId,
       type: 'text',
+      category: 'chat',
       content,
       is_ai_generated: isAiGenerated,
       is_read: false,

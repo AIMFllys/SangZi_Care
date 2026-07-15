@@ -29,6 +29,11 @@ export interface ChatRequest {
 export interface ChatResponse {
   reply: string;
   session_id: string;
+  actions?: Array<{
+    type: string;
+    label: string;
+    success: boolean;
+  }>;
 }
 
 /** POST /ai/intent 请求体。 */

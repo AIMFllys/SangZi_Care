@@ -18,6 +18,8 @@ export type MessageRow =
 export type MessageInsert =
   Database['public']['Tables']['oc_elder_care_messages']['Insert'];
 
+export type MessageCategory = 'chat' | 'murmur' | 'system';
+
 /** 对齐 Python MessageResponse / 前端 messageStore.MessageResponse。 */
 export interface MessageResponse {
   id: string;
@@ -27,6 +29,7 @@ export interface MessageResponse {
   content: string | null;
   audio_url: string | null;
   audio_duration: number | null;
+  category: MessageCategory;
   is_ai_generated: boolean | null;
   is_read: boolean | null;
   read_at: string | null;
@@ -43,6 +46,7 @@ export function toMessageResponse(row: MessageRow): MessageResponse {
     content: row.content,
     audio_url: row.audio_url,
     audio_duration: row.audio_duration,
+    category: (row.category || 'chat') as MessageCategory,
     is_ai_generated: row.is_ai_generated,
     is_read: row.is_read,
     read_at: row.read_at,

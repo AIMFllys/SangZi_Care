@@ -43,6 +43,7 @@ function createMessage(overrides: Partial<MessageResponse> = {}): MessageRespons
     content: '你好',
     audio_url: null,
     audio_duration: null,
+    category: 'chat',
     is_ai_generated: null,
     is_read: false,
     read_at: null,
@@ -111,6 +112,17 @@ describe('ChatBubble 组件', () => {
 
   it('非 AI 消息不显示 AI 标记', () => {
     render(<ChatBubble message={createMessage()} isMine={false} />);
+    expect(screen.queryByText('AI')).toBeNull();
+  });
+
+  it('碎碎念消息显示专属标签而不是通用 AI 标签', () => {
+    render(
+      <ChatBubble
+        message={createMessage({ category: 'murmur', is_ai_generated: true })}
+        isMine={false}
+      />,
+    );
+    expect(screen.getByText('碎碎念')).toBeDefined();
     expect(screen.queryByText('AI')).toBeNull();
   });
 

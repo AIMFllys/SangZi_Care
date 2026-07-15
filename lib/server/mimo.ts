@@ -335,3 +335,114 @@ export async function transcribeSpeech(
   }, config);
   return readTranscript(payload);
 }
+
+export type MimoChatRole = 'system' | 'user' | 'assistant' | 'tool';
+
+export interface MimoToolCall {
+  id: string;
+  type: 'function';
+  function: {
+    name: string;
+    arguments: string;
+  };
+}
+
+export interface MimoChatMessage {
+  role: MimoChatRole;
+  content: string | null;
+  tool_call_id?: string;
+  tool_calls?: MimoToolCall[];
+}
+
+export interface MimoFunctionTool {
+  type: 'function';
+  function: {
+    name: string;
+    description: string;
+    parameters: Record<string, unknown>;
+  };
+}
+
+export interface MimoChatTurn {
+  content: string;
+  toolCalls: MimoToolCall[];
+}
+
+const COMPANION_CHAT_MODEL = 'mimo-v2.5-pro';
+const MAX_TOOL_CALLS = 5;
+const MAX_TOOL_ARGUMENT_CHARACTERS = 16_000;
+
+function readToolCalls(value: unknown): MimoToolCall[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > MAX_TOOL_CALLS) {
+    throw new MimoError('MiMo 工具调用响应无效', 'schema', 502);
+  }
+
+  return value.map((item) => {
+    if (
+      !isRecord(item)
+      || typeof item.id !== 'string'
+      || !item.id.trim()
+      || item.type !== 'function'
+      || !isRecord(item.function)
+      || typeof item.function.name !== 'string'
+      || !item.function.name.trim()
+      || typeof item.function.arguments !== 'string'
+      || item.function.arguments.length > MAX_TOOL_ARGUMENT_CHARACTERS
+    ) {
+      throw new MimoError('MiMo 工具调用响应无效', 'schema', 502);
+    }
+
+    return {
+      id: item.id,
+      type: 'function',
+      function: {
+        name: item.function.name,
+        arguments: item.function.arguments,
+      },
+    };
+  });
+}
+
+function readChatTurn(payload: unknown): MimoChatTurn {
+  if (!isRecord(payload) || !Array.isArray(payload.choices)) {
+    throw new MimoError('MiMo 对话响应结构无效', 'schema', 502);
+  }
+  const first = payload.choices[0];
+  if (!isRecord(first) || !isRecord(first.message)) {
+    throw new MimoError('MiMo 对话响应结构无效', 'schema', 502);
+  }
+
+  const content = first.message.content;
+  if (content !== null && content !== undefined && typeof content !== 'string') {
+    throw new MimoError('MiMo 对话响应结构无效', 'schema', 502);
+  }
+  const toolCalls = readToolCalls(first.message.tool_calls);
+  const normalizedContent = typeof content === 'string' ? content.trim() : '';
+  if (!normalizedContent && toolCalls.length === 0) {
+    throw new MimoError('MiMo 对话响应内容为空', 'schema', 502);
+  }
+
+  return { content: normalizedContent, toolCalls };
+}
+
+/**
+ * 固定使用 MiMo v2.5 Pro 完成陪伴对话；tools 为空时用于工具执行后的自然语言收尾。
+ */
+export async function completeMimoChat(
+  messages: MimoChatMessage[],
+  tools: MimoFunctionTool[] = [],
+): Promise<MimoChatTurn> {
+  if (messages.length === 0) {
+    throw new MimoError('MiMo 对话消息不能为空', 'schema', 400);
+  }
+
+  const config = getConfig();
+  const payload = await requestMimo({
+    model: COMPANION_CHAT_MODEL,
+    messages,
+    ...(tools.length > 0 ? { tools, tool_choice: 'auto' } : {}),
+    stream: false,
+  }, config);
+  return readChatTurn(payload);
+}

@@ -101,6 +101,7 @@ export async function POST(request: NextRequest) {
       sender_id: currentUserId,
       receiver_id: normalizedReceiverId,
       type: 'voice',
+      category: 'chat',
       content: transcript,
       audio_url: objectPath,
       audio_duration: pcmDurationMs / 1_000,

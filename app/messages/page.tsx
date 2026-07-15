@@ -62,6 +62,9 @@ export default function MessagesPage() {
                     <Badge variant="normal" className={styles.contactRelation}>{contact.relationship}</Badge>
                   </div>
                   <div className={styles.contactPreview}>
+                    {contact.lastMessage?.category === 'murmur' && (
+                      <span className={styles.murmurPreviewTag}>碎碎念</span>
+                    )}
                     {contact.lastMessage
                       ? getMessagePreview(contact.lastMessage.type, contact.lastMessage.content || '')
                       : '暂无消息'}

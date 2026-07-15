@@ -27,7 +27,7 @@ export default function ChatDetailPage() {
   const contactId = params?.id ?? '';
 
   const user = useUserStore((s) => s.user);
-  const { messages, loading, fetchMessages, sendTextMessage, sendVoiceMessage, markAsRead } =
+  const { messages, loading, fetchMessages, sendTextMessage, sendVoiceMessage, markConversationAsRead } =
     useMessageStore();
 
   // 输入模式：text 或 voice
@@ -54,11 +54,11 @@ export default function ChatDetailPage() {
       const unreadReceived = messages.filter(
         (m) => m.receiver_id === user.id && !m.is_read,
       );
-      unreadReceived.forEach((m) => {
-        markAsRead(m.id);
-      });
+      if (unreadReceived.length > 0 && contactId) {
+        void markConversationAsRead(contactId).catch(() => undefined);
+      }
     }
-  }, [messages, user?.id, markAsRead]);
+  }, [contactId, messages, user?.id, markConversationAsRead]);
 
   useEffect(() => {
     const viewport = window.visualViewport;
