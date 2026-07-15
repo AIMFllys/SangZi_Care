@@ -225,7 +225,7 @@
 }
 
 .dateNav > button {
-  min-height: 40px;
+  min-height: 44px;
 }
 
 .recipientRow {
@@ -301,7 +301,7 @@
 }
 
 .timeSlotStatus button {
-  min-height: 36px;
+  min-height: 44px;
   padding: 0 10px;
   border: 0;
   border-radius: var(--radius-full);

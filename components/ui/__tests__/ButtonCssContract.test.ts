@@ -17,4 +17,25 @@ describe('Button CSS contract', () => {
     expect(largeRule).toContain('min-height: 52px');
     expect(css).not.toContain('min-height: 56px');
   });
+
+  it('运行时非圆形紧凑按钮仍保持至少 44px 触控高度', () => {
+    const homeCss = readFileSync(
+      resolve(process.cwd(), 'app/page.module.css'),
+      'utf8',
+    );
+    const medicineCss = readFileSync(
+      resolve(process.cwd(), 'app/medicine/page.module.css'),
+      'utf8',
+    );
+    const dashboardManageRule =
+      homeCss.match(/\.chartHeader\s+button\s*\{([\s\S]*?)\}/)?.[1] ?? '';
+    const addPlanRule =
+      medicineCss.match(/\.dateNav\s*>\s*button\s*\{([\s\S]*?)\}/)?.[1] ?? '';
+    const confirmMedicationRule =
+      medicineCss.match(/\.timeSlotStatus\s+button\s*\{([\s\S]*?)\}/)?.[1] ?? '';
+
+    expect(dashboardManageRule).toContain('min-height: 44px');
+    expect(addPlanRule).toContain('min-height: 44px');
+    expect(confirmMedicationRule).toContain('min-height: 44px');
+  });
 });
