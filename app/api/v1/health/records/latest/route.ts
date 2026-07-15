@@ -13,7 +13,10 @@ import {
   toApiResponse,
   withPrivateNoStore,
 } from '@/lib/server';
-import { RECORD_TYPES } from '@/lib/server/health-thresholds';
+import {
+  RECORD_TYPES,
+  type HealthRecordType,
+} from '@/lib/server/health-thresholds';
 import {
   resolveHealthTarget,
   toRecordResponse,
@@ -23,7 +26,13 @@ import {
 
 export const runtime = 'nodejs';
 
-type LatestRecordsResponse = Partial<Record<string, HealthRecordResponse | null>>;
+type LatestRecordsResponse = Record<HealthRecordType, HealthRecordResponse | null>;
+
+const RECORD_TYPE_SET = new Set<string>(RECORD_TYPES);
+
+function isHealthRecordType(value: string): value is HealthRecordType {
+  return RECORD_TYPE_SET.has(value);
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,28 +47,26 @@ export async function GET(request: NextRequest) {
       requestedUserId,
     );
 
-    const latest: LatestRecordsResponse = {};
+    const latest = Object.fromEntries(
+      RECORD_TYPES.map((recordType) => [recordType, null]),
+    ) as LatestRecordsResponse;
 
-    const results = await Promise.all(RECORD_TYPES.map(async (recordType) => {
-      const result = await supabase
-        .from('oc_health_records')
-        .select('*')
-        .eq('user_id', targetUserId)
-        .eq('record_type', recordType)
-        .order('measured_at', { ascending: false })
-        .limit(1);
-      return { recordType, ...result };
-    }));
+    const { data, error } = await supabase
+      .from('oc_health_records')
+      .select('*')
+      .eq('user_id', targetUserId)
+      .in('record_type', [...RECORD_TYPES])
+      .order('measured_at', { ascending: false });
 
-    for (const { recordType, data, error } of results) {
-      if (error) {
-        console.error('[GET /health/records/latest] 查询失败:', error);
-        latest[recordType] = null;
-        continue;
+    if (error) {
+      console.error('[GET /health/records/latest] 查询失败:', error);
+    } else {
+      for (const row of (data ?? []) as HealthRecordRow[]) {
+        if (!isHealthRecordType(row.record_type) || latest[row.record_type] !== null) {
+          continue;
+        }
+        latest[row.record_type] = toRecordResponse(row);
       }
-
-      const rows = (data ?? []) as HealthRecordRow[];
-      latest[recordType] = rows.length > 0 ? toRecordResponse(rows[0]) : null;
     }
 
     return withPrivateNoStore(
