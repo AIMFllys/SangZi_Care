@@ -84,10 +84,27 @@
   transform: scale(0.95);
 }
 
+.emptyAction {
+    min-height: 44px;
+    padding: 0 var(--space-lg);
+    border: 1px solid var(--accent-action);
+    border-radius: var(--radius-full);
+    background: var(--accent-soft);
+    color: var(--accent-action);
+    font: inherit;
+    font-size: var(--font-caption);
+    font-weight: 750;
+    cursor: pointer;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dot,
   .retryButton {
     animation: none;
+    transition: none;
+  }
+
+  .emptyAction {
     transition: none;
   }
 }

@@ -3,6 +3,7 @@
 import { useEffect, useCallback } from 'react';
 import { useMedicineStore } from '@/stores/medicineStore';
 import type { MedicationPlanResponse } from '@/stores/medicineStore';
+import { useCareRecipient } from '@/hooks/useCareRecipient';
 import { ROUTES } from '@/lib/constants';
 import { Clock, Calendar, CheckCircle, Archive } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
@@ -51,30 +52,54 @@ function PlanCard({
 }
 
 export default function MedicineHistoryPage() {
-  const { plans, isLoading, error, fetchAllPlans } = useMedicineStore();
+  const {
+    plans,
+    plansTargetKey,
+    isLoading,
+    error,
+    fetchAllPlans,
+  } = useMedicineStore();
+  const {
+    recipient,
+    targetUserId,
+    isFamily,
+    isLoading: recipientLoading,
+  } = useCareRecipient();
 
   useEffect(() => {
-    fetchAllPlans();
-  }, [fetchAllPlans]);
+    if (!targetUserId) return;
+    void fetchAllPlans(targetUserId);
+  }, [fetchAllPlans, targetUserId]);
 
   const handleRetry = useCallback(() => {
-    fetchAllPlans();
-  }, [fetchAllPlans]);
+    if (!targetUserId) return;
+    void fetchAllPlans(targetUserId);
+  }, [fetchAllPlans, targetUserId]);
 
-  // 按活跃状态分组
-  const activePlans = plans.filter((p) => p.is_active);
-  const inactivePlans = plans.filter((p) => !p.is_active);
+  const targetMatches = Boolean(targetUserId && plansTargetKey === targetUserId);
+  const visiblePlans = targetMatches ? plans : [];
+  // 按活跃状态分组；切换长辈时不把旧目标缓存挂到新标题下。
+  const activePlans = visiblePlans.filter((p) => p.is_active);
+  const inactivePlans = visiblePlans.filter((p) => !p.is_active);
 
   return (
     <div className={styles.page}>
       {/* 顶部栏 */}
-      <PageHeader title="用药历史" backHref={ROUTES.MEDICINE} variant="detail" />
+      <PageHeader
+        title={isFamily && recipient ? `${recipient.name}的用药历史` : '用药历史'}
+        backHref={ROUTES.MEDICINE}
+        variant="detail"
+      />
 
       {/* 内容区域 */}
       <div className={styles.scroller}>
-      {isLoading ? (
+      {recipientLoading || (Boolean(targetUserId) && (!targetMatches || isLoading)) ? (
         <div className={styles.loading}>
           <span className={styles.loadingText}>加载中...</span>
+        </div>
+      ) : !targetUserId ? (
+        <div className={styles.loading}>
+          <span className={styles.loadingText}>请先选择照护长辈</span>
         </div>
       ) : error ? (
         <div className={styles.errorBox}>

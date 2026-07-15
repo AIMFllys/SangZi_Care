@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { isValidTime, validateForm } from '../PlanForm';
+import {
+  getShanghaiNaturalDate,
+  isValidTime,
+  validateForm,
+} from '../PlanForm';
 import type { PlanFormData } from '../PlanForm';
 
 // ---------- 纯函数测试 ----------
@@ -36,6 +40,10 @@ describe('validateForm', () => {
     end_date: '',
     repeat_days: [],
     notes: '',
+    side_effects: '',
+    is_active: true,
+    remind_enabled: true,
+    remind_before_minutes: 10,
   };
 
   it('有效数据返回空错误对象', () => {
@@ -67,6 +75,30 @@ describe('validateForm', () => {
     expect(errors.start_date).toBe('请选择开始日期');
   });
 
+  it('结束日期早于开始日期时返回错误', () => {
+    const errors = validateForm({
+      ...validData,
+      start_date: '2026-07-14',
+      end_date: '2026-07-13',
+    });
+    expect(errors.end_date).toBe('结束日期不能早于开始日期');
+  });
+
+  it('提前提醒分钟数只接受 0 到 1440 的整数', () => {
+    expect(validateForm({
+      ...validData,
+      remind_before_minutes: 1440,
+    })).toEqual({});
+    expect(validateForm({
+      ...validData,
+      remind_before_minutes: 1.5,
+    }).remind_before_minutes).toBe('提前提醒时间须为 0 到 1440 的整数');
+    expect(validateForm({
+      ...validData,
+      remind_before_minutes: 1441,
+    }).remind_before_minutes).toBe('提前提醒时间须为 0 到 1440 的整数');
+  });
+
   it('多个字段同时为空时返回多个错误', () => {
     const errors = validateForm({
       ...validData,
@@ -76,6 +108,14 @@ describe('validateForm', () => {
       start_date: '',
     });
     expect(Object.keys(errors)).toHaveLength(4);
+  });
+});
+
+describe('getShanghaiNaturalDate', () => {
+  it('在 UTC 与上海跨日时返回上海自然日', () => {
+    expect(
+      getShanghaiNaturalDate(new Date('2026-07-13T16:30:00.000Z')),
+    ).toBe('2026-07-14');
   });
 });
 
@@ -177,7 +217,7 @@ describe('PlanForm 组件', () => {
 
     // 清空默认的开始日期
     const dateInput = screen.getByDisplayValue(
-      new Date().toISOString().slice(0, 10),
+      getShanghaiNaturalDate(),
     ) as HTMLInputElement;
     fireEvent.change(dateInput, { target: { value: '' } });
 
@@ -257,6 +297,10 @@ describe('PlanForm 组件', () => {
     fireEvent.change(timeInput, { target: { value: '08:00' } });
     fireEvent.click(screen.getByText('添加时间'));
 
+    fireEvent.change(screen.getByLabelText('提前提醒'), {
+      target: { value: '30' },
+    });
+
     // 提交
     await act(async () => {
       fireEvent.click(screen.getByText('创建计划'));
@@ -270,6 +314,8 @@ describe('PlanForm 组件', () => {
     expect(callArg.schedule_times).toEqual(['08:00']);
     expect(callArg.created_by).toBe('family-user-1');
     expect(callArg.is_active).toBe(true);
+    expect(callArg.remind_enabled).toBe(true);
+    expect(callArg.remind_before_minutes).toBe(30);
 
     expect(defaultProps.onSuccess).toHaveBeenCalled();
   });
@@ -291,6 +337,57 @@ describe('PlanForm 组件', () => {
     expect(mockUpdatePlan.mock.calls[0][0]).toBe('plan-1');
     expect(mockUpdatePlan.mock.calls[0][1].dosage).toBe('200mg');
 
+    expect(defaultProps.onSuccess).toHaveBeenCalled();
+  });
+
+  it('编辑时可明确清空可选字段、取消重复日期并停用提醒和计划', async () => {
+    const plan = makePlan({
+      end_date: '2024-12-31',
+      repeat_days: [1],
+      notes: '饭后服用',
+      side_effects: '轻微头晕',
+      remind_before_minutes: 15,
+    });
+    mockUpdatePlan.mockResolvedValue({
+      ...plan,
+      end_date: null,
+      repeat_days: [],
+      notes: null,
+      side_effects: null,
+      is_active: false,
+      remind_enabled: false,
+    });
+    render(<PlanForm {...defaultProps} plan={plan} />);
+
+    fireEvent.change(screen.getByDisplayValue('2024-12-31'), {
+      target: { value: '' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '周一' }));
+    fireEvent.change(screen.getByPlaceholderText('如：饭后服用、注意事项等'), {
+      target: { value: '' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('如：头晕、恶心；没有可留空'), {
+      target: { value: '' },
+    });
+    fireEvent.click(screen.getByRole('switch', { name: '启用定时用药提醒' }));
+    fireEvent.click(screen.getByRole('switch', { name: '启用用药计划' }));
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('保存修改'));
+    });
+
+    expect(mockUpdatePlan).toHaveBeenCalledWith(
+      'plan-1',
+      expect.objectContaining({
+        end_date: null,
+        repeat_days: [],
+        notes: null,
+        side_effects: null,
+        is_active: false,
+        remind_enabled: false,
+        remind_before_minutes: 15,
+      }),
+    );
     expect(defaultProps.onSuccess).toHaveBeenCalled();
   });
 

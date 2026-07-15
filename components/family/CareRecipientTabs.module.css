@@ -1,0 +1,115 @@
+.scroller {
+  display: flex;
+  min-width: 0;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px var(--page-gutter) 4px;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: inline-flex;
+  min-width: max-content;
+  min-height: 48px;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 4px 12px 4px 5px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-full);
+  background: var(--bg-card-solid);
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgb(78 52 29 / 5%);
+}
+
+.tab:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+.active {
+  border-color: var(--accent-action);
+  background: var(--accent-action);
+  color: var(--accent-text);
+  box-shadow: 0 6px 16px var(--accent-soft);
+}
+
+.avatar,
+.addIcon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border-radius: var(--radius-full);
+}
+
+.avatar {
+  background: var(--accent-soft);
+  color: var(--accent-action);
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.active .avatar {
+  background: rgb(255 255 255 / 20%);
+  color: inherit;
+}
+
+.copy {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+  text-align: left;
+}
+
+.name {
+  max-width: 7rem;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relation {
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.1;
+  opacity: 0.78;
+}
+
+.add {
+  padding-right: 12px;
+  border-style: dashed;
+  color: var(--accent-action);
+}
+
+.addIcon {
+  background: var(--accent-soft);
+}
+
+.addText {
+  font-size: 13px;
+  font-weight: 750;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tab {
+    transition: transform var(--duration-fast) var(--ease-out-smooth),
+      background-color var(--duration-fast),
+      border-color var(--duration-fast);
+  }
+
+  .tab:active {
+    transform: scale(0.98);
+  }
+}

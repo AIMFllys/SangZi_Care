@@ -1,0 +1,100 @@
+.barChart {
+  display: grid;
+  height: 112px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: end;
+  gap: 7px;
+}
+
+.barColumn {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.barTrack {
+  position: relative;
+  height: 82px;
+  overflow: hidden;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--accent-soft) 58%, transparent);
+}
+
+.barFill {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 7px;
+  background: linear-gradient(180deg, var(--accent-decoration), var(--accent-action));
+}
+
+.barWarning {
+  background: linear-gradient(180deg, #ffb26f, #ed7b35);
+}
+
+.barLabel {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: center;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.sparklineWrap {
+  position: relative;
+  display: grid;
+  min-height: 118px;
+  place-items: center;
+}
+
+.sparkline {
+  width: 100%;
+  height: 118px;
+  overflow: visible;
+}
+
+.sparkGrid {
+  fill: none;
+  stroke: var(--divider);
+  stroke-width: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+
+.sparkPath {
+  fill: none;
+  stroke: var(--accent-action);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.sparkEmpty {
+  position: absolute;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .barFill {
+    animation: chart-rise 380ms var(--ease-out-smooth) both;
+    transform-origin: bottom;
+  }
+
+  .sparkPath {
+    animation: spark-reveal 520ms var(--ease-out-smooth) both;
+  }
+}
+
+@keyframes chart-rise {
+  from { transform: scaleY(0); }
+}
+
+@keyframes spark-reveal {
+  from { opacity: 0; }
+}

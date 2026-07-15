@@ -15,6 +15,20 @@
   padding: var(--space-sm) var(--page-gutter) var(--space-lg);
 }
 
+.recipientTabs {
+  margin: -2px calc(-1 * var(--page-gutter)) 10px;
+}
+
+.permissionNotice {
+  margin-bottom: 10px;
+  padding: 11px 13px;
+  border-color: var(--color-warning-soft);
+  color: var(--text-secondary);
+  font-size: var(--font-small);
+  font-weight: 650;
+  line-height: 1.5;
+}
+
 .typeSection {
   min-width: 0;
 }
@@ -319,4 +333,10 @@
   .micBtnListening {
     animation: none;
   }
+}
+.inputFieldset {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }

@@ -14,9 +14,32 @@ vi.mock('next/link', () => ({
 const mockFetchAllPlans = vi.fn();
 const mockStoreState = {
   plans: [] as MedicationPlanResponse[],
+  plansTargetKey: 'elder-7' as string | null,
   isLoading: false,
   error: null as string | null,
   fetchAllPlans: mockFetchAllPlans,
+};
+
+interface MockRecipient {
+  id: string;
+  name: string;
+  permissions: { canEditMedication: boolean };
+}
+
+const mockCareState: {
+  recipient: MockRecipient | null;
+  targetUserId: string | null;
+  isFamily: boolean;
+  isLoading: boolean;
+} = {
+  recipient: {
+    id: 'elder-7',
+    name: '李奶奶',
+    permissions: { canEditMedication: true },
+  },
+  targetUserId: 'elder-7',
+  isFamily: true,
+  isLoading: false,
 };
 
 vi.mock('@/stores/medicineStore', () => ({
@@ -24,6 +47,10 @@ vi.mock('@/stores/medicineStore', () => ({
     if (typeof selector === 'function') return selector(mockStoreState);
     return mockStoreState;
   },
+}));
+
+vi.mock('@/hooks/useCareRecipient', () => ({
+  useCareRecipient: () => mockCareState,
 }));
 
 // ---------- 辅助工厂 ----------
@@ -55,18 +82,27 @@ describe('MedicineHistoryPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockStoreState.plans = [];
+    mockStoreState.plansTargetKey = 'elder-7';
     mockStoreState.isLoading = false;
     mockStoreState.error = null;
+    mockCareState.recipient = {
+      id: 'elder-7',
+      name: '李奶奶',
+      permissions: { canEditMedication: true },
+    };
+    mockCareState.targetUserId = 'elder-7';
+    mockCareState.isFamily = true;
+    mockCareState.isLoading = false;
   });
 
-  it('页面加载时调用 fetchAllPlans', () => {
+  it('页面加载时只查询当前照护长辈的全部计划', () => {
     render(<MedicineHistoryPage />);
-    expect(mockFetchAllPlans).toHaveBeenCalled();
+    expect(mockFetchAllPlans).toHaveBeenCalledWith('elder-7');
   });
 
   it('显示页面标题和返回链接', () => {
     render(<MedicineHistoryPage />);
-    expect(screen.getByText('用药历史')).toBeTruthy();
+    expect(screen.getByText('李奶奶的用药历史')).toBeTruthy();
     expect(screen.getByLabelText('返回')).toBeTruthy();
   });
 
@@ -95,6 +131,45 @@ describe('MedicineHistoryPage', () => {
     fireEvent.click(screen.getByText('重试'));
     // 初始加载 + 重试 = 至少2次
     expect(mockFetchAllPlans).toHaveBeenCalledTimes(2);
+    expect(mockFetchAllPlans).toHaveBeenLastCalledWith('elder-7');
+  });
+
+  it('家属尚无有效照护目标时不回退查询本人', () => {
+    mockCareState.recipient = null;
+    mockCareState.targetUserId = null;
+
+    render(<MedicineHistoryPage />);
+
+    expect(mockFetchAllPlans).not.toHaveBeenCalled();
+    expect(screen.getByText('请先选择照护长辈')).toBeTruthy();
+  });
+
+  it('照护目标加载期间先显示加载状态且不发起本人查询', () => {
+    mockCareState.recipient = null;
+    mockCareState.targetUserId = null;
+    mockCareState.isLoading = true;
+
+    render(<MedicineHistoryPage />);
+
+    expect(screen.getByText('加载中...')).toBeTruthy();
+    expect(mockFetchAllPlans).not.toHaveBeenCalled();
+  });
+
+  it('切换长辈期间不把旧目标计划显示在新标题下', () => {
+    mockStoreState.plans = [makePlan({ medicine_name: '旧目标药物' })];
+    mockStoreState.plansTargetKey = 'elder-7';
+    mockCareState.recipient = {
+      id: 'elder-8',
+      name: '王爷爷',
+      permissions: { canEditMedication: true },
+    };
+    mockCareState.targetUserId = 'elder-8';
+
+    render(<MedicineHistoryPage />);
+
+    expect(mockFetchAllPlans).toHaveBeenCalledWith('elder-8');
+    expect(screen.getByText('加载中...')).toBeTruthy();
+    expect(screen.queryByText('旧目标药物')).toBeNull();
   });
 
   it('无计划时显示空状态提示', () => {

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  addCareDays,
   createScheduledAt,
   getCareDateInfo,
   getCareDayRange,
+  getCareWeekday,
   normalizePlanTime,
 } from '../_time';
 
@@ -31,5 +33,10 @@ describe('care medication time', () => {
       weekday: 2,
       time: '00:30',
     });
+  });
+
+  it('按自然日偏移并计算 ISO 星期', () => {
+    expect(addCareDays('2026-07-14', -6)).toBe('2026-07-08');
+    expect(getCareWeekday('2026-07-14')).toBe(2);
   });
 });

@@ -4,6 +4,14 @@
  * ============================================================ */
 
 [data-theme="family"] {
+  /* 监护端采用紧凑信息密度；长辈端仍保留原有适老字号。 */
+  --font-title: 1.5rem;
+  --font-heading: 1.1875rem;
+  --font-body: 1rem;
+  --font-caption: 0.875rem;
+  --font-small: 0.8125rem;
+  --page-gutter: clamp(16px, 4vw, 20px);
+
   --bg-base: #f4f6fb;
   --bg-elevated: #edf0f8;
   --bg-card: rgba(255, 255, 255, 0.78);

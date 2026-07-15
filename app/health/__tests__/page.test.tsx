@@ -22,8 +22,27 @@ vi.mock('@/stores/userStore', () => ({
     selector({ user: mockUser }),
 }));
 
+const mockCareRecipient = {
+  recipient: {
+    id: 'user-1',
+    name: '李奶奶',
+    permissions: { canEditHealth: true },
+  },
+  recipients: [],
+  targetUserId: 'user-1',
+  isSelf: true,
+  isFamily: false,
+  isLoading: false,
+  selectRecipient: vi.fn(),
+};
+
+vi.mock('@/hooks/useCareRecipient', () => ({
+  useCareRecipient: () => mockCareRecipient,
+}));
+
 let mockStoreState = {
   latestRecords: {} as Record<string, HealthRecordResponse | null>,
+  latestTargetKey: 'user-1' as string | null,
   trendData: [] as HealthRecordResponse[],
   selectedType: 'blood_pressure',
   loading: false,
@@ -71,6 +90,7 @@ describe('HealthPage', () => {
     vi.clearAllMocks();
     mockStoreState = {
       latestRecords: {},
+      latestTargetKey: 'user-1',
       trendData: [],
       selectedType: 'blood_pressure',
       loading: false,
@@ -88,7 +108,7 @@ describe('HealthPage', () => {
 
   it('初始加载时调用 fetchLatest', () => {
     render(<HealthPage />);
-    expect(mockFetchLatest).toHaveBeenCalled();
+    expect(mockFetchLatest).toHaveBeenCalledWith('user-1');
   });
 
   it('显示加载状态', () => {
@@ -139,6 +159,21 @@ describe('HealthPage', () => {
     expect(screen.getByText('135/88')).toBeDefined();
   });
 
+  it('切换长辈首帧不展示上一位长辈的健康数据', () => {
+    mockStoreState.latestTargetKey = 'elder-old';
+    mockStoreState.latestRecords = {
+      blood_pressure: makeRecord({
+        user_id: 'elder-old',
+        values: { systolic: 188, diastolic: 110 },
+      }),
+    };
+
+    render(<HealthPage />);
+
+    expect(screen.queryByText('188/110')).toBeNull();
+    expect(screen.getByText('加载中...')).toBeDefined();
+  });
+
   it('点击设置按钮导航到设置页', () => {
     render(<HealthPage />);
 
@@ -148,24 +183,24 @@ describe('HealthPage', () => {
 
   it('渲染添加新记录按钮', () => {
     render(<HealthPage />);
-    expect(screen.getByText('添加新记录')).toBeDefined();
+    expect(screen.getByText('添加健康记录')).toBeDefined();
   });
 
   it('点击添加新记录按钮导航到录入页', () => {
     render(<HealthPage />);
 
-    fireEvent.click(screen.getByText('添加新记录'));
+    fireEvent.click(screen.getByText('添加健康记录'));
     expect(mockPush).toHaveBeenCalledWith('/health/input');
   });
 
-  it('添加按钮用网格可用宽度抵消 fullWidth 与页边距叠加', () => {
+  it('底部操作区使用独立页边距，按钮不再叠加外边距', () => {
     const css = readFileSync(
       resolve(process.cwd(), 'app/health/page.module.css'),
       'utf8',
     );
-    const addButtonRule = css.match(/\.addBtn\s*\{([^}]*)\}/)?.[1] ?? '';
+    const bottomRule = css.match(/\.bottomAction\s*\{([^}]*)\}/)?.[1] ?? '';
 
-    expect(addButtonRule).toMatch(/width:\s*auto/);
+    expect(bottomRule).toMatch(/padding:\s*8px var\(--page-gutter\)/);
   });
 
   it('手机窄屏改为单列，并保持健康数值不可从数字中间断行', () => {
@@ -173,7 +208,7 @@ describe('HealthPage', () => {
       resolve(process.cwd(), 'app/health/page.module.css'),
       'utf8',
     );
-    const narrowRule = css.slice(css.indexOf('@media (max-width: 430px)'));
+    const narrowRule = css.slice(css.indexOf('@media (max-width: 330px)'));
     const valueRule = css.match(/\.healthValue\s*\{([^}]*)\}/)?.[1] ?? '';
 
     expect(narrowRule).toMatch(

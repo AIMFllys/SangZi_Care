@@ -213,6 +213,24 @@ vi.mock('@/stores/userStore', () => ({
     selector({ user: mockUser }),
 }));
 
+const mockCareRecipient = {
+    recipient: {
+      id: 'user-1',
+      name: '李奶奶',
+      permissions: { canEditHealth: true },
+    },
+    recipients: [],
+    targetUserId: 'user-1',
+    isSelf: true,
+    isFamily: false,
+    isLoading: false,
+    selectRecipient: vi.fn(),
+};
+
+vi.mock('@/hooks/useCareRecipient', () => ({
+  useCareRecipient: () => mockCareRecipient,
+}));
+
 const mockStartListening = vi.fn();
 const mockStopListening = vi.fn();
 const mockCancelListening = vi.fn();
@@ -269,6 +287,14 @@ describe('HealthInputPage 组件', () => {
     mockTranscript = '';
     mockRecognitionPhase = 'idle';
     mockRecognitionError = null;
+    mockCareRecipient.recipient = {
+      id: 'user-1',
+      name: '李奶奶',
+      permissions: { canEditHealth: true },
+    };
+    mockCareRecipient.targetUserId = 'user-1';
+    mockCareRecipient.isSelf = true;
+    mockCareRecipient.isFamily = false;
     mockStartListening.mockResolvedValue(undefined);
     mockStopListening.mockResolvedValue({
       transcript: '高压一百三十五，低压八十八',
@@ -365,6 +391,41 @@ describe('HealthInputPage 组件', () => {
     expect(callArg.values.diastolic).toBe(80);
     expect(callArg.input_method).toBe('manual');
     expect(callArg.recorded_by).toBe('user-1');
+  });
+
+  it('切换照护长辈时清空旧表单并取消语音任务', () => {
+    const view = render(<HealthInputPage />);
+    fireEvent.change(screen.getByLabelText('收缩压'), { target: { value: '168' } });
+    fireEvent.change(screen.getByLabelText('舒张压'), { target: { value: '98' } });
+
+    mockCareRecipient.targetUserId = 'elder-2';
+    mockCareRecipient.recipient = {
+      id: 'elder-2',
+      name: '王奶奶',
+      permissions: { canEditHealth: true },
+    };
+    view.rerender(<HealthInputPage />);
+
+    expect(screen.getByLabelText('收缩压')).toHaveValue(null);
+    expect(screen.getByLabelText('舒张压')).toHaveValue(null);
+    expect(mockCancelListening).toHaveBeenCalled();
+  });
+
+  it('未获代录授权时锁定健康录入控件', () => {
+    mockCareRecipient.isSelf = false;
+    mockCareRecipient.isFamily = true;
+    mockCareRecipient.recipient = {
+      id: 'elder-1',
+      name: '王奶奶',
+      permissions: { canEditHealth: false },
+    };
+    mockCareRecipient.targetUserId = 'elder-1';
+
+    render(<HealthInputPage />);
+
+    expect(screen.getByLabelText('收缩压')).toBeDisabled();
+    expect(screen.getByRole('tab', { name: /语音录入/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /保存记录/ })).toBeDisabled();
   });
 
   it('语音录入切换显示麦克风按钮', () => {

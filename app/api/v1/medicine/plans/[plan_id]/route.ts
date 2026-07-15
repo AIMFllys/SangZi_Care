@@ -7,7 +7,8 @@
 //   - 跨用户写（plan.user_id ≠ 当前用户）需 active 绑定且
 //     can_edit_medication=true（plan 05 §2）
 //   - 自动刷新 updated_at
-//   - null 字段不参与更新（对齐 Python model_dump(exclude_none=True)）
+//   - end_date / notes / side_effects 传 null 表示明确清空
+//   - repeat_days 传空数组表示取消星期限制
 // 返回：MedicationPlanResponse
 // ============================================================
 
@@ -42,6 +43,48 @@ interface MedicationPlanUpdateBody {
   side_effects?: unknown;
   remind_enabled?: unknown;
   remind_before_minutes?: unknown;
+}
+
+function hasOwn(value: object, key: PropertyKey): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function parsePlanDate(value: unknown, field: string): string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new ApiError(400, `${field} 必须为 YYYY-MM-DD 日期`);
+  }
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.toISOString().slice(0, 10) !== value
+  ) {
+    throw new ApiError(400, `${field} 必须为有效日期`);
+  }
+  return value;
+}
+
+function parseNullableText(value: unknown, field: string): string | null {
+  if (value === null) return null;
+  if (typeof value !== 'string') {
+    throw new ApiError(400, `${field} 必须为字符串或 null`);
+  }
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+}
+
+function parseReminderMinutes(value: unknown): number {
+  if (
+    typeof value !== 'number' ||
+    !Number.isInteger(value) ||
+    value < 0 ||
+    value > 1440
+  ) {
+    throw new ApiError(
+      400,
+      'remind_before_minutes 必须为 0 到 1440 的整数',
+    );
+  }
+  return value;
 }
 
 export async function PATCH(
@@ -80,19 +123,25 @@ export async function PATCH(
       }
       update_data.schedule_times = body.schedule_times;
     }
-    if (Array.isArray(body.repeat_days)) {
+    if (hasOwn(body, 'repeat_days')) {
+      if (!Array.isArray(body.repeat_days)) {
+        throw new ApiError(400, 'repeat_days 必须为数字数组');
+      }
       for (const v of body.repeat_days) {
-        if (typeof v !== 'number' || !Number.isFinite(v)) {
-          throw new ApiError(400, 'repeat_days 必须为数字数组');
+        if (!Number.isInteger(v) || v < 1 || v > 7) {
+          throw new ApiError(400, 'repeat_days 只能包含 1 到 7 的整数');
         }
       }
       update_data.repeat_days = body.repeat_days;
     }
-    if (typeof body.start_date === 'string' && body.start_date !== '') {
-      update_data.start_date = body.start_date;
+    if (hasOwn(body, 'start_date')) {
+      update_data.start_date = parsePlanDate(body.start_date, 'start_date');
     }
-    if (typeof body.end_date === 'string' && body.end_date !== '') {
-      update_data.end_date = body.end_date;
+    if (hasOwn(body, 'end_date')) {
+      update_data.end_date =
+        body.end_date === null
+          ? null
+          : parsePlanDate(body.end_date, 'end_date');
     }
     if (typeof body.is_active === 'boolean') {
       update_data.is_active = body.is_active;
@@ -100,20 +149,25 @@ export async function PATCH(
     if (typeof body.unit === 'string') {
       update_data.unit = body.unit;
     }
-    if (typeof body.notes === 'string') {
-      update_data.notes = body.notes;
+    if (hasOwn(body, 'notes')) {
+      update_data.notes = parseNullableText(body.notes, 'notes');
     }
-    if (typeof body.side_effects === 'string') {
-      update_data.side_effects = body.side_effects;
+    if (hasOwn(body, 'side_effects')) {
+      update_data.side_effects = parseNullableText(
+        body.side_effects,
+        'side_effects',
+      );
     }
-    if (typeof body.remind_enabled === 'boolean') {
+    if (hasOwn(body, 'remind_enabled')) {
+      if (typeof body.remind_enabled !== 'boolean') {
+        throw new ApiError(400, 'remind_enabled 必须为布尔值');
+      }
       update_data.remind_enabled = body.remind_enabled;
     }
-    if (
-      typeof body.remind_before_minutes === 'number' &&
-      Number.isFinite(body.remind_before_minutes)
-    ) {
-      update_data.remind_before_minutes = body.remind_before_minutes;
+    if (hasOwn(body, 'remind_before_minutes')) {
+      update_data.remind_before_minutes = parseReminderMinutes(
+        body.remind_before_minutes,
+      );
     }
 
     if (Object.keys(update_data).length === 0) {
@@ -125,7 +179,7 @@ export async function PATCH(
     // 先查存在性 + 取 user_id 做权限校验
     const { data: existing, error: selectErr } = await supabase
       .from('oc_medication_plans')
-      .select('id, user_id')
+      .select('id, user_id, start_date, end_date')
       .eq('id', plan_id)
       .limit(1);
 
@@ -144,6 +198,15 @@ export async function PATCH(
       planOwnerUserId,
       'edit',
     );
+
+    const effectiveStartDate =
+      update_data.start_date ?? existing[0].start_date;
+    const effectiveEndDate = hasOwn(update_data, 'end_date')
+      ? update_data.end_date
+      : existing[0].end_date;
+    if (effectiveEndDate && effectiveEndDate < effectiveStartDate) {
+      throw new ApiError(400, '结束日期不能早于开始日期');
+    }
 
     update_data.updated_at = new Date().toISOString();
 

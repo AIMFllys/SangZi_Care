@@ -8,6 +8,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useMedicineStore } from '@/stores/medicineStore';
 import { useUserStore } from '@/stores/userStore';
+import { BellRing, Clock3, Pill, Power, X } from 'lucide-react';
+import { Switch } from '@/components/ui/Switch';
 import type {
   MedicationPlanResponse,
   MedicationPlanCreate,
@@ -27,6 +29,22 @@ const WEEK_DAYS = [
   { value: 7, label: '周日' },
 ] as const;
 
+const MAX_REMINDER_MINUTES = 24 * 60;
+
+/** 返回指定时刻对应的上海自然日（YYYY-MM-DD）。 */
+export function getShanghaiNaturalDate(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now);
+  const values = Object.fromEntries(
+    parts.map((part) => [part.type, part.value]),
+  );
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 // ---------- 时间格式校验 ----------
 
 /** 校验 HH:MM 格式 */
@@ -43,6 +61,8 @@ export interface FormErrors {
   dosage?: string;
   schedule_times?: string;
   start_date?: string;
+  end_date?: string;
+  remind_before_minutes?: string;
 }
 
 export interface PlanFormData {
@@ -53,6 +73,10 @@ export interface PlanFormData {
   end_date: string;
   repeat_days: number[];
   notes: string;
+  side_effects: string;
+  is_active: boolean;
+  remind_enabled: boolean;
+  remind_before_minutes: number;
 }
 
 /** 校验表单数据，返回错误对象（空对象表示无错误） */
@@ -70,6 +94,20 @@ export function validateForm(data: PlanFormData): FormErrors {
   }
   if (!data.start_date) {
     errors.start_date = '请选择开始日期';
+  }
+  if (
+    data.start_date &&
+    data.end_date &&
+    data.end_date < data.start_date
+  ) {
+    errors.end_date = '结束日期不能早于开始日期';
+  }
+  if (
+    !Number.isInteger(data.remind_before_minutes) ||
+    data.remind_before_minutes < 0 ||
+    data.remind_before_minutes > MAX_REMINDER_MINUTES
+  ) {
+    errors.remind_before_minutes = '提前提醒时间须为 0 到 1440 的整数';
   }
 
   return errors;
@@ -102,10 +140,14 @@ export function PlanForm({ elderId, plan, onSuccess, onCancel }: PlanFormProps) 
     medicine_name: plan?.medicine_name ?? '',
     dosage: plan?.dosage ?? '',
     schedule_times: plan?.schedule_times ?? [],
-    start_date: plan?.start_date ?? new Date().toISOString().slice(0, 10),
+    start_date: plan?.start_date ?? getShanghaiNaturalDate(),
     end_date: plan?.end_date ?? '',
     repeat_days: plan?.repeat_days ?? [],
     notes: plan?.notes ?? '',
+    side_effects: plan?.side_effects ?? '',
+    is_active: plan?.is_active ?? true,
+    remind_enabled: plan?.remind_enabled ?? true,
+    remind_before_minutes: plan?.remind_before_minutes ?? 10,
   }));
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -194,11 +236,17 @@ export function PlanForm({ elderId, plan, onSuccess, onCancel }: PlanFormProps) 
           dosage: formData.dosage.trim(),
           schedule_times: formData.schedule_times,
           start_date: formData.start_date,
-          end_date: formData.end_date || undefined,
-          repeat_days:
-            formData.repeat_days.length > 0 ? formData.repeat_days : undefined,
-          notes: formData.notes.trim() || undefined,
+          end_date: formData.end_date || null,
+          repeat_days: formData.repeat_days,
+          is_active: formData.is_active,
+          remind_enabled: formData.remind_enabled,
+          remind_before_minutes: formData.remind_before_minutes,
         };
+        // 更新接口用 null 表示明确清空；前端旧类型仍将这两个字段声明为 string。
+        Object.assign(updateData, {
+          notes: formData.notes.trim() || null,
+          side_effects: formData.side_effects.trim() || null,
+        });
         await updatePlan(plan.id, updateData);
       } else {
         const createData: MedicationPlanCreate = {
@@ -211,8 +259,11 @@ export function PlanForm({ elderId, plan, onSuccess, onCancel }: PlanFormProps) 
           repeat_days:
             formData.repeat_days.length > 0 ? formData.repeat_days : undefined,
           notes: formData.notes.trim() || undefined,
+          side_effects: formData.side_effects.trim() || undefined,
           created_by: currentUser?.id,
-          is_active: true,
+          is_active: formData.is_active,
+          remind_enabled: formData.remind_enabled,
+          remind_before_minutes: formData.remind_before_minutes,
         };
         await createPlan(createData);
       }
@@ -249,14 +300,15 @@ export function PlanForm({ elderId, plan, onSuccess, onCancel }: PlanFormProps) 
         {/* 头部 */}
         <div className={styles.header}>
           <h2 className={styles.headerTitle}>
-            {isEdit ? '✏️ 编辑用药计划' : '➕ 添加用药计划'}
+            <Pill size={21} aria-hidden="true" />
+            {isEdit ? '编辑用药计划' : '添加用药计划'}
           </h2>
           <button
             className={styles.closeBtn}
             onClick={onCancel}
             aria-label="关闭"
           >
-            ✕
+            <X size={21} aria-hidden="true" />
           </button>
         </div>
 
@@ -305,13 +357,13 @@ export function PlanForm({ elderId, plan, onSuccess, onCancel }: PlanFormProps) 
             <div className={styles.timeSlots}>
               {formData.schedule_times.map((time) => (
                 <span key={time} className={styles.timeSlot}>
-                  🕐 {time}
+                  <Clock3 size={15} aria-hidden="true" /> {time}
                   <button
                     className={styles.removeTimeBtn}
                     onClick={() => removeTime(time)}
                     aria-label={`移除时间 ${time}`}
                   >
-                    ✕
+                    <X size={14} aria-hidden="true" />
                   </button>
                 </span>
               ))}
@@ -364,11 +416,15 @@ export function PlanForm({ elderId, plan, onSuccess, onCancel }: PlanFormProps) 
           <div className={styles.field}>
             <label className={styles.label}>结束日期</label>
             <input
-              className={styles.input}
+              className={`${styles.input} ${errors.end_date ? styles.inputError : ''}`}
               type="date"
+              min={formData.start_date || undefined}
               value={formData.end_date}
               onChange={(e) => updateField('end_date', e.target.value)}
             />
+            {errors.end_date && (
+              <span className={styles.errorText}>{errors.end_date}</span>
+            )}
           </div>
 
           {/* 重复日期 */}
@@ -390,6 +446,68 @@ export function PlanForm({ elderId, plan, onSuccess, onCancel }: PlanFormProps) 
             </div>
           </div>
 
+          {isEdit && (
+            <div className={styles.reminderCard}>
+              <span className={styles.reminderIcon} aria-hidden="true">
+                <Power size={20} />
+              </span>
+              <span className={styles.reminderCopy}>
+                <strong>启用用药计划</strong>
+                <small>
+                  {formData.is_active
+                    ? '计划生效，并参与每日提醒'
+                    : '计划已停用，可随时恢复'}
+                </small>
+              </span>
+              <Switch
+                checked={formData.is_active}
+                onCheckedChange={(checked) => updateField('is_active', checked)}
+                aria-label="启用用药计划"
+              />
+            </div>
+          )}
+
+          {/* 定时提醒 */}
+          <div className={styles.reminderCard}>
+            <span className={styles.reminderIcon} aria-hidden="true">
+              <BellRing size={20} />
+            </span>
+            <span className={styles.reminderCopy}>
+              <strong>定时提醒</strong>
+              <small>按每个服药时间提前提示长辈</small>
+            </span>
+            <Switch
+              checked={formData.remind_enabled}
+              onCheckedChange={(checked) => updateField('remind_enabled', checked)}
+              aria-label="启用定时用药提醒"
+            />
+            {formData.remind_enabled && (
+              <label className={styles.reminderLead}>
+                <span>提前提醒</span>
+                <select
+                  aria-invalid={!!errors.remind_before_minutes}
+                  value={formData.remind_before_minutes}
+                  onChange={(event) => updateField(
+                    'remind_before_minutes',
+                    Number(event.target.value),
+                  )}
+                >
+                  <option value={0}>准时</option>
+                  <option value={5}>提前 5 分钟</option>
+                  <option value={10}>提前 10 分钟</option>
+                  <option value={15}>提前 15 分钟</option>
+                  <option value={30}>提前 30 分钟</option>
+                  <option value={60}>提前 1 小时</option>
+                </select>
+              </label>
+            )}
+            {errors.remind_before_minutes && (
+              <span className={`${styles.errorText} ${styles.reminderError}`}>
+                {errors.remind_before_minutes}
+              </span>
+            )}
+          </div>
+
           {/* 备注 */}
           <div className={styles.field}>
             <label className={styles.label}>备注</label>
@@ -398,6 +516,16 @@ export function PlanForm({ elderId, plan, onSuccess, onCancel }: PlanFormProps) 
               placeholder="如：饭后服用、注意事项等"
               value={formData.notes}
               onChange={(e) => updateField('notes', e.target.value)}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>不良反应</label>
+            <textarea
+              className={`${styles.input} ${styles.textarea}`}
+              placeholder="如：头晕、恶心；没有可留空"
+              value={formData.side_effects}
+              onChange={(e) => updateField('side_effects', e.target.value)}
             />
           </div>
 

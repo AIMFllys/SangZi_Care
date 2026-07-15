@@ -699,6 +699,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      oc_get_care_dashboard_snapshot: {
+        Args: {
+          p_end: string
+          p_include_health: boolean
+          p_include_medication: boolean
+          p_start: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       oc_create_family_bind_code: {
         Args: {
           p_bind_code: string

@@ -7,6 +7,7 @@ import styles from './PageHeader.module.css';
 
 interface PageHeaderProps {
   title: string;
+  subtitle?: string;
   variant?: 'primary' | 'detail';
   backHref?: string;
   onBack?: () => void;
@@ -18,6 +19,7 @@ interface PageHeaderProps {
 
 export default function PageHeader({
   title,
+  subtitle,
   variant = 'primary',
   backHref,
   onBack,
@@ -61,7 +63,10 @@ export default function PageHeader({
         </div>
 
         <div className={styles.center} data-header-slot="center">
-          <h1 className={styles.title}>{title}</h1>
+          <div className={styles.titleStack}>
+            <h1 className={styles.title}>{title}</h1>
+            {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
+          </div>
         </div>
 
         <div className={styles.right} data-header-slot="right">

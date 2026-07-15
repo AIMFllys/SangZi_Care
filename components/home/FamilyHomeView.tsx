@@ -1,182 +1,236 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useHealthStore, formatHealthValue } from '@/stores/healthStore';
-import { useMedicineStore } from '@/stores/medicineStore';
-import { useFamilyBinds } from '@/hooks/useFamilyBinds';
+import {
+  Activity,
+  Bell,
+  ChevronRight,
+  HeartPulse,
+  LockKeyhole,
+  Pill,
+  Plus,
+  ShieldCheck,
+  TriangleAlert,
+  Users,
+} from 'lucide-react';
+import { useCareRecipient } from '@/hooks/useCareRecipient';
+import { useCareDashboard } from '@/hooks/useCareDashboard';
+import { formatHealthValue } from '@/stores/healthStore';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
 import PageHeader from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { IconButton } from '@/components/ui/IconButton';
-import { Bell, User, Users, Pill, MapPin, Home, CheckCircle, AlertCircle, Plus } from 'lucide-react';
+import { CareRecipientTabs } from '@/components/family/CareRecipientTabs';
+import { AdherenceMiniChart } from '@/components/family/AdherenceMiniChart';
+import { HealthSparkline } from '@/components/family/HealthSparkline';
 import styles from '../../app/page.module.css';
 
-/**
- * Family 端首页 — 家人看板
- */
 export default function FamilyHomeView() {
   const router = useRouter();
-  const { binds, isLoading: bindsLoading } = useFamilyBinds();
-  const latestRecords = useHealthStore((s) => s.latestRecords);
-  const fetchLatest = useHealthStore((s) => s.fetchLatest);
-  const trendData = useHealthStore((s) => s.trendData);
-  const fetchTrend = useHealthStore((s) => s.fetchTrend);
-  const todayTimeline = useMedicineStore((s) => s.todayTimeline);
-  const fetchTodayTimeline = useMedicineStore((s) => s.fetchTodayTimeline);
-  const [selectedElder, setSelectedElder] = useState(0);
+  const {
+    recipient,
+    recipients,
+    targetUserId,
+    isLoading: recipientsLoading,
+    error: recipientsError,
+    retry: retryRecipients,
+  } = useCareRecipient();
+  const {
+    data,
+    loading,
+    error: dashboardError,
+    retry: retryDashboard,
+  } = useCareDashboard(targetUserId);
 
-  const elder = binds[selectedElder];
-
-  useEffect(() => {
-    if (elder) {
-      fetchLatest(elder.user.id);
-      fetchTodayTimeline(elder.user.id);
-      fetchTrend('heart_rate', 7, elder.user.id);
-    }
-  }, [elder, fetchLatest, fetchTodayTimeline, fetchTrend]);
-
-  const medicineTotal = todayTimeline.length;
-  const medicineDone = todayTimeline.filter((t) => t.status === 'taken').length;
-
-  const bp = latestRecords.blood_pressure;
-  const bpDisplay = bp ? formatHealthValue('blood_pressure', bp.values) : '--';
-
-  // 从真实趋势数据中提取心率值
-  const heartRateValues = trendData.length > 0
-    ? trendData.map((r) => {
-        const vals = r.values;
-        if ('value' in vals && typeof vals.value === 'number') return vals.value;
-        return 0;
-      })
-    : [];
-  const maxTrend = heartRateValues.length > 0 ? Math.max(...heartRateValues) : 1;
-  const hasTrendData = heartRateValues.length > 0 && heartRateValues.some((v) => v > 0);
-
-  // 生成日期标签
-  const dayLabels: string[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    if (i === 0) dayLabels.push('今天');
-    else if (i === 1) dayLabels.push('昨天');
-    else dayLabels.push(`${d.getMonth() + 1}/${d.getDate()}`);
-  }
+  const bloodPressure = data?.latestVitals.blood_pressure;
+  const heartRate = data?.latestVitals.heart_rate;
+  const bloodPressureValue = bloodPressure
+    ? formatHealthValue('blood_pressure', bloodPressure.values)
+    : '--';
+  const heartRateValue = heartRate
+    ? formatHealthValue('heart_rate', heartRate.values)
+    : '--';
+  const updatedTime = data?.updatedAt
+    ? new Date(data.updatedAt).toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+    : '--:--';
 
   return (
     <div className={styles.familyPage}>
-      {/* 头部 */}
       <PageHeader
-        title="家人看板"
+        title="照护看板"
+        subtitle={recipient ? `正在照护 · ${recipient.name}` : '家属监护端'}
         rightAction={
           <IconButton
-            aria-label="查看消息通知"
+            aria-label="查看版本通知"
             variant="soft"
             size="md"
-            onClick={() => router.push('/messages')}
+            onClick={() => router.push('/notifications')}
           >
-            <Bell size={22} />
+            <Bell size={21} />
           </IconButton>
         }
         transparent
       />
 
-      {/* 老人选择 tabs */}
-      <div className={styles.elderTabs}>
-        {binds.map((bind, i) => (
-          <button
-            key={bind.user.id}
-            type="button"
-            className={`${styles.elderTab} ${i === selectedElder ? styles.elderTabActive : ''}`}
-            onClick={() => setSelectedElder(i)}
-          >
-            <span className={styles.elderTabAvatar}>
-              <User size={20} />
-            </span>
-            <span className={styles.elderTabLabel}>{bind.user.name || bind.bind.relation || '家人'}</span>
-          </button>
-        ))}
-        <button
-          type="button"
-          className={`${styles.elderTab} ${styles.elderTabAdd}`}
-          onClick={() => router.push('/settings/bind')}
-          aria-label="添加家人"
-        >
-          <Plus size={20} />
-        </button>
-      </div>
+      <CareRecipientTabs showAdd />
 
-      <DataStateWrapper loading={bindsLoading} empty={binds.length === 0 ? { icon: <Users size={48} />, title: '还没有绑定家人', description: '去设置页面添加您的家人吧' } : false}>
-        <div className={styles.familyContent}>
-        {/* 摘要卡片 */}
-        <div className={styles.summaryGrid}>
-          <Card variant="glass" className={styles.summaryCard} onClick={() => router.push('/medicine')}>
-            <span className={styles.summaryIcon}><Pill size={24} /></span>
-            <span className={styles.summaryLabel}>今日用药</span>
-            <span className={styles.summaryValue}>{medicineDone}<span className={styles.summaryValueUnit}> / {medicineTotal}</span></span>
-            <span className={styles.summaryMeta}>
-              {medicineDone >= medicineTotal && medicineTotal > 0
-                ? <><CheckCircle size={16} /> 全部完成</>
-                : `还有 ${medicineTotal - medicineDone} 次`}
-            </span>
-            <span className={styles.summaryBgIcon}><Pill size={56} /></span>
-          </Card>
-          <Card variant="glass" className={styles.summaryCard} onClick={() => router.push('/health')}>
-            <span className={styles.summaryIcon}><MapPin size={24} /></span>
-            <span className={styles.summaryLabel}>当前状态</span>
-            <span className={styles.summaryValue}>在家休息</span>
-            <span className={styles.summaryMeta}>更新于 10分钟前</span>
-            <span className={styles.summaryBgIcon}><Home size={56} /></span>
-          </Card>
-        </div>
+      <DataStateWrapper
+        loading={recipientsLoading || loading}
+        error={recipientsError ?? dashboardError}
+        onRetry={recipientsError ? retryRecipients : retryDashboard}
+        empty={recipients.length === 0 ? {
+          icon: <Users size={44} />,
+          title: '还没有照护长辈',
+          description: '使用长辈提供的绑定码建立监护关系',
+          action: {
+            label: '去绑定长辈',
+            onClick: () => router.push('/settings/bind'),
+          },
+        } : false}
+      >
+        {data && recipient && (
+          <div className={styles.familyContent}>
+            <section className={styles.summaryGrid} aria-label="关键照护指标">
+              <Card
+                variant="glass"
+                className={styles.summaryCard}
+                onClick={data.access.medication ? () => router.push('/medicine') : undefined}
+              >
+                <span className={styles.summaryIcon}><Pill size={22} /></span>
+                <span className={styles.summaryLabel}>今日用药</span>
+                <span className={styles.summaryValue}>
+                  {data.access.medication ? data.todayMedication.completed : '--'}
+                  {data.access.medication && (
+                    <span className={styles.summaryValueUnit}>
+                      {' '}/ {data.todayMedication.total} 次
+                    </span>
+                  )}
+                </span>
+                <span className={styles.summaryMeta}>
+                  {!data.access.medication
+                    ? '长辈尚未授权查看用药'
+                    : data.todayMedication.total === 0
+                    ? '今日没有计划'
+                    : `${data.todayMedication.rate}% 已完成`}
+                </span>
+                <span className={styles.summaryBgIcon}><Pill size={60} /></span>
+              </Card>
 
-        {/* 健康趋势 */}
-        <Card variant="glass" className={styles.trendSection}>
-          <div className={styles.trendHeader}>
-            <h2 className={styles.trendTitle}>
-              <span className={styles.trendTitleAccent} />
-              健康趋势 (心率)
-            </h2>
-            <button type="button" className={styles.trendLink} onClick={() => router.push('/health')}>详细 →</button>
-          </div>
+              <Card variant="glass" className={styles.summaryCard}>
+                <span className={styles.summaryIcon}><ShieldCheck size={22} /></span>
+                <span className={styles.summaryLabel}>7 日依从率</span>
+                <span className={styles.summaryValue}>
+                  {data.access.medication ? `${data.adherence7d}%` : '--'}
+                </span>
+                <span className={styles.summaryMeta}>
+                  {!data.access.medication
+                    ? '长辈尚未授权查看用药'
+                    : data.adherence7d >= 80
+                      ? '照护节奏稳定'
+                      : '仍有计划待关注'}
+                </span>
+                <span className={styles.summaryBgIcon}><ShieldCheck size={60} /></span>
+              </Card>
+            </section>
 
-          {hasTrendData ? (
-            <>
-              <div className={styles.trendChart}>
-                {heartRateValues.map((val, i) => (
-                  <div
-                    key={i}
-                    className={`${styles.trendBar} ${i === heartRateValues.length - 1 ? styles.trendBarActive : ''} ${val > 80 ? styles.trendBarDanger : ''}`}
-                    style={{ height: `${(val / maxTrend) * 100}%` }}
-                  />
-                ))}
-              </div>
-              <div className={styles.trendLabels}>
-                {dayLabels.slice(0, heartRateValues.length).map((d, i) => (
-                  <span key={d} className={`${styles.trendDayLabel} ${i === heartRateValues.length - 1 ? styles.trendDayActive : ''}`}>{d}</span>
-                ))}
-              </div>
-            </>
-          ) : (
-            <p className={styles.trendEmpty}>
-              暂无趋势数据，请先录入健康记录
-            </p>
-          )}
+            <section className={styles.vitalsStrip} aria-label="最新健康指标">
+              <button
+                type="button"
+                disabled={!data.access.health}
+                onClick={() => router.push('/health')}
+              >
+                <span className={styles.vitalIcon}><Activity size={18} /></span>
+                <span><small>血压</small><strong>{data.access.health ? bloodPressureValue : '--'}</strong></span>
+                <em>mmHg</em>
+              </button>
+              <button
+                type="button"
+                disabled={!data.access.health}
+                onClick={() => router.push('/health')}
+              >
+                <span className={styles.vitalIcon}><HeartPulse size={18} /></span>
+                <span><small>心率</small><strong>{data.access.health ? heartRateValue : '--'}</strong></span>
+                <em>次/分</em>
+              </button>
+              <button
+                type="button"
+                disabled={!data.access.health}
+                className={data.abnormalCount7d > 0 ? styles.vitalWarning : ''}
+                onClick={() => router.push('/health')}
+              >
+                <span className={styles.vitalIcon}><TriangleAlert size={18} /></span>
+                <span><small>7 日异常</small><strong>{data.access.health ? data.abnormalCount7d : '--'}</strong></span>
+                <em>次</em>
+              </button>
+            </section>
 
-          {/* 警告 */}
-          {bp?.is_abnormal && (
-            <div className={styles.alertBanner}>
-              <span className={styles.alertIcon}><AlertCircle size={24} /></span>
-              <div>
-                <div className={styles.alertTitle}>血压偏高</div>
-                <div className={styles.alertDesc}>
-                  最近测量值为 {bpDisplay} mmHg，建议今晚再次测量并保持关注。
+            <section className={styles.dashboardCharts} aria-label="照护趋势图">
+              <Card variant="glass" className={styles.chartCard}>
+                <div className={styles.chartHeader}>
+                  <div>
+                    <span className={styles.chartEyebrow}>MEDICATION</span>
+                    <h2>每日用药完成</h2>
+                  </div>
+                  <button type="button" onClick={() => router.push('/medicine')}>
+                    管理 <ChevronRight size={15} />
+                  </button>
                 </div>
-              </div>
-            </div>
-          )}
-        </Card>
-        </div>
+                {data.access.medication ? (
+                  <AdherenceMiniChart points={data.medicationAdherence} />
+                ) : (
+                  <div className={styles.chartLocked} role="status">
+                    <LockKeyhole size={20} /> 长辈尚未授权查看用药
+                  </div>
+                )}
+              </Card>
+
+              <Card variant="glass" className={styles.chartCard}>
+                <div className={styles.chartHeader}>
+                  <div>
+                    <span className={styles.chartEyebrow}>HEART RATE</span>
+                    <h2>近七日心率</h2>
+                  </div>
+                  <span className={styles.updatedAt}>更新 {updatedTime}</span>
+                </div>
+                {data.access.health ? (
+                  <HealthSparkline points={data.heartRateTrend} />
+                ) : (
+                  <div className={styles.chartLocked} role="status">
+                    <LockKeyhole size={20} /> 长辈尚未授权查看健康
+                  </div>
+                )}
+              </Card>
+            </section>
+
+            <section className={styles.careActions} aria-label="快捷照护操作">
+              <button
+                type="button"
+                disabled={!recipient.permissions.canEditHealth}
+                onClick={() => router.push('/health/input')}
+              >
+                <span><Plus size={18} /></span>
+                <strong>代录健康</strong>
+                <small>
+                  {recipient.permissions.canEditHealth ? '血压、心率等' : '长辈尚未授权'}
+                </small>
+              </button>
+              <button
+                type="button"
+                disabled={!recipient.permissions.canEditMedication}
+                onClick={() => router.push('/medicine')}
+              >
+                <span><Pill size={18} /></span>
+                <strong>设置用药</strong>
+                <small>
+                  {recipient.permissions.canEditMedication ? '计划与提醒' : '长辈尚未授权'}
+                </small>
+              </button>
+            </section>
+          </div>
+        )}
       </DataStateWrapper>
     </div>
   );

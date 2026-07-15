@@ -53,10 +53,17 @@ export function createScheduledAt(date: string, planTime: string): string {
   return result.toISOString();
 }
 
-function addOneDay(date: string): string {
+export function addCareDays(date: string, days: number): string {
   const value = new Date(`${date}T12:00:00Z`);
-  value.setUTCDate(value.getUTCDate() + 1);
+  if (Number.isNaN(value.getTime()) || !Number.isInteger(days)) {
+    throw new Error('照护日期无效');
+  }
+  value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
+}
+
+export function getCareWeekday(date: string): number {
+  return getCareDateInfo(new Date(`${date}T12:00:00+08:00`)).weekday;
 }
 
 export function getCareDayRange(date: string): {
@@ -65,6 +72,6 @@ export function getCareDayRange(date: string): {
 } {
   return {
     start: new Date(`${date}T00:00:00+08:00`).toISOString(),
-    endExclusive: new Date(`${addOneDay(date)}T00:00:00+08:00`).toISOString(),
+    endExclusive: new Date(`${addCareDays(date, 1)}T00:00:00+08:00`).toISOString(),
   };
 }

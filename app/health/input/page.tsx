@@ -10,11 +10,13 @@ import { useRouter } from 'next/navigation';
 import { useHealthStore, RECORD_TYPE_CONFIG, RECORD_TYPES } from '@/stores/healthStore';
 import type { HealthRecordCreate } from '@/stores/healthStore';
 import { useUserStore } from '@/stores/userStore';
+import { useCareRecipient } from '@/hooks/useCareRecipient';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { ROUTES } from '@/lib/constants';
 import { Mic, Square, Edit3, FileEdit, CheckCircle, Activity, Droplet, Heart, Scale, Thermometer } from 'lucide-react';
 import { Button, Input, Card } from '@/components/ui';
 import PageHeader from '@/components/layout/PageHeader';
+import { CareRecipientTabs } from '@/components/family/CareRecipientTabs';
 import styles from './page.module.css';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -270,6 +272,8 @@ export default function HealthInputPage() {
   const router = useRouter();
   const createRecord = useHealthStore((s) => s.createRecord);
   const currentUser = useUserStore((s) => s.user);
+  const { recipient, targetUserId, isFamily } = useCareRecipient();
+  const canEditHealth = Boolean(recipient?.permissions.canEditHealth);
   const {
     phase: recognitionPhase,
     error: recognitionError,
@@ -290,11 +294,14 @@ export default function HealthInputPage() {
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const voiceRunIdRef = useRef(0);
+  const targetUserIdRef = useRef(targetUserId);
+  const inputLocked = !targetUserId || !canEditHealth;
 
   // ------ 字段更新 ------
 
   const updateField = useCallback(
     <K extends keyof FormValues>(key: K, value: FormValues[K]) => {
+      if (inputLocked) return;
       setFormValues((prev) => ({ ...prev, [key]: value }));
       if (inputMethod === 'voice' && voiceStage === 'confirmed') {
         setVoiceStage('review');
@@ -308,7 +315,7 @@ export default function HealthInputPage() {
         return prev;
       });
     },
-    [inputMethod, voiceStage],
+    [inputLocked, inputMethod, voiceStage],
   );
 
   const cancelVoiceSession = useCallback(() => {
@@ -322,21 +329,21 @@ export default function HealthInputPage() {
   // ------ 切换记录类型 ------
 
   const handleTypeChange = useCallback((type: RecordType) => {
-    if (type === selectedType) return;
+    if (inputLocked || type === selectedType) return;
     cancelVoiceSession();
     setSelectedType(type);
     setErrors({});
-  }, [cancelVoiceSession, selectedType]);
+  }, [cancelVoiceSession, inputLocked, selectedType]);
 
   // ------ 切换录入方式 ------
 
   const handleMethodChange = useCallback(
     (method: InputMethod) => {
-      if (method === inputMethod) return;
+      if (inputLocked || method === inputMethod) return;
       if (inputMethod === 'voice') cancelVoiceSession();
       setInputMethod(method);
     },
-    [cancelVoiceSession, inputMethod],
+    [cancelVoiceSession, inputLocked, inputMethod],
   );
 
   // ------ 语音按钮 ------
@@ -369,6 +376,7 @@ export default function HealthInputPage() {
   }, [selectedType, stopListening]);
 
   const handleMicToggle = useCallback(async (): Promise<void> => {
+    if (inputLocked) return;
     if (voiceStage === 'recording') {
       await finishVoiceInput();
       return;
@@ -388,7 +396,19 @@ export default function HealthInputPage() {
       setVoiceError(error instanceof Error ? error.message : '无法开始录音，请检查麦克风权限');
       setVoiceStage('error');
     }
-  }, [finishVoiceInput, resetTranscript, startListening, voiceStage]);
+  }, [finishVoiceInput, inputLocked, resetTranscript, startListening, voiceStage]);
+
+  useEffect(() => {
+    if (targetUserIdRef.current === targetUserId) return;
+    targetUserIdRef.current = targetUserId;
+    cancelVoiceSession();
+    setSelectedType('blood_pressure');
+    setInputMethod('manual');
+    setFormValues({ ...INITIAL_FORM_VALUES });
+    setErrors({});
+    setIsSubmitting(false);
+    setShowSuccess(false);
+  }, [cancelVoiceSession, targetUserId]);
 
   useEffect(() => {
     if (voiceStage === 'recording' && recognitionPhase === 'success') {
@@ -424,7 +444,11 @@ export default function HealthInputPage() {
     setIsSubmitting(true);
 
     try {
+      if (!targetUserId || !canEditHealth) {
+        throw new Error('当前长辈尚未授权代录健康数据');
+      }
       const recordData: HealthRecordCreate = {
+        user_id: targetUserId,
         record_type: selectedType,
         values: buildRecordValues(selectedType, formValues),
         measured_at: new Date().toISOString(),
@@ -446,7 +470,17 @@ export default function HealthInputPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedType, formValues, inputMethod, voiceStage, currentUser, createRecord, router]);
+  }, [
+    selectedType,
+    formValues,
+    inputMethod,
+    voiceStage,
+    currentUser,
+    createRecord,
+    router,
+    targetUserId,
+    canEditHealth,
+  ]);
 
   // ------ 取消 ------
 
@@ -583,13 +617,21 @@ export default function HealthInputPage() {
     <div className={styles.page}>
       {/* 顶部栏 */}
       <PageHeader
-        title="录入健康数据"
+        title={isFamily && recipient ? `为${recipient.name}记录` : '录入健康数据'}
+        subtitle={isFamily ? '家属代录将保留操作人审计' : undefined}
         variant="detail"
         backHref={ROUTES.HEALTH}
         rightAction={<FileEdit size={24} />}
       />
 
       <div className={styles.scroller}>
+      <CareRecipientTabs className={styles.recipientTabs} />
+      {isFamily && !canEditHealth && (
+        <Card variant="solid" className={styles.permissionNotice} role="status">
+          当前长辈尚未授权代录健康数据，可请长辈在“家庭绑定”中开启权限。
+        </Card>
+      )}
+      <fieldset className={styles.inputFieldset} disabled={inputLocked}>
       {/* 记录类型选择 */}
       <section className={styles.typeSection} aria-label="选择记录类型">
         <div className={styles.typeGrid}>
@@ -603,6 +645,7 @@ export default function HealthInputPage() {
                 onClick={() => handleTypeChange(type as RecordType)}
                 className={`${styles.typeCard} ${selected ? styles.typeCardSelected : ''}`}
                 aria-pressed={selected}
+                aria-disabled={inputLocked}
                 aria-label={config.label}
               >
                 <div className={`${styles.typeIcon} ${selected ? styles.typeIconSelected : ''}`}>
@@ -655,7 +698,7 @@ export default function HealthInputPage() {
               className={`${styles.micBtn} ${voiceStage === 'recording' ? styles.micBtnListening : ''}`}
               onClick={() => void handleMicToggle()}
               aria-label={voiceStage === 'recording' ? '停止录音' : '开始录音'}
-              disabled={voiceStage === 'transcribing'}
+              disabled={inputLocked || voiceStage === 'transcribing'}
             >
               {voiceStage === 'recording' ? <Square size={32} /> : <Mic size={32} />}
             </button>
@@ -727,6 +770,7 @@ export default function HealthInputPage() {
         </div>
         </div>
       </details>
+      </fieldset>
       </div>
 
       {/* 提交按钮 */}
@@ -749,7 +793,12 @@ export default function HealthInputPage() {
           leftIcon={<CheckCircle size={20} />}
           onClick={handleSubmit}
           loading={isSubmitting}
-          disabled={voiceStage === 'recording' || voiceStage === 'transcribing'}
+          disabled={
+            !targetUserId
+            || !canEditHealth
+            || voiceStage === 'recording'
+            || voiceStage === 'transcribing'
+          }
         >
           保存记录
         </Button>

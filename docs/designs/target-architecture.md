@@ -1,7 +1,7 @@
 # 目标架构 — 桑梓智护全栈 Next.js
 
 > Created: 2026-07-10  
-> Updated: 2026-07-12  
+> Updated: 2026-07-14
 > Status: accepted
 
 ## 问题陈述
@@ -46,6 +46,14 @@
 - 9 个 API 域全部迁入 `app/api/v1/<域>/route.ts`（原 `backend/api/v1/<file>.py` 已删除；迁移记录见 [docs/plans/api-migration/](../plans/api-migration/)）
 - 前端 `fetchApi` 已改同源 `/api/...`（`lib/api.ts` 默认 `''`），不再依赖 8000 端口
 - 历史 Python `backend/` 已于 2026-07-12 删除（见 [12-cleanup.md](../plans/api-migration/12-cleanup.md)）
+
+### 阶段 C（已完成 2026-07）— 监护协作数据边界
+
+- 家属端以 `active` 家庭绑定中的长辈为唯一健康/用药目标，选择状态跨页面共享
+- 健康查看、健康代录和用药管理分别校验权限；聚合看板按域脱敏
+- `oc_medication_records` 持久化应服发生项，计划变更不再重算历史依从率
+- `oc_get_care_dashboard_snapshot` 由 Next 服务端以 `service_role` 调用，一次返回最小统计集；客户端角色无执行权
+- Supabase migration 进入仓库并已在当前目标项目验证，其他环境仍按文件顺序部署
 
 ## 明确不做（本阶段及原则）
 

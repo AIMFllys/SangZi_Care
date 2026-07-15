@@ -214,11 +214,14 @@ button.sosButton {
 
 .familyContent {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--space-sm);
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 12px;
   min-height: 0;
-  overflow: hidden;
-  padding: 0 var(--page-gutter) var(--space-sm);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 4px var(--page-gutter) var(--space-lg);
+  overscroll-behavior-y: contain;
 }
 
 .summaryGrid {
@@ -231,11 +234,200 @@ button.sosButton {
   position: relative;
   display: grid;
   min-width: 0;
-  min-height: 118px;
+  min-height: 112px;
   align-content: center;
   gap: 3px;
   overflow: hidden;
   padding: var(--space-sm) var(--space-md);
+}
+
+.vitalsStrip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.vitalsStrip button {
+  display: grid;
+  min-width: 0;
+  min-height: 76px;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  align-items: center;
+  gap: 2px 6px;
+  padding: 9px;
+  border: 0;
+  border-right: 1px solid var(--divider);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.vitalsStrip button:last-child {
+  border-right: 0;
+}
+
+.vitalIcon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  grid-row: 1 / span 2;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent-action);
+}
+
+.vitalsStrip span:not(.vitalIcon) {
+  display: grid;
+  min-width: 0;
+}
+
+.vitalsStrip small,
+.vitalsStrip em {
+  color: var(--text-muted);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.vitalsStrip strong {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 850;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vitalsStrip em {
+  display: none;
+}
+
+.vitalsStrip .vitalWarning .vitalIcon {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.dashboardCharts {
+  display: grid;
+  gap: 12px;
+}
+
+.chartCard {
+  position: relative;
+  overflow: hidden;
+  padding: 14px 16px 12px;
+}
+
+.chartHeader {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.chartHeader h2 {
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.chartEyebrow {
+  color: var(--accent-action);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+}
+
+.chartHeader button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  padding: 0 5px 0 10px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--accent-soft);
+  color: var(--accent-action);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.updatedAt {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.careActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.careActions button {
+  display: grid;
+  min-width: 0;
+  min-height: 72px;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  gap: 2px 9px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card-solid);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+
+.careActions button > span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  grid-row: 1 / span 2;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--accent-action);
+}
+
+.careActions strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 820;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.careActions small {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.careActions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .summaryIcon {
@@ -431,6 +623,12 @@ button.sosButton {
   }
 }
 
+@media (min-width: 720px) {
+  .dashboardCharts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-height: 650px) {
   .page {
     gap: 6px;
@@ -464,4 +662,14 @@ button.sosButton {
   .voiceBallRing {
     animation: none;
   }
+}
+.chartLocked {
+  min-height: 118px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
 }

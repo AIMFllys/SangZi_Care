@@ -8,6 +8,10 @@ interface EmptyConfig {
     icon?: ReactNode;
     title?: string;
     description?: string;
+    action?: {
+        label: string;
+        onClick: () => void;
+    };
 }
 
 interface DataStateWrapperProps {
@@ -63,6 +67,15 @@ export default function DataStateWrapper({
                 <p className={styles.text}>{empty.title || '暂无数据'}</p>
                 {empty.description && (
                     <p className={styles.description}>{empty.description}</p>
+                )}
+                {empty.action && (
+                    <button
+                        type="button"
+                        className={styles.emptyAction}
+                        onClick={empty.action.onClick}
+                    >
+                        {empty.action.label}
+                    </button>
                 )}
             </div>
         );

@@ -62,11 +62,15 @@ interface FamilyState {
   /** 当前缓存归属账号，防共用设备串用上一账号数据 */
   ownerUserId: string | null;
   bindsRequestId: number;
+  /** 家属端跨页面共享的当前照护长辈 */
+  selectedElderId: string | null;
 
   /** 拉取绑定列表（需传当前用户 ID 以正确识别对方） */
   fetchBinds: (currentUserId: string) => Promise<void>;
   /** 拉取老人健康摘要（家属端用） */
   fetchElderHealthSummary: (elderId: string) => Promise<void>;
+  /** 选择当前照护长辈；页面仍会校验其属于 active 绑定 */
+  setSelectedElderId: (elderId: string | null) => void;
   /** 清空状态 */
   reset: () => void;
 }
@@ -79,6 +83,7 @@ export const useFamilyStore = create<FamilyState>()((set, get) => ({
   error: null,
   ownerUserId: null,
   bindsRequestId: 0,
+  selectedElderId: null,
 
   fetchBinds: async (currentUserId: string) => {
     const requestId = get().bindsRequestId + 1;
@@ -89,6 +94,8 @@ export const useFamilyStore = create<FamilyState>()((set, get) => ({
       rawBinds: state.ownerUserId === currentUserId ? state.rawBinds : [],
       healthSummaries:
         state.ownerUserId === currentUserId ? state.healthSummaries : {},
+      selectedElderId:
+        state.ownerUserId === currentUserId ? state.selectedElderId : null,
       isLoading: true,
       error: null,
     }));
@@ -123,10 +130,19 @@ export const useFamilyStore = create<FamilyState>()((set, get) => ({
         || get().ownerUserId !== currentUserId
       ) return;
 
+      const elderIds = data
+        .filter((bind) => bind.family_id === currentUserId && bind.status === 'active')
+        .map((bind) => bind.elder_id);
+      const currentSelection = get().selectedElderId;
+      const selectedElderId = currentSelection && elderIds.includes(currentSelection)
+        ? currentSelection
+        : elderIds[0] ?? null;
+
       set({
         binds: bindsWithUser,
         rawBinds: data,
         ownerUserId: currentUserId,
+        selectedElderId,
         isLoading: false,
       });
     } catch (err) {
@@ -156,6 +172,10 @@ export const useFamilyStore = create<FamilyState>()((set, get) => ({
     }
   },
 
+  setSelectedElderId: (elderId) => {
+    set({ selectedElderId: elderId });
+  },
+
   reset: () => {
     set({
       binds: [],
@@ -165,6 +185,7 @@ export const useFamilyStore = create<FamilyState>()((set, get) => ({
       error: null,
       ownerUserId: null,
       bindsRequestId: get().bindsRequestId + 1,
+      selectedElderId: null,
     });
   },
 }));
