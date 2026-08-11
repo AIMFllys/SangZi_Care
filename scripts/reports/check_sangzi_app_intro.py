@@ -17,6 +17,7 @@ NS = {
 }
 
 REQUIRED_PHRASES = [
+    "基础医学院“慧老智治 医心为民”AI智慧医养暑期社会实践队",
     "APP 概况",
     "一款 APP，两种使用角色",
     "核心功能总览",
@@ -36,6 +37,9 @@ REQUIRED_PHRASES = [
 ]
 
 BANNED_TERMS = [
+    "智护银龄项目组",
+    "本文采用 A4 纸张",
+    "本文不是党政机关公文",
     "Next.js",
     "React",
     "Supabase",
@@ -123,7 +127,11 @@ def check_tables(document_root: etree._Element) -> int:
 
 
 def check_images(archive: zipfile.ZipFile, document_root: etree._Element) -> int:
-    media = sorted(name for name in archive.namelist() if name.startswith("word/media/"))
+    media = sorted(
+        name
+        for name in archive.namelist()
+        if name.startswith("word/media/") and not name.endswith("/")
+    )
     if len(media) < 8:
         fail(f"应用截图不足 8 张，当前为 {len(media)} 张")
     if len(media) != 8:
@@ -145,20 +153,27 @@ def check_images(archive: zipfile.ZipFile, document_root: etree._Element) -> int
     return len(media)
 
 
-def check_styles(archive: zipfile.ZipFile) -> None:
+def check_styles(archive: zipfile.ZipFile) -> tuple[set[str], set[str]]:
     styles_root = etree.fromstring(archive.read("word/styles.xml"))
     styles_xml = etree.tostring(styles_root, encoding="unicode")
-    for font in ("FangSong", "SimHei", "KaiTi", "SimSun", "Times New Roman"):
+    for font in ("仿宋", "黑体", "楷体", "宋体", "Times New Roman"):
         if font not in styles_xml:
             fail(f"样式中缺少指定字体：{font}")
-    heading_ids = set(
+    heading1_ids = set(
         styles_root.xpath(
-            "//w:style[@w:type='paragraph' and (w:name/@w:val='heading 1' or w:name/@w:val='heading 2')]/@w:styleId",
+            "//w:style[@w:type='paragraph' and (w:name/@w:val='heading 1' or w:name/@w:val='标题 1')]/@w:styleId",
             namespaces=NS,
         )
     )
-    if len(heading_ids) < 2:
+    heading2_ids = set(
+        styles_root.xpath(
+            "//w:style[@w:type='paragraph' and (w:name/@w:val='heading 2' or w:name/@w:val='标题 2')]/@w:styleId",
+            namespaces=NS,
+        )
+    )
+    if not heading1_ids or not heading2_ids:
         fail("未找到完整的一级、二级标题样式")
+    return heading1_ids, heading2_ids
 
 
 def check_document(path: Path) -> None:
@@ -193,8 +208,13 @@ def check_document(path: Path) -> None:
         if text.count("演示数据") < 6:
             fail("演示数据说明不足")
 
-        heading1_count = len(document_root.xpath("//w:p[w:pPr/w:pStyle[@w:val='Heading1']]", namespaces=NS))
-        heading2_count = len(document_root.xpath("//w:p[w:pPr/w:pStyle[@w:val='Heading2']]", namespaces=NS))
+        heading1_ids, heading2_ids = check_styles(archive)
+        paragraph_style_ids = [
+            node.get(f"{{{NS['w']}}}val")
+            for node in document_root.xpath("//w:p/w:pPr/w:pStyle", namespaces=NS)
+        ]
+        heading1_count = sum(style_id in heading1_ids for style_id in paragraph_style_ids)
+        heading2_count = sum(style_id in heading2_ids for style_id in paragraph_style_ids)
         if heading1_count < 15:
             fail(f"一级章节不足，当前为 {heading1_count}")
         if heading2_count < 8:
@@ -203,7 +223,6 @@ def check_document(path: Path) -> None:
         check_page_setup(document_root)
         table_count = check_tables(document_root)
         image_count = check_images(archive, document_root)
-        check_styles(archive)
 
         footer_xml = archive.read("word/footer1.xml").decode("utf-8")
         if " PAGE " not in footer_xml:

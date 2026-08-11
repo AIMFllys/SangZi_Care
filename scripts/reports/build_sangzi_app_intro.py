@@ -16,6 +16,7 @@ from docx.shared import Cm, Inches, Mm, Pt, RGBColor
 APP_NAME = "智护银龄"
 DOCUMENT_TITLE = "智护银龄 APP 项目介绍"
 PROJECT_ORIGIN = "华中科技大学基础医学院“慧老智治 医心为民”AI 智慧医养暑期实践项目"
+TEAM_NAME = "基础医学院“慧老智治 医心为民”AI智慧医养暑期社会实践队"
 
 BURGUNDY = "7B2431"
 CHARCOAL = "20252B"
@@ -32,12 +33,25 @@ CAUTION = "7A5A00"
 CONTENT_WIDTH_DXA = 8844
 CONTENT_WIDTH_IN = 156 / 25.4
 
-FONT_TITLE = "STSong"
-FONT_BODY = "FangSong"
-FONT_HEADING = "SimHei"
-FONT_SUBHEADING = "KaiTi"
-FONT_CAPTION = "SimSun"
+FONT_TITLE = "宋体"
+FONT_BODY = "仿宋"
+FONT_HEADING = "黑体"
+FONT_SUBHEADING = "楷体"
+FONT_CAPTION = "宋体"
 FONT_WESTERN = "Times New Roman"
+
+
+def set_explicit_fonts(r_fonts, east_asia: str, western: str) -> None:
+    """Use literal font names so WPS does not substitute theme fonts differently."""
+    for theme_name in ("asciiTheme", "hAnsiTheme", "eastAsiaTheme", "cstheme"):
+        theme_attr = qn(f"w:{theme_name}")
+        if theme_attr in r_fonts.attrib:
+            del r_fonts.attrib[theme_attr]
+    r_fonts.set(qn("w:ascii"), western)
+    r_fonts.set(qn("w:hAnsi"), western)
+    r_fonts.set(qn("w:eastAsia"), east_asia)
+    r_fonts.set(qn("w:cs"), western)
+    r_fonts.set(qn("w:hint"), "eastAsia")
 
 
 def rgb(hex_color: str) -> RGBColor:
@@ -60,10 +74,7 @@ def set_run_font(
     if r_fonts is None:
         r_fonts = OxmlElement("w:rFonts")
         r_pr.insert(0, r_fonts)
-    r_fonts.set(qn("w:ascii"), western)
-    r_fonts.set(qn("w:hAnsi"), western)
-    r_fonts.set(qn("w:eastAsia"), east_asia)
-    r_fonts.set(qn("w:cs"), western)
+    set_explicit_fonts(r_fonts, east_asia, western)
     if size is not None:
         run.font.size = Pt(size)
     if bold is not None:
@@ -83,10 +94,7 @@ def set_style_font(style, east_asia: str, western: str, size: float, color: str)
     if r_fonts is None:
         r_fonts = OxmlElement("w:rFonts")
         r_pr.insert(0, r_fonts)
-    r_fonts.set(qn("w:ascii"), western)
-    r_fonts.set(qn("w:hAnsi"), western)
-    r_fonts.set(qn("w:eastAsia"), east_asia)
-    r_fonts.set(qn("w:cs"), western)
+    set_explicit_fonts(r_fonts, east_asia, western)
 
 
 def set_cell_shading(cell, fill: str) -> None:
@@ -104,7 +112,14 @@ def set_cell_margins(cell, *, top: int = 90, start: int = 100, bottom: int = 90,
     if tc_mar is None:
         tc_mar = OxmlElement("w:tcMar")
         tc_pr.append(tc_mar)
-    for edge, value in (("top", top), ("start", start), ("bottom", bottom), ("end", end)):
+    for edge, value in (
+        ("top", top),
+        ("start", start),
+        ("left", start),
+        ("bottom", bottom),
+        ("end", end),
+        ("right", end),
+    ):
         tag = qn(f"w:{edge}")
         node = tc_mar.find(tag)
         if node is None:
@@ -120,7 +135,7 @@ def set_cell_borders(cell, *, color: str = LIGHT_LINE, size: int = 6) -> None:
     if tc_borders is None:
         tc_borders = OxmlElement("w:tcBorders")
         tc_pr.append(tc_borders)
-    for edge in ("top", "start", "bottom", "end", "insideH", "insideV"):
+    for edge in ("top", "start", "left", "bottom", "end", "right", "insideH", "insideV"):
         tag = qn(f"w:{edge}")
         element = tc_borders.find(tag)
         if element is None:
@@ -138,7 +153,7 @@ def remove_table_borders(table) -> None:
     if borders is None:
         borders = OxmlElement("w:tblBorders")
         tbl_pr.append(borders)
-    for edge in ("top", "start", "bottom", "end", "insideH", "insideV"):
+    for edge in ("top", "start", "left", "bottom", "end", "right", "insideH", "insideV"):
         element = OxmlElement(f"w:{edge}")
         element.set(qn("w:val"), "nil")
         borders.append(element)
@@ -675,7 +690,7 @@ def build_document(output_path: Path, source_root: Path) -> None:
     props = doc.core_properties
     props.title = DOCUMENT_TITLE
     props.subject = "智护银龄 APP 的定位、功能、使用方式、价值与边界"
-    props.author = "智护银龄项目组"
+    props.author = TEAM_NAME
     props.keywords = "智护银龄, 桑梓智护, 智慧医养, 适老化, APP 介绍"
     props.comments = "依据项目现行功能资料和真实运行截图制作。"
     props.created = datetime(2026, 8, 11, 12, 0, 0)
@@ -712,8 +727,8 @@ def build_document(output_path: Path, source_root: Path) -> None:
     meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
     meta.paragraph_format.first_line_indent = Pt(0)
     meta.paragraph_format.line_spacing = 1.6
-    r = meta.add_run("智护银龄项目组\n当前展示版本：1.1.0\n2026年8月")
-    set_run_font(r, east_asia=FONT_BODY, size=14, color=CHARCOAL)
+    r = meta.add_run(f"{TEAM_NAME}\n当前展示版本：1.1.0\n2026年8月")
+    set_run_font(r, east_asia=FONT_BODY, size=13, color=CHARCOAL)
 
     page_break(doc)
 
@@ -1086,10 +1101,6 @@ def build_document(output_path: Path, source_root: Path) -> None:
         "家属查看或代办长辈事项需要家庭绑定和相应授权。本文全部 APP 截图来自真实运行页面，但截图中的姓名、健康数值、药品、消息和时间均为功能演示，不代表真实个人信息或服务效果。",
     )
     add_h2(doc, "文档编排依据")
-    add_body(
-        doc,
-        "本文采用 A4 纸张，版面、标题层级、字体和页码参照正式汇报材料体例，并结合 APP 截图展示需要作适度调整。本文不是党政机关公文，因此不设置发文字号、版记和印章等要素。",
-    )
     sources = [
         (
             "GB/T 148—1997《印刷、书写和绘图纸幅面尺寸》",
@@ -1127,6 +1138,15 @@ def build_document(output_path: Path, source_root: Path) -> None:
         "结语",
         "智护银龄希望把健康管理和家庭关怀放回日常生活：长辈能够更容易地使用，家属能够在获得同意后更清楚地协助，重要信息能够被连续地记录和理解。",
     )
+    # WPS 会在以表格结束的文档后补一个默认空段落，极端情况下会产生空白尾页。
+    # 显式保留一个最小终止段落，确保它稳定停留在结语之后的同一页。
+    terminal = doc.add_paragraph()
+    terminal.paragraph_format.first_line_indent = Pt(0)
+    terminal.paragraph_format.space_before = Pt(0)
+    terminal.paragraph_format.space_after = Pt(0)
+    terminal.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+    terminal.paragraph_format.line_spacing = Pt(1)
+    set_run_font(terminal.add_run(""), east_asia=FONT_CAPTION, size=1, color=WHITE)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     doc.save(output_path)
