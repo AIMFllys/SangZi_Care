@@ -238,14 +238,26 @@ export default function VoicePage() {
       </div>
 
       {visibleReply && (
-        <Card variant="glass" className={styles.responseCard}>
+        <Card
+          variant="glass"
+          className={styles.responseCard}
+          role="region"
+          aria-label="AI 回复"
+        >
           <div className={styles.responseLabel}>
             <span className={styles.responseIcon} aria-hidden="true">
               <Bot size={20} color="var(--accent)" />
             </span>
             AI 回复
           </div>
-          <p className={styles.responseText}>{visibleReply}</p>
+          <div
+            className={styles.responseBody}
+            role="document"
+            aria-label="AI 回复内容"
+            tabIndex={0}
+          >
+            <p className={styles.responseText}>{visibleReply}</p>
+          </div>
         </Card>
       )}
 

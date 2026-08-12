@@ -118,6 +118,12 @@
 
 /* AI 回复卡 */
 .responseCard {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-block-size: 0;
+  max-block-size: clamp(176px, 31dvh, 260px);
+  overflow: hidden;
   margin-top: auto;
 }
 
@@ -136,6 +142,16 @@
   align-items: center;
   justify-content: center;
   color: var(--accent);
+}
+
+.responseBody {
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  -webkit-overflow-scrolling: touch;
 }
 
 .responseText {
@@ -214,6 +230,12 @@
 
   .micRingDelayed {
     display: none;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 650px) {
+  .responseCard {
+    max-block-size: clamp(112px, 29dvh, 148px);
   }
 }
 

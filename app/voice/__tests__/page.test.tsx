@@ -199,6 +199,24 @@ describe('/voice real conversation state machine', () => {
     expect(mocks.tts.speak).not.toHaveBeenCalledWith(expect.stringContaining('暂无已绑定家属'));
   });
 
+  it('将 AI 回复呈现为可聚焦的内部阅读区域，同时保持短回复完整显示', () => {
+    mocks.ai.messages = [{
+      role: 'assistant',
+      content: '短回复：今天记得按时喝水。',
+      timestamp: Date.now(),
+    }];
+
+    render(<VoicePage />);
+
+    const responseCard = screen.getByRole('region', { name: 'AI 回复' });
+    const responseBody = screen.getByRole('document', { name: 'AI 回复内容' });
+
+    expect(responseCard).toContainElement(responseBody);
+    expect(responseBody).toHaveAttribute('tabindex', '0');
+    expect(responseBody).toHaveTextContent('短回复：今天记得按时喝水。');
+    expect(screen.getByText('AI 回复')).toBeInTheDocument();
+  });
+
   it('开始下一轮时清理上一轮动作反馈', async () => {
     mocks.ai.sendMessage.mockResolvedValueOnce({
       reply: '已处理',
