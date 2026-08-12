@@ -176,6 +176,6 @@ class UrlPolicyTest {
         ).firstOrNull(File::isFile)
             ?: error("找不到 MainActivity.kt 源文件")
 
-        return sourceFile.readText(Charsets.UTF_8)
+        return sourceFile.readText(Charsets.UTF_8).replace("\r\n", "\n")
     }
 }
