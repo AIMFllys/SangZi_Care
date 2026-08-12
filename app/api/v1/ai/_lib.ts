@@ -7,6 +7,7 @@
 // ============================================================
 
 import type { Database } from '@/types/supabase';
+import type { AIChatResponse } from '@/types/ai';
 
 export type AiConversationRow =
   Database['public']['Tables']['oc_ai_conversations']['Row'];
@@ -26,15 +27,7 @@ export interface ChatRequest {
 }
 
 /** POST /ai/chat 响应体（前端 fetchApi<{ reply, session_id }>）。 */
-export interface ChatResponse {
-  reply: string;
-  session_id: string;
-  actions?: Array<{
-    type: string;
-    label: string;
-    success: boolean;
-  }>;
-}
+export type ChatResponse = AIChatResponse;
 
 /** POST /ai/intent 请求体。 */
 export interface IntentRequest {

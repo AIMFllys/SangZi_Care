@@ -144,6 +144,59 @@
   line-height: 1.7;
 }
 
+.actionFeedback {
+  margin-top: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+}
+
+.actionFeedback h2 {
+  margin: 0 0 var(--space-xs);
+  color: var(--text-secondary);
+  font-size: var(--font-caption);
+}
+
+.actionFeedback ul {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.actionFeedback li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-body);
+  line-height: 1.45;
+}
+
+.actionStatus {
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+
+.action_success {
+  background: color-mix(in srgb, var(--color-success) 10%, var(--bg-card));
+  color: var(--text-primary);
+}
+
+.action_warning {
+  background: color-mix(in srgb, var(--color-warning) 13%, var(--bg-card));
+  color: var(--text-primary);
+}
+
+.action_error {
+  background: color-mix(in srgb, var(--color-danger) 10%, var(--bg-card));
+  color: var(--color-danger);
+}
+
 /* 结束按钮 */
 .endButton {
   margin-top: var(--space-md);

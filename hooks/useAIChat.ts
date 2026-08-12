@@ -8,11 +8,18 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { fetchApi } from '@/lib/api';
+import {
+  AI_ACTION_TYPES,
+  type AIAction,
+  type AIActionStatus,
+  type AIChatResult,
+} from '@/types/ai';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  actions?: AIAction[];
 }
 
 export interface IntentResult {
@@ -31,7 +38,7 @@ export interface UseAIChatReturn {
   /** 当前会话ID */
   sessionId: string | null;
   /** 发送文字消息 */
-  sendMessage: (text: string) => Promise<string>;
+  sendMessage: (text: string) => Promise<AIChatResult>;
   /** 识别意图 */
   recognizeIntent: (text: string) => Promise<IntentResult>;
   /** 获取对话摘要 */
@@ -55,6 +62,51 @@ function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError';
 }
 
+const ACTION_TYPE_SET = new Set<string>(AI_ACTION_TYPES);
+const ACTION_STATUS_SET = new Set<string>(['success', 'warning', 'error']);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** API 是运行时边界：只让已知、可读且状态一致的动作进入 UI。 */
+export function normalizeAIActions(value: unknown): AIAction[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((candidate): AIAction[] => {
+    if (!isRecord(candidate)) return [];
+    const { type, label } = candidate;
+    if (
+      typeof type !== 'string'
+      || !ACTION_TYPE_SET.has(type)
+      || typeof label !== 'string'
+    ) {
+      return [];
+    }
+    const normalizedLabel = label.trim();
+    if (!normalizedLabel || Array.from(normalizedLabel).length > 120) return [];
+
+    let status: AIActionStatus | null = null;
+    if (typeof candidate.status === 'string' && ACTION_STATUS_SET.has(candidate.status)) {
+      status = candidate.status as AIActionStatus;
+    } else if (typeof candidate.success === 'boolean') {
+      status = candidate.success
+        ? 'success'
+        : type === 'share_consent_required' || type === 'no_family_recipients'
+          ? 'warning'
+          : 'error';
+    }
+    if (!status) return [];
+
+    return [{
+      type: type as AIAction['type'],
+      label: normalizedLabel,
+      status,
+      success: status === 'success',
+    }];
+  });
+}
+
 export function useAIChat(): UseAIChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -72,7 +124,7 @@ export function useAIChat(): UseAIChatReturn {
     if (mountedRef.current) setIsLoading(false);
   }, []);
 
-  const sendMessage = useCallback(async (text: string): Promise<string> => {
+  const sendMessage = useCallback(async (text: string): Promise<AIChatResult> => {
     cancelPending();
     const request: PendingChatRequest = {
       id: ++requestIdRef.current,
@@ -94,7 +146,11 @@ export function useAIChat(): UseAIChatReturn {
         content: m.content,
       }));
 
-      const res = await fetchApi<{ reply: string; session_id: string }>(
+      const res = await fetchApi<{
+        reply: string;
+        session_id: string;
+        actions?: unknown;
+      }>(
         '/api/v1/ai/chat',
         {
           method: 'POST',
@@ -111,14 +167,16 @@ export function useAIChat(): UseAIChatReturn {
       }
 
       sessionIdRef.current = res.session_id;
+      const actions = normalizeAIActions(res.actions);
 
       const assistantMsg: ChatMessage = {
         role: 'assistant',
         content: res.reply,
         timestamp: Date.now(),
+        actions,
       };
       setMessages((prev) => [...prev, assistantMsg]);
-      return res.reply;
+      return { reply: res.reply, actions };
     } catch (err) {
       if (isAbortError(err)) throw err;
       const msg = err instanceof Error ? err.message : '对话失败';

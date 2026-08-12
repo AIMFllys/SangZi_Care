@@ -104,7 +104,7 @@ describe('executeCompanionToolCall', () => {
     );
 
     expect(result.actions).toContainEqual({
-      type: 'health_recorded', label: '已记录心率', success: true,
+      type: 'health_recorded', label: '已记录心率', status: 'success', success: true,
     });
     expect(database.from).toHaveBeenCalledWith('oc_health_records');
     expect(database.insert).toHaveBeenCalledWith(expect.objectContaining({
@@ -130,7 +130,9 @@ describe('executeCompanionToolCall', () => {
       },
     );
 
-    expect(result.actions[0]).toMatchObject({ type: 'tool_error', success: false });
+    expect(result.actions[0]).toMatchObject({
+      type: 'tool_error', status: 'error', success: false,
+    });
     expect(database.from).not.toHaveBeenCalled();
   });
 
@@ -178,7 +180,53 @@ describe('executeCompanionToolCall', () => {
       p_summary: '今天在公园遇见老朋友，心情很好。',
     });
     expect(result.actions).toContainEqual({
-      type: 'murmur_shared', label: '已同步 2 位家属', success: true,
+      type: 'murmur_shared', label: '已同步 2 位家属', status: 'success', success: true,
     });
+  });
+
+  it('明确同意但没有已绑定家属时返回未发送 warning，而不是假装全部成功', async () => {
+    const database = createClient({ rpcData: [] });
+
+    const result = await executeCompanionToolCall(
+      toolCall('save_murmur', {
+        summary: '今天晒了太阳。',
+        share_with_family: true,
+      }),
+      {
+        supabase: database.client,
+        user: elder,
+        sourceText: '把今天晒太阳的事告诉孩子吧',
+        explicitShareConsent: true,
+      },
+    );
+
+    expect(result.actions).toContainEqual({
+      type: 'no_family_recipients',
+      label: '暂无已绑定家属，本次未发送',
+      status: 'warning',
+      success: false,
+    });
+  });
+
+  it('分享 RPC 技术失败时保留已保存 success，并返回同步 error', async () => {
+    const database = createClient({ rpcError: { code: 'PGRST500' } });
+
+    const result = await executeCompanionToolCall(
+      toolCall('save_murmur', {
+        summary: '今天晒了太阳。',
+        share_with_family: true,
+      }),
+      {
+        supabase: database.client,
+        user: elder,
+        sourceText: '把今天晒太阳的事告诉孩子吧',
+        explicitShareConsent: true,
+      },
+    );
+
+    expect(result.actions).toEqual([
+      expect.objectContaining({ type: 'murmur_saved', status: 'success', success: true }),
+      expect.objectContaining({ type: 'tool_error', status: 'error', success: false }),
+    ]);
   });
 });

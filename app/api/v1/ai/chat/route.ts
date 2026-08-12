@@ -46,6 +46,44 @@ const MAX_MESSAGES = 50;
 const MAX_MESSAGE_CHARACTERS = 4_000;
 const ALLOWED_ROLES = new Set(['user', 'assistant']);
 
+function toolFallbackReply(toolResults: Array<{ content: string }>): string {
+  return toolResults.map((result) => {
+    try {
+      const parsed = JSON.parse(result.content) as { message?: unknown };
+      return typeof parsed.message === 'string' ? parsed.message.trim() : '';
+    } catch {
+      return '';
+    }
+  }).filter(Boolean).join(' ');
+}
+
+function logToolAction(
+  action: CompanionAction,
+  context: {
+    sessionId: string;
+    userId: string;
+    role: string;
+    toolCallId: string;
+    toolName: string;
+  },
+): void {
+  if (action.status === 'success') return;
+  const event = action.status === 'warning'
+    ? '[POST /ai/chat] companion_tool_warning'
+    : '[POST /ai/chat] companion_tool_error';
+  const metadata = {
+    ...context,
+    actionType: action.type,
+    actionStatus: action.status,
+    actionLabel: action.label,
+  };
+  if (action.status === 'warning') {
+    console.warn(event, metadata);
+  } else {
+    console.error(event, metadata);
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { user_id: currentUserId, role: currentRole } = await requireUser(request);
@@ -135,33 +173,46 @@ export async function POST(request: NextRequest) {
         });
         toolResults.push(result);
         actions.push(...result.actions);
+        result.actions.forEach((action) => logToolAction(action, {
+          sessionId,
+          userId: currentUserId,
+          role: currentRole,
+          toolCallId: toolCall.id,
+          toolName: toolCall.function.name,
+        }));
       }
 
-      const finalTurn = await completeMimoChat([
-        ...mimoMessages,
-        {
-          role: 'assistant',
-          content: firstTurn.content || null,
-          tool_calls: firstTurn.toolCalls,
-        },
-        ...toolResults.map((result) => ({
-          role: 'tool' as const,
-          tool_call_id: result.toolCallId,
-          content: result.content,
-        })),
-      ]);
-      reply = finalTurn.content;
-
-      if (!reply) {
-        reply = toolResults.map((result) => {
-          try {
-            const parsed = JSON.parse(result.content) as { message?: unknown };
-            return typeof parsed.message === 'string' ? parsed.message : '';
-          } catch {
-            return '';
-          }
-        }).filter(Boolean).join(' ');
+      try {
+        const finalTurn = await completeMimoChat([
+          ...mimoMessages,
+          {
+            role: 'assistant',
+            content: firstTurn.content || null,
+            tool_calls: firstTurn.toolCalls,
+          },
+          ...toolResults.map((result) => ({
+            role: 'tool' as const,
+            tool_call_id: result.toolCallId,
+            content: result.content,
+          })),
+        ]);
+        reply = finalTurn.content;
+      } catch (error) {
+        const errorMetadata = error instanceof MimoError
+          ? { errorName: error.name, errorKind: error.kind, errorStatus: error.status }
+          : { errorName: error instanceof Error ? error.name : 'UnknownError' };
+        console.error('[POST /ai/chat] companion_finalize_failed', {
+          sessionId,
+          userId: currentUserId,
+          role: currentRole,
+          toolCallIds: firstTurn.toolCalls.map((toolCall) => toolCall.id),
+          toolNames: firstTurn.toolCalls.map((toolCall) => toolCall.function.name),
+          ...errorMetadata,
+        });
+        reply = '';
       }
+
+      if (!reply) reply = toolFallbackReply(toolResults);
     }
 
     if (!reply) {

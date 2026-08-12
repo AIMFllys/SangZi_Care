@@ -77,7 +77,9 @@ describe('AI API 生产边界', () => {
     mocks.executeCompanionToolCall.mockResolvedValue({
       toolCallId: 'call-1',
       content: '{"ok":true,"message":"已记录"}',
-      actions: [{ type: 'health_recorded', label: '已记录心率', success: true }],
+      actions: [{
+        type: 'health_recorded', label: '已记录心率', status: 'success', success: true,
+      }],
     });
     mocks.recognizeIntent.mockResolvedValue({
       intent: 'medication_confirm',
@@ -86,6 +88,7 @@ describe('AI API 生产边界', () => {
     });
     mocks.generateSummary.mockResolvedValue('老人近期情绪稳定。');
     vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
@@ -192,6 +195,47 @@ describe('AI API 生产边界', () => {
       expect(mocks.completeMimoChat).toHaveBeenCalledTimes(2);
       expect(mocks.completeMimoChat.mock.calls[1][0]).toContainEqual(
         expect.objectContaining({ role: 'tool', tool_call_id: 'call-1' }),
+      );
+    });
+
+    it('工具已执行但 MiMo 收尾失败时用真实工具消息兜底并返回 200，避免客户端重试副作用', async () => {
+      mocks.completeMimoChat
+        .mockResolvedValueOnce({
+          content: '',
+          toolCalls: [{
+            id: 'call-save-1',
+            type: 'function',
+            function: { name: 'save_murmur', arguments: '{"summary":"散步","share_with_family":false}' },
+          }],
+        })
+        .mockRejectedValueOnce(new Error('upstream unavailable'));
+      mocks.executeCompanionToolCall.mockResolvedValueOnce({
+        toolCallId: 'call-save-1',
+        content: '{"ok":true,"message":"碎碎念已私密保存。"}',
+        actions: [{
+          type: 'murmur_saved', label: '碎碎念已私密保存', status: 'success', success: true,
+        }],
+      });
+
+      const response = await postChat(jsonRequest('/api/v1/ai/chat', {
+        messages: [{ role: 'user', content: '记录今天散步' }],
+        session_id: 'session-safe-fallback',
+      }));
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toMatchObject({
+        reply: '碎碎念已私密保存。',
+        session_id: 'session-safe-fallback',
+        actions: [{ type: 'murmur_saved', status: 'success' }],
+      });
+      expect(console.error).toHaveBeenCalledWith(
+        '[POST /ai/chat] companion_finalize_failed',
+        expect.objectContaining({
+          sessionId: 'session-safe-fallback',
+          userId: 'user-1',
+          role: 'elder',
+          toolCallIds: ['call-save-1'],
+        }),
       );
     });
   });

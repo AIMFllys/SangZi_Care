@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { checkAbnormal, RECORD_TYPES, type HealthRecordType } from './health-thresholds';
 import type { MimoFunctionTool, MimoToolCall } from './mimo';
+import type { AIAction, AIActionStatus, AIActionType } from '@/types/ai';
 import type { Database, Json } from '@/types/supabase';
 
 export interface CompanionUser {
@@ -14,16 +15,7 @@ export interface CompanionConversationMessage {
   content: string;
 }
 
-export interface CompanionAction {
-  type:
-    | 'health_recorded'
-    | 'murmur_saved'
-    | 'murmur_shared'
-    | 'share_consent_required'
-    | 'tool_error';
-  label: string;
-  success: boolean;
-}
+export type CompanionAction = AIAction;
 
 export interface CompanionToolExecution {
   toolCallId: string;
@@ -278,15 +270,23 @@ function response(
   };
 }
 
+function action(
+  type: AIActionType,
+  label: string,
+  status: AIActionStatus,
+): CompanionAction {
+  return { type, label, status, success: status === 'success' };
+}
+
 async function recordHealth(
   call: MimoToolCall,
   args: Record<string, unknown>,
   context: CompanionToolContext,
 ): Promise<CompanionToolExecution> {
   if (context.user.role !== 'elder') {
-    return response(call.id, false, '家属账号不能把本人数据写入长辈健康档案。', [{
-      type: 'tool_error', label: '健康记录未保存', success: false,
-    }]);
+    return response(call.id, false, '家属账号不能把本人数据写入长辈健康档案。', [
+      action('tool_error', '健康记录未保存', 'error'),
+    ]);
   }
 
   const { recordType, values, display } = parseHealthValues(args);
@@ -314,14 +314,14 @@ async function recordHealth(
     .select('id');
 
   if (error || !data?.length) {
-    return response(call.id, false, '健康记录保存失败，请让长辈稍后重试。', [{
-      type: 'tool_error', label: '健康记录保存失败', success: false,
-    }]);
+    return response(call.id, false, '健康记录保存失败，请让长辈稍后重试。', [
+      action('tool_error', '健康记录保存失败', 'error'),
+    ]);
   }
 
-  return response(call.id, true, `已记录${HEALTH_LABELS[recordType]}：${display}。`, [{
-    type: 'health_recorded', label: `已记录${HEALTH_LABELS[recordType]}`, success: true,
-  }]);
+  return response(call.id, true, `已记录${HEALTH_LABELS[recordType]}：${display}。`, [
+    action('health_recorded', `已记录${HEALTH_LABELS[recordType]}`, 'success'),
+  ]);
 }
 
 async function saveMurmur(
@@ -330,9 +330,9 @@ async function saveMurmur(
   context: CompanionToolContext,
 ): Promise<CompanionToolExecution> {
   if (context.user.role !== 'elder') {
-    return response(call.id, false, '只有长辈账号可以保存碎碎念。', [{
-      type: 'tool_error', label: '碎碎念未保存', success: false,
-    }]);
+    return response(call.id, false, '只有长辈账号可以保存碎碎念。', [
+      action('tool_error', '碎碎念未保存', 'error'),
+    ]);
   }
 
   const summary = readOptionalText(args, 'summary', 1000);
@@ -354,15 +354,13 @@ async function saveMurmur(
     .select('id');
 
   if (error || !data?.length) {
-    return response(call.id, false, '碎碎念保存失败，请稍后重试。', [{
-      type: 'tool_error', label: '碎碎念保存失败', success: false,
-    }]);
+    return response(call.id, false, '碎碎念保存失败，请稍后重试。', [
+      action('tool_error', '碎碎念保存失败', 'error'),
+    ]);
   }
 
   const murmurId = data[0].id;
-  const savedAction: CompanionAction = {
-    type: 'murmur_saved', label: '碎碎念已私密保存', success: true,
-  };
+  const savedAction = action('murmur_saved', '碎碎念已私密保存', 'success');
 
   if (!shareRequested) {
     return response(call.id, true, '碎碎念已私密保存。可以询问长辈是否需要同步给家人。', [savedAction]);
@@ -372,7 +370,7 @@ async function saveMurmur(
       call.id,
       true,
       '碎碎念已私密保存，但当前没有可验证的明确分享同意，因此没有发送。请先明确询问长辈。',
-      [savedAction, { type: 'share_consent_required', label: '等待长辈同意分享', success: false }],
+      [savedAction, action('share_consent_required', '等待长辈同意分享', 'warning')],
     );
   }
 
@@ -387,18 +385,21 @@ async function saveMurmur(
   if (shareError) {
     return response(call.id, false, '碎碎念已私密保存，但同步给家人失败，请稍后重试。', [
       savedAction,
-      { type: 'tool_error', label: '同步家人失败', success: false },
+      action('tool_error', '同步家人失败', 'error'),
     ]);
   }
 
   const sharedCount = Array.isArray(messageIds) ? messageIds.length : 0;
   if (sharedCount === 0) {
-    return response(call.id, true, '碎碎念已私密保存；当前没有已绑定的家属，因此没有发送。', [savedAction]);
+    return response(call.id, true, '碎碎念已私密保存；当前没有已绑定的家属，因此没有发送。', [
+      savedAction,
+      action('no_family_recipients', '暂无已绑定家属，本次未发送', 'warning'),
+    ]);
   }
 
   return response(call.id, true, `碎碎念已同步给 ${sharedCount} 位已绑定家属。`, [
     { ...savedAction, label: '碎碎念已保存' },
-    { type: 'murmur_shared', label: `已同步 ${sharedCount} 位家属`, success: true },
+    action('murmur_shared', `已同步 ${sharedCount} 位家属`, 'success'),
   ]);
 }
 
@@ -414,13 +415,13 @@ export async function executeCompanionToolCall(
     if (call.function.name === 'save_murmur') {
       return await saveMurmur(call, args, context);
     }
-    return response(call.id, false, '不支持的工具调用。', [{
-      type: 'tool_error', label: '未知工具', success: false,
-    }]);
+    return response(call.id, false, '不支持的工具调用。', [
+      action('tool_error', '未知工具', 'error'),
+    ]);
   } catch (error) {
     const message = error instanceof Error ? error.message : '工具参数无效';
-    return response(call.id, false, `没有执行工具：${message}`, [{
-      type: 'tool_error', label: '工具参数需要确认', success: false,
-    }]);
+    return response(call.id, false, `没有执行工具：${message}`, [
+      action('tool_error', '工具参数需要确认', 'error'),
+    ]);
   }
 }

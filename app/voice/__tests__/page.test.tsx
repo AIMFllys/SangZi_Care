@@ -17,7 +17,17 @@ const mocks = vi.hoisted(() => ({
     resetTranscript: vi.fn(),
   },
   ai: {
-    messages: [] as Array<{ role: 'user' | 'assistant'; content: string; timestamp: number }>,
+    messages: [] as Array<{
+      role: 'user' | 'assistant';
+      content: string;
+      timestamp: number;
+      actions?: Array<{
+        type: string;
+        label: string;
+        status: 'success' | 'warning' | 'error';
+        success: boolean;
+      }>;
+    }>,
     isLoading: false,
     error: null as string | null,
     sessionId: null,
@@ -77,7 +87,10 @@ describe('/voice real conversation state machine', () => {
     });
     mocks.ai.messages = [];
     mocks.ai.error = null;
-    mocks.ai.sendMessage.mockResolvedValue('今天状态很好，记得多喝水');
+    mocks.ai.sendMessage.mockResolvedValue({
+      reply: '今天状态很好，记得多喝水',
+      actions: [],
+    });
     mocks.tts.error = null;
     mocks.tts.speak.mockResolvedValue(undefined);
   });
@@ -98,7 +111,15 @@ describe('/voice real conversation state machine', () => {
       audioBlob: Blob;
       durationMs: number;
     } | null>();
-    const answer = deferred<string>();
+    const answer = deferred<{
+      reply: string;
+      actions: Array<{
+        type: string;
+        label: string;
+        status: 'success' | 'warning' | 'error';
+        success: boolean;
+      }>;
+    }>();
     const speech = deferred<void>();
     mocks.recognition.stopListening.mockReturnValue(transcription.promise);
     mocks.ai.sendMessage.mockReturnValue(answer.promise);
@@ -123,7 +144,7 @@ describe('/voice real conversation state machine', () => {
     });
 
     await act(async () => {
-      answer.resolve('好的，为您找一段经典京剧。');
+      answer.resolve({ reply: '好的，为您找一段经典京剧。', actions: [] });
       await Promise.resolve();
     });
     await waitFor(() => {
@@ -141,6 +162,90 @@ describe('/voice real conversation state machine', () => {
     });
     expect(mocks.ai.sendMessage).toHaveBeenCalledOnce();
     expect(mocks.tts.speak).toHaveBeenCalledOnce();
+  });
+
+  it('展示成功、未发送和技术失败动作，但只朗读 AI 回复', async () => {
+    mocks.ai.sendMessage.mockResolvedValueOnce({
+      reply: '碎碎念已保存，我把实际处理结果列在下方。',
+      actions: [
+        {
+          type: 'murmur_saved', label: '碎碎念已保存', status: 'success', success: true,
+        },
+        {
+          type: 'no_family_recipients',
+          label: '暂无已绑定家属，本次未发送',
+          status: 'warning',
+          success: false,
+        },
+        {
+          type: 'tool_error', label: '同步家人失败', status: 'error', success: false,
+        },
+      ],
+    });
+    render(<VoicePage />);
+    await beginRecording();
+
+    fireEvent.click(screen.getByRole('button', { name: '停止听取' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('status', { name: '本轮处理结果' }))
+        .toHaveTextContent('已完成碎碎念已保存');
+      expect(screen.getByRole('status', { name: '本轮处理结果' }))
+        .toHaveTextContent('请留意暂无已绑定家属，本次未发送');
+      expect(screen.getByRole('status', { name: '本轮处理结果' }))
+        .toHaveTextContent('未完成同步家人失败');
+    });
+    expect(mocks.tts.speak).toHaveBeenCalledWith('碎碎念已保存，我把实际处理结果列在下方。');
+    expect(mocks.tts.speak).not.toHaveBeenCalledWith(expect.stringContaining('暂无已绑定家属'));
+  });
+
+  it('开始下一轮时清理上一轮动作反馈', async () => {
+    mocks.ai.sendMessage.mockResolvedValueOnce({
+      reply: '已处理',
+      actions: [{
+        type: 'murmur_saved', label: '上一轮碎碎念已保存', status: 'success', success: true,
+      }],
+    });
+    render(<VoicePage />);
+    await beginRecording();
+    fireEvent.click(screen.getByRole('button', { name: '停止听取' }));
+    await waitFor(() => expect(screen.getByText('上一轮碎碎念已保存')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: '开始说话' }));
+
+    await waitFor(() => expect(screen.queryByText('上一轮碎碎念已保存')).not.toBeInTheDocument());
+  });
+
+  it('结束对话后迟到的 AI 回复与动作都不会显示或朗读', async () => {
+    const answer = deferred<{
+      reply: string;
+      actions: Array<{
+        type: string;
+        label: string;
+        status: 'success' | 'warning' | 'error';
+        success: boolean;
+      }>;
+    }>();
+    mocks.ai.sendMessage.mockReturnValueOnce(answer.promise);
+    render(<VoicePage />);
+    await beginRecording();
+    fireEvent.click(screen.getByRole('button', { name: '停止听取' }));
+    await waitFor(() => expect(mocks.ai.sendMessage).toHaveBeenCalledOnce());
+
+    fireEvent.click(screen.getByRole('button', { name: '结束对话' }));
+    await act(async () => {
+      answer.resolve({
+        reply: '迟到回复',
+        actions: [{
+          type: 'murmur_shared', label: '迟到同步动作', status: 'success', success: true,
+        }],
+      });
+      await Promise.resolve();
+    });
+
+    expect(screen.queryByText('迟到回复')).not.toBeInTheDocument();
+    expect(screen.queryByText('迟到同步动作')).not.toBeInTheDocument();
+    expect(mocks.tts.speak).not.toHaveBeenCalled();
   });
 
   it('结束对话会取消所有层，迟到的 ASR 不再发送给 AI', async () => {

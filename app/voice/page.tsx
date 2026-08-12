@@ -9,6 +9,7 @@ import { useAIChat } from '@/hooks/useAIChat';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { ROUTES } from '@/lib/constants';
+import type { AIAction, AIActionStatus } from '@/types/ai';
 import styles from './page.module.css';
 
 type VoiceConversationPhase =
@@ -26,6 +27,12 @@ const STATUS_BY_PHASE: Record<VoiceConversationPhase, string> = {
   thinking: 'AI 正在思考...',
   speaking: '正在为您播报...',
   error: '对话遇到问题',
+};
+
+const ACTION_STATUS_LABEL: Record<AIActionStatus, string> = {
+  success: '已完成',
+  warning: '请留意',
+  error: '未完成',
 };
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -50,6 +57,7 @@ export default function VoicePage() {
   const [phase, setPhase] = useState<VoiceConversationPhase>('idle');
   const [recognizedText, setRecognizedText] = useState('');
   const [assistantText, setAssistantText] = useState('');
+  const [assistantActions, setAssistantActions] = useState<AIAction[]>([]);
   const [conversationError, setConversationError] = useState<string | null>(null);
   const runIdRef = useRef(0);
   const mountedRef = useRef(true);
@@ -84,6 +92,7 @@ export default function VoicePage() {
     const runId = ++runIdRef.current;
     setConversationError(null);
     setRecognizedText('');
+    setAssistantActions([]);
     resetTranscript();
     setPhase('recording');
 
@@ -107,12 +116,13 @@ export default function VoicePage() {
 
       setRecognizedText(userText);
       setPhase('thinking');
-      const reply = await sendMessage(userText);
+      const chatResult = await sendMessage(userText);
       if (!isCurrentRun(runId)) return;
 
-      setAssistantText(reply);
+      setAssistantText(chatResult.reply);
+      setAssistantActions(chatResult.actions);
       setPhase('speaking');
-      await speak(reply);
+      await speak(chatResult.reply);
       if (!isCurrentRun(runId)) return;
       setPhase('idle');
     } catch (error) {
@@ -138,6 +148,7 @@ export default function VoicePage() {
     cancelAll();
     setRecognizedText('');
     setAssistantText('');
+    setAssistantActions([]);
     setConversationError(null);
     setPhase('idle');
     router.back();
@@ -236,6 +247,30 @@ export default function VoicePage() {
           </div>
           <p className={styles.responseText}>{visibleReply}</p>
         </Card>
+      )}
+
+      {assistantActions.length > 0 && (
+        <section
+          className={styles.actionFeedback}
+          role="status"
+          aria-label="本轮处理结果"
+          aria-live="polite"
+        >
+          <h2>本轮处理结果</h2>
+          <ul>
+            {assistantActions.map((item, index) => (
+              <li
+                key={`${item.type}-${index}`}
+                className={styles[`action_${item.status}`]}
+              >
+                <span className={styles.actionStatus}>
+                  {ACTION_STATUS_LABEL[item.status]}
+                </span>
+                <span>{item.label}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <Button
