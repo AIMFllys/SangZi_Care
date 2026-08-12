@@ -197,6 +197,14 @@ describe('/voice real conversation state machine', () => {
     });
     expect(mocks.tts.speak).toHaveBeenCalledWith('碎碎念已保存，我把实际处理结果列在下方。');
     expect(mocks.tts.speak).not.toHaveBeenCalledWith(expect.stringContaining('暂无已绑定家属'));
+    expect(screen.getByRole('region', { name: 'AI 回复' })).toHaveAttribute(
+      'data-layout',
+      'with-actions',
+    );
+    expect(screen.getByRole('status', { name: '本轮处理结果' })).toHaveAttribute(
+      'tabindex',
+      '0',
+    );
   });
 
   it('将 AI 回复呈现为可聚焦的内部阅读区域，同时保持短回复完整显示', () => {

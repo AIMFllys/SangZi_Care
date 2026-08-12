@@ -66,6 +66,7 @@ export default function VoicePage() {
     message.role === 'assistant');
   const visibleTranscript = recognizedText || transcript;
   const visibleReply = assistantText || lastAiMessage?.content || '';
+  const hasAssistantActions = assistantActions.length > 0;
   const isRecording = phase === 'recording';
   const isBusy = phase === 'transcribing'
     || phase === 'thinking'
@@ -187,7 +188,7 @@ export default function VoicePage() {
     : STATUS_BY_PHASE[phase];
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${hasAssistantActions ? styles.pageWithActions : ''}`}>
       <PageHeader
         title="智能语音助手"
         variant="detail"
@@ -240,9 +241,10 @@ export default function VoicePage() {
       {visibleReply && (
         <Card
           variant="glass"
-          className={styles.responseCard}
+          className={`${styles.responseCard} ${hasAssistantActions ? styles.responseCardWithActions : ''}`}
           role="region"
           aria-label="AI 回复"
+          data-layout={hasAssistantActions ? 'with-actions' : 'default'}
         >
           <div className={styles.responseLabel}>
             <span className={styles.responseIcon} aria-hidden="true">
@@ -267,6 +269,7 @@ export default function VoicePage() {
           role="status"
           aria-label="本轮处理结果"
           aria-live="polite"
+          tabIndex={0}
         >
           <h2>本轮处理结果</h2>
           <ul>
