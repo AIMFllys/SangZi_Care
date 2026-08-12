@@ -48,6 +48,8 @@ let timelineState = makeTimeline();
 let targetUserIdState = 'elder-1';
 let timelineTargetKeyState = 'elder-1';
 let plansTargetKeyState = 'elder-1';
+let isSelfState = true;
+let isFamilyState = false;
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
 vi.mock('@/stores/userStore', () => ({
@@ -65,8 +67,8 @@ vi.mock('@/hooks/useCareRecipient', () => ({
     },
     recipients: [],
     targetUserId: targetUserIdState,
-    isSelf: true,
-    isFamily: false,
+    isSelf: isSelfState,
+    isFamily: isFamilyState,
     isLoading: false,
     selectRecipient: vi.fn(),
   }),
@@ -105,6 +107,8 @@ describe('MedicinePage', () => {
     targetUserIdState = 'elder-1';
     timelineTargetKeyState = 'elder-1';
     plansTargetKeyState = 'elder-1';
+    isSelfState = true;
+    isFamilyState = false;
     confirmMedication.mockResolvedValue(undefined);
     speak.mockResolvedValue(undefined);
   });
@@ -255,6 +259,13 @@ describe('MedicinePage', () => {
       });
     });
     expect(screen.getByRole('status')).toHaveTextContent('已通知 1 位家属');
+  });
+
+  it('家属代管的用药提醒不显示长辈本人 SOS 入口', () => {
+    isSelfState = false;
+    isFamilyState = true;
+    render(<MedicinePage />);
+    expect(screen.queryByRole('button', { name: 'SOS 紧急呼叫' })).not.toBeInTheDocument();
   });
 
   it('药品全名最多显示两行，不以省略号隐藏关键信息', () => {

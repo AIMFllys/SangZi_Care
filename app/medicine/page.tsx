@@ -332,15 +332,17 @@ export default function MedicinePage() {
             </div>
             当前用药提醒
           </Card>
-          <IconButton
-            aria-label="SOS 紧急呼叫"
-            className={styles.sosBtn}
-            onClick={() => void triggerEmergency()}
-            disabled={sosLoading}
-            aria-busy={sosLoading}
-          >
-            <span className={styles.sosText}>SOS</span>
-          </IconButton>
+          {isSelf && (
+            <IconButton
+              aria-label="SOS 紧急呼叫"
+              className={styles.sosBtn}
+              onClick={() => void triggerEmergency()}
+              disabled={sosLoading}
+              aria-busy={sosLoading}
+            >
+              <span className={styles.sosText}>SOS</span>
+            </IconButton>
+          )}
         </div>
 
         <div className={styles.heroSection}>
@@ -368,7 +370,12 @@ export default function MedicinePage() {
             </div>
           </Card>
 
-          {sosFeedback && (
+          {isSelf && sosLoading && (
+            <p className={styles.sosMessage} role="status">
+              正在发送紧急求助…
+            </p>
+          )}
+          {isSelf && sosFeedback && (
             <p
               className={styles.sosMessage}
               role={sosFeedback.kind === 'error' ? 'alert' : 'status'}

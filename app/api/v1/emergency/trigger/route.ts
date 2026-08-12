@@ -68,6 +68,12 @@ export async function POST(request: NextRequest) {
     });
     if (error || data === null) {
       console.error('[POST /emergency/trigger] RPC failed', { code: error?.code ?? 'empty_result' });
+      if (error?.code === 'P0001' && error.message === 'emergency_request_conflict') {
+        throw new ApiError(409, '同一请求编号的紧急求助内容不一致，请重新发起');
+      }
+      if (error?.code === 'P0001' && error.message === 'invalid_emergency_actor') {
+        throw new ApiError(403, '仅长辈账号可触发紧急求助');
+      }
       throw new ApiError(500, '紧急求助暂时无法发送，请重试并立即拨打 120');
     }
 
@@ -77,6 +83,7 @@ export async function POST(request: NextRequest) {
         elderId,
         requestId: body.request_id,
         triggerMethod: body.trigger_method,
+        location,
       });
     } catch {
       console.error('[POST /emergency/trigger] RPC returned an invalid result');

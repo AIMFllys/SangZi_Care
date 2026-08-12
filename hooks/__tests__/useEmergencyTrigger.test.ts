@@ -55,6 +55,17 @@ describe('useEmergencyTrigger', () => {
     }));
   });
 
+  it('请求进行中暴露 loading 供页面显示明确发送状态', async () => {
+    const pending = deferred<typeof sentResponse>();
+    mocks.fetchApi.mockReturnValue(pending.promise);
+    const hook = renderHook(() => useEmergencyTrigger());
+
+    act(() => { void hook.result.current.trigger(); });
+    expect(hook.result.current.isLoading).toBe(true);
+    pending.resolve(sentResponse);
+    await waitFor(() => expect(hook.result.current.isLoading).toBe(false));
+  });
+
   it('零收件人显示明确警告并提示立即拨打 120', async () => {
     mocks.fetchApi.mockResolvedValue({
       ...sentResponse,
@@ -118,6 +129,21 @@ describe('useEmergencyTrigger', () => {
       .not.toBe(mocks.fetchApi.mock.calls[1][1].body.request_id);
   });
 
+  it('409 幂等键载荷冲突后清除 pending payload', async () => {
+    const randomUUID = vi.fn()
+      .mockReturnValueOnce('11111111-1111-4111-8111-111111111111')
+      .mockReturnValueOnce('22222222-2222-4222-8222-222222222222');
+    vi.stubGlobal('crypto', { randomUUID });
+    mocks.fetchApi
+      .mockRejectedValueOnce(new ApiError('同一请求编号的内容不一致', 409))
+      .mockResolvedValueOnce(sentResponse);
+    const hook = renderHook(() => useEmergencyTrigger());
+    await act(async () => { await hook.result.current.trigger(); });
+    await act(async () => { await hook.result.current.trigger(); });
+    expect(mocks.fetchApi.mock.calls[0][1].body.request_id)
+      .not.toBe(mocks.fetchApi.mock.calls[1][1].body.request_id);
+  });
+
   it('权限未 granted 时不读取定位，仍立即发起 SOS', async () => {
     mocks.fetchApi.mockResolvedValue(sentResponse);
     const hook = renderHook(() => useEmergencyTrigger());
@@ -143,5 +169,22 @@ describe('useEmergencyTrigger', () => {
       longitude: 114.3,
       accuracy: 15,
     });
+  });
+
+  it('权限查询永不返回时在短界限内无定位继续 POST', async () => {
+    vi.useFakeTimers();
+    vi.mocked(navigator.permissions.query).mockReturnValue(new Promise(() => undefined));
+    mocks.fetchApi.mockResolvedValue(sentResponse);
+    const hook = renderHook(() => useEmergencyTrigger());
+
+    let pending!: ReturnType<typeof hook.result.current.trigger>;
+    act(() => { pending = hook.result.current.trigger(); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(150); });
+    await act(async () => { await pending; });
+
+    expect(navigator.geolocation.getCurrentPosition).not.toHaveBeenCalled();
+    expect(mocks.fetchApi).toHaveBeenCalledOnce();
+    expect(mocks.fetchApi.mock.calls[0][1].body).not.toHaveProperty('location');
+    vi.useRealTimers();
   });
 });

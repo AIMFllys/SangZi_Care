@@ -118,6 +118,11 @@ export default function ElderHomeView() {
         <p className={styles.voiceLabel}>点我说话</p>
       </div>
 
+      {sosLoading && (
+        <p className={styles.sosMessage} role="status">
+          正在发送紧急求助…
+        </p>
+      )}
       {sosFeedback && (
         <p
           className={styles.sosMessage}

@@ -26,6 +26,7 @@ import {
   type EmergencyCallRow,
   type EmergencyCallUpdate,
 } from '../_lib';
+import { readBoundedJson } from '../../_http';
 
 export const runtime = 'nodejs';
 
@@ -34,11 +35,14 @@ interface CancelBody {
   reason?: unknown;
 }
 
+const MAX_JSON_BYTES = 2 * 1024;
+
 export async function POST(request: NextRequest) {
   try {
-    const { user_id: currentUserId } = await requireUser(request);
+    const { user_id: currentUserId, role } = await requireUser(request);
+    if (role !== 'elder') throw new ApiError(403, '仅长辈本人可取消紧急求助');
 
-    const body = (await request.json().catch(() => null)) as CancelBody | null;
+    const body = await readBoundedJson<CancelBody | null>(request, MAX_JSON_BYTES);
     if (!body) {
       throw new ApiError(400, '请求体必须为 JSON');
     }
@@ -57,7 +61,8 @@ export async function POST(request: NextRequest) {
       if (typeof body.reason !== 'string') {
         throw new ApiError(400, 'reason 必须为字符串');
       }
-      reason = body.reason;
+      reason = body.reason.trim();
+      if (reason.length > 500) throw new ApiError(400, 'reason 不能超过 500 个字符');
     }
 
     const now = new Date().toISOString();
@@ -75,6 +80,8 @@ export async function POST(request: NextRequest) {
       .from('oc_emergency_calls')
       .update(updateData)
       .eq('id', emergencyCallId)
+      .eq('user_id', currentUserId)
+      .eq('status', 'triggered')
       .select('*');
 
     if (error) {
@@ -82,7 +89,7 @@ export async function POST(request: NextRequest) {
       throw new ApiError(500, '取消紧急呼叫失败');
     }
     if (!data || data.length === 0) {
-      throw new ApiError(404, '紧急呼叫记录不存在');
+      throw new ApiError(404, '可取消的紧急呼叫记录不存在');
     }
 
     return withPrivateNoStore(

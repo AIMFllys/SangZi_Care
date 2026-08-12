@@ -16,6 +16,8 @@ describe('SOS 原子通知迁移契约', () => {
     expect(source).toMatch(/v_call\.trigger_method is distinct from p_trigger_method/);
     expect(source).toMatch(/v_call\.location is distinct from p_location/);
     expect(source).toContain('emergency_request_conflict');
+    expect(source).toMatch(/errcode = 'P0001', message = 'emergency_request_conflict'/);
+    expect(source).toMatch(/role = 'elder'[\s\S]*errcode = 'P0001', message = 'invalid_emergency_actor'/);
   });
 
   it('同一安全函数原子创建事件与 system 消息', () => {

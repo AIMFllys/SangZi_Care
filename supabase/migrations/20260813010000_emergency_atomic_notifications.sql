@@ -33,7 +33,7 @@ begin
   if not exists (
     select 1 from public.oc_users where id = p_elder_id and role = 'elder'
   ) then
-    raise exception 'invalid_emergency_actor';
+    raise exception using errcode = 'P0001', message = 'invalid_emergency_actor';
   end if;
   if p_trigger_method not in ('button', 'voice') then
     raise exception 'invalid_trigger_method';
@@ -46,16 +46,16 @@ begin
       or jsonb_typeof(p_location -> 'latitude') <> 'number'
       or jsonb_typeof(p_location -> 'longitude') <> 'number'
       or ((p_location ? 'accuracy') and jsonb_typeof(p_location -> 'accuracy') <> 'number') then
-      raise exception 'invalid_location';
+      raise exception using errcode = 'P0001', message = 'invalid_location';
     end if;
     begin
       if (p_location ->> 'latitude')::double precision not between -90 and 90
         or (p_location ->> 'longitude')::double precision not between -180 and 180
         or ((p_location ? 'accuracy') and (p_location ->> 'accuracy')::double precision < 0) then
-        raise exception 'invalid_location';
+        raise exception using errcode = 'P0001', message = 'invalid_location';
       end if;
     exception when invalid_text_representation or numeric_value_out_of_range then
-      raise exception 'invalid_location';
+      raise exception using errcode = 'P0001', message = 'invalid_location';
     end;
   end if;
 
@@ -77,7 +77,7 @@ begin
 
     if v_call.trigger_method is distinct from p_trigger_method
       or v_call.location is distinct from p_location then
-      raise exception 'emergency_request_conflict';
+      raise exception using errcode = 'P0001', message = 'emergency_request_conflict';
     end if;
 
     return jsonb_build_object(

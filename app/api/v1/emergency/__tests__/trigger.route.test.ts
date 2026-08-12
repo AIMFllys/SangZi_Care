@@ -71,7 +71,7 @@ describe('POST /api/v1/emergency/trigger', () => {
   });
 
   it('一次 RPC 返回已通知结果并严格映射响应', async () => {
-    const rpc = vi.fn().mockResolvedValue({ data: { call, notification_status: 'sent', recipient_count: 1, replayed: false }, error: null });
+    const rpc = vi.fn().mockResolvedValue({ data: { call: { ...call, location: { longitude: 114.3, accuracy: 12, latitude: 30.5 } }, notification_status: 'sent', recipient_count: 1, replayed: false }, error: null });
     mocks.getSupabaseServerClient.mockReturnValue({ rpc });
     const response = await POST(request({
       request_id: call.request_id,
@@ -137,5 +137,24 @@ describe('POST /api/v1/emergency/trigger', () => {
     expect(response.status).toBe(500);
     expect(response.headers.get('cache-control')).toContain('private');
     expect(await response.text()).not.toContain('database secret detail');
+  });
+
+  it.each([
+    ['P0001', 'emergency_request_conflict', 409],
+    ['P0001', 'invalid_emergency_actor', 403],
+  ])('只映射稳定 RPC 业务错误 %s/%s', async (code, message, status) => {
+    mocks.getSupabaseServerClient.mockReturnValue({
+      rpc: vi.fn().mockResolvedValue({ data: null, error: { code, message } }),
+    });
+    const response = await POST(request({ request_id: call.request_id, trigger_method: 'button' }));
+    expect(response.status).toBe(status);
+  });
+
+  it('同错误文案但非稳定 SQLSTATE 不映射 409', async () => {
+    mocks.getSupabaseServerClient.mockReturnValue({
+      rpc: vi.fn().mockResolvedValue({ data: null, error: { code: 'XX000', message: 'emergency_request_conflict' } }),
+    });
+    const response = await POST(request({ request_id: call.request_id, trigger_method: 'button' }));
+    expect(response.status).toBe(500);
   });
 });

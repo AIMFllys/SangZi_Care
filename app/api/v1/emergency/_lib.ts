@@ -86,9 +86,28 @@ function isNullableNumber(value: unknown): value is number | null {
   return value === null || (typeof value === 'number' && Number.isFinite(value));
 }
 
+function jsonEqual(left: unknown, right: unknown): boolean {
+  if (left === right) return true;
+  if (left === null || right === null) return false;
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+    return left.every((item, index) => jsonEqual(item, right[index]));
+  }
+  if (!isRecord(left) || !isRecord(right)) return false;
+  const leftKeys = Object.keys(left).sort();
+  const rightKeys = Object.keys(right).sort();
+  return leftKeys.length === rightKeys.length
+    && leftKeys.every((key, index) => key === rightKeys[index] && jsonEqual(left[key], right[key]));
+}
+
 export function parseTriggerRpcResult(
   value: Json,
-  expected: { elderId: string; requestId: string; triggerMethod: 'button' | 'voice' },
+  expected: {
+    elderId: string;
+    requestId: string;
+    triggerMethod: 'button' | 'voice';
+    location: Json | null;
+  },
 ): EmergencyTriggerResponse {
   if (!isRecord(value) || !isRecord(value.call)) {
     throw new Error('invalid emergency RPC response');
@@ -125,6 +144,7 @@ export function parseTriggerRpcResult(
     || call.user_id !== expected.elderId
     || call.request_id !== expected.requestId
     || call.trigger_method !== expected.triggerMethod
+    || !jsonEqual(call.location, expected.location)
     || call.notified_families.length !== recipientCount
     || (notificationStatus === 'sent' && call.notification_sent_at === null)
     || (notificationStatus === 'no_recipients' && call.notification_sent_at !== null)
