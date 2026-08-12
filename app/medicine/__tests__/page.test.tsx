@@ -8,7 +8,9 @@ import MedicinePage from '../page';
 const fetchTodayTimeline = vi.fn();
 const fetchAllPlans = vi.fn();
 const confirmMedication = vi.fn().mockResolvedValue(undefined);
-const fetchApi = vi.fn().mockResolvedValue({ id: 'emergency-1' });
+const fetchApi = vi.fn().mockResolvedValue({
+  id: 'emergency-1', notification_status: 'sent', recipient_count: 1, replayed: false,
+});
 const push = vi.fn();
 const speak = vi.fn().mockResolvedValue(undefined);
 const stop = vi.fn();
@@ -246,9 +248,13 @@ describe('MedicinePage', () => {
     await waitFor(() => {
       expect(fetchApi).toHaveBeenCalledWith('/api/v1/emergency/trigger', {
         method: 'POST',
-        body: { trigger_method: 'button' },
+        body: expect.objectContaining({
+          request_id: expect.any(String),
+          trigger_method: 'button',
+        }),
       });
     });
+    expect(screen.getByRole('status')).toHaveTextContent('已通知 1 位家属');
   });
 
   it('药品全名最多显示两行，不以省略号隐藏关键信息', () => {

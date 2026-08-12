@@ -37,8 +37,17 @@ export interface EmergencyCallResponse {
   cancelled_by: string | null;
   recording_url: string | null;
   recording_duration: number | null;
+  request_id: string | null;
   notification_sent_at: string | null;
   created_at: string | null;
+}
+
+export type EmergencyNotificationStatus = 'sent' | 'no_recipients';
+
+export interface EmergencyTriggerResponse extends EmergencyCallResponse {
+  notification_status: EmergencyNotificationStatus;
+  recipient_count: number;
+  replayed: boolean;
 }
 
 /** 将 emergency_calls 行映射为响应体。 */
@@ -59,8 +68,77 @@ export function toCallResponse(row: EmergencyCallRow): EmergencyCallResponse {
     cancelled_by: row.cancelled_by,
     recording_url: row.recording_url,
     recording_duration: row.recording_duration,
+    request_id: row.request_id,
     notification_sent_at: row.notification_sent_at,
     created_at: row.created_at,
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === 'string';
+}
+
+function isNullableNumber(value: unknown): value is number | null {
+  return value === null || (typeof value === 'number' && Number.isFinite(value));
+}
+
+export function parseTriggerRpcResult(
+  value: Json,
+  expected: { elderId: string; requestId: string; triggerMethod: 'button' | 'voice' },
+): EmergencyTriggerResponse {
+  if (!isRecord(value) || !isRecord(value.call)) {
+    throw new Error('invalid emergency RPC response');
+  }
+  const call = value.call;
+  const notificationStatus = value.notification_status;
+  const recipientCount = value.recipient_count;
+  if (
+    typeof call.id !== 'string'
+    || typeof call.user_id !== 'string'
+    || typeof call.request_id !== 'string'
+    || typeof call.trigger_method !== 'string'
+    || !isNullableString(call.status)
+    || !Array.isArray(call.called_numbers)
+    || call.called_numbers.some((item) => typeof item !== 'string')
+    || !Array.isArray(call.notified_families)
+    || call.notified_families.some((item) => typeof item !== 'string')
+    || !isRecord(call.called_contacts)
+    || (call.location !== null && !isRecord(call.location))
+    || !isNullableString(call.triggered_at)
+    || !isNullableString(call.answered_at)
+    || !isNullableString(call.ended_at)
+    || !isNullableString(call.cancel_reason)
+    || !isNullableString(call.cancelled_by)
+    || !isNullableString(call.recording_url)
+    || !isNullableNumber(call.recording_duration)
+    || !isNullableString(call.notification_sent_at)
+    || !isNullableString(call.created_at)
+    || (notificationStatus !== 'sent' && notificationStatus !== 'no_recipients')
+    || typeof recipientCount !== 'number'
+    || !Number.isSafeInteger(recipientCount)
+    || recipientCount < 0
+    || typeof value.replayed !== 'boolean'
+    || call.user_id !== expected.elderId
+    || call.request_id !== expected.requestId
+    || call.trigger_method !== expected.triggerMethod
+    || call.notified_families.length !== recipientCount
+    || (notificationStatus === 'sent' && call.notification_sent_at === null)
+    || (notificationStatus === 'no_recipients' && call.notification_sent_at !== null)
+    || (notificationStatus === 'sent' && recipientCount === 0)
+    || (notificationStatus === 'no_recipients' && recipientCount !== 0)
+  ) {
+    throw new Error('invalid emergency RPC response');
+  }
+
+  return {
+    ...toCallResponse(call as unknown as EmergencyCallRow),
+    notification_status: notificationStatus,
+    recipient_count: recipientCount,
+    replayed: value.replayed,
   };
 }
 

@@ -22,7 +22,12 @@ describe('ElderHomeView', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    fetchApi.mockResolvedValue({ id: 'emergency-1' });
+    fetchApi.mockResolvedValue({
+      id: 'emergency-1',
+      notification_status: 'sent',
+      recipient_count: 2,
+      replayed: false,
+    });
     visibilityState = 'visible';
     Object.defineProperty(document, 'visibilityState', {
       configurable: true,
@@ -52,10 +57,13 @@ describe('ElderHomeView', () => {
     await waitFor(() => {
       expect(fetchApi).toHaveBeenCalledWith('/api/v1/emergency/trigger', {
         method: 'POST',
-        body: { trigger_method: 'button' },
+        body: expect.objectContaining({
+          request_id: expect.any(String),
+          trigger_method: 'button',
+        }),
       });
     });
-    expect(screen.getByRole('status')).toHaveTextContent('已通知家属');
+    expect(screen.getByRole('status')).toHaveTextContent('已通知 2 位家属');
     expect(push).not.toHaveBeenCalledWith('/settings');
   });
 

@@ -7,9 +7,9 @@ import {
   type MedicationPlanResponse,
   type TodayTimelineItem,
 } from '@/stores/medicineStore';
-import { fetchApi } from '@/lib/api';
 import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { useCareRecipient } from '@/hooks/useCareRecipient';
+import { useEmergencyTrigger } from '@/hooks/useEmergencyTrigger';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
 import { Badge, Button, Card, IconButton } from '@/components/ui';
 import PageHeader from '@/components/layout/PageHeader';
@@ -105,10 +105,11 @@ export default function MedicinePage() {
   const [dismissedReminderKeys, setDismissedReminderKeys] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
-  const [sosMessage, setSosMessage] = useState('');
   const [actionError, setActionError] = useState('');
   const [showPlanForm, setShowPlanForm] = useState(false);
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
+  const { trigger: triggerEmergency, isLoading: sosLoading, feedback: sosFeedback } =
+    useEmergencyTrigger();
 
   const canManageMedication = Boolean(recipient?.permissions.canEditMedication);
   const timelineMatchesTarget = Boolean(
@@ -308,19 +309,6 @@ export default function MedicinePage() {
     setNow(timestamp);
   };
 
-  const handleEmergency = async () => {
-    setSosMessage('');
-    try {
-      await fetchApi('/api/v1/emergency/trigger', {
-        method: 'POST',
-        body: { trigger_method: 'button' },
-      });
-      setSosMessage('紧急求助已发出');
-    } catch (reason) {
-      setSosMessage(reason instanceof Error ? reason.message : '求助发送失败，请拨打 120');
-    }
-  };
-
   const refreshPlans = async () => {
     setShowPlanForm(false);
     setEditingPlanId(null);
@@ -347,7 +335,9 @@ export default function MedicinePage() {
           <IconButton
             aria-label="SOS 紧急呼叫"
             className={styles.sosBtn}
-            onClick={handleEmergency}
+            onClick={() => void triggerEmergency()}
+            disabled={sosLoading}
+            aria-busy={sosLoading}
           >
             <span className={styles.sosText}>SOS</span>
           </IconButton>
@@ -378,7 +368,14 @@ export default function MedicinePage() {
             </div>
           </Card>
 
-          {sosMessage && <p className={styles.sosMessage} role="status">{sosMessage}</p>}
+          {sosFeedback && (
+            <p
+              className={styles.sosMessage}
+              role={sosFeedback.kind === 'error' ? 'alert' : 'status'}
+            >
+              {sosFeedback.message}
+            </p>
+          )}
           {actionError && <p className={styles.sosMessage} role="alert">{actionError}</p>}
 
           <div className={styles.actions}>

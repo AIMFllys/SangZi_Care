@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
-import { fetchApi } from '@/lib/api';
+import { useEmergencyTrigger } from '@/hooks/useEmergencyTrigger';
 import { Sun, Mic, Phone } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import styles from '../../app/page.module.css';
@@ -71,25 +71,8 @@ export default function ElderHomeView() {
   const user = useUserStore((s) => s.user);
   const { time, date, hour } = useCurrentTime();
   const name = user?.name || '您';
-  const [sosLoading, setSosLoading] = useState(false);
-  const [sosMessage, setSosMessage] = useState('');
-
-  async function handleEmergency() {
-    if (sosLoading) return;
-    setSosLoading(true);
-    setSosMessage('');
-    try {
-      await fetchApi('/api/v1/emergency/trigger', {
-        method: 'POST',
-        body: { trigger_method: 'button' },
-      });
-      setSosMessage('紧急求助已发出，已通知家属');
-    } catch (error) {
-      setSosMessage(error instanceof Error ? error.message : '求助发送失败，请立即拨打 120');
-    } finally {
-      setSosLoading(false);
-    }
-  }
+  const { trigger: triggerEmergency, isLoading: sosLoading, feedback: sosFeedback } =
+    useEmergencyTrigger();
 
   return (
     <div className={styles.page}>
@@ -135,7 +118,14 @@ export default function ElderHomeView() {
         <p className={styles.voiceLabel}>点我说话</p>
       </div>
 
-      {sosMessage && <p className={styles.sosMessage} role="status">{sosMessage}</p>}
+      {sosFeedback && (
+        <p
+          className={styles.sosMessage}
+          role={sosFeedback.kind === 'error' ? 'alert' : 'status'}
+        >
+          {sosFeedback.message}
+        </p>
+      )}
 
       <Button
         variant="danger"
@@ -143,7 +133,7 @@ export default function ElderHomeView() {
         fullWidth
         leftIcon={<Phone size={24} />}
         className={styles.sosButton}
-        onClick={handleEmergency}
+        onClick={() => void triggerEmergency()}
         loading={sosLoading}
         aria-label="紧急呼叫 SOS"
       >

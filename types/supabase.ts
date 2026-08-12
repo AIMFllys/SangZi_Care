@@ -374,6 +374,7 @@ export type Database = {
           notified_families: string[] | null
           recording_duration: number | null
           recording_url: string | null
+          request_id: string | null
           status: string | null
           trigger_method: string
           triggered_at: string | null
@@ -393,6 +394,7 @@ export type Database = {
           notified_families?: string[] | null
           recording_duration?: number | null
           recording_url?: string | null
+          request_id?: string | null
           status?: string | null
           trigger_method: string
           triggered_at?: string | null
@@ -412,6 +414,7 @@ export type Database = {
           notified_families?: string[] | null
           recording_duration?: number | null
           recording_url?: string | null
+          request_id?: string | null
           status?: string | null
           trigger_method?: string
           triggered_at?: string | null
@@ -759,6 +762,15 @@ export type Database = {
           p_summary: string
         }
         Returns: string[]
+      }
+      oc_trigger_emergency: {
+        Args: {
+          p_elder_id: string
+          p_location: Json | null
+          p_request_id: string
+          p_trigger_method: string
+        }
+        Returns: Json
       }
       oc_get_care_dashboard_snapshot: {
         Args: {
