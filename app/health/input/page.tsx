@@ -9,12 +9,23 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useHealthStore, RECORD_TYPE_CONFIG, RECORD_TYPES } from '@/stores/healthStore';
 import type { HealthRecordCreate } from '@/stores/healthStore';
+import {
+  createInitialHealthDrafts,
+  getDirtyHealthRecordTypes,
+  getHealthSubmissionTypes,
+} from './drafts';
+import type {
+  HealthDraft,
+  HealthFormValues,
+  HealthRecordType,
+  InputMethod,
+} from './drafts';
 import { useUserStore } from '@/stores/userStore';
 import { useCareRecipient } from '@/hooks/useCareRecipient';
 import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import { ROUTES } from '@/lib/constants';
 import { Mic, Square, Edit3, FileEdit, CheckCircle, Activity, Droplet, Heart, Scale, Thermometer } from 'lucide-react';
-import { Button, Input, Card } from '@/components/ui';
+import { Button, Input, Card, ConfirmDialog } from '@/components/ui';
 import PageHeader from '@/components/layout/PageHeader';
 import { CareRecipientTabs } from '@/components/family/CareRecipientTabs';
 import styles from './page.module.css';
@@ -29,34 +40,8 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 
 // ---------- 类型 ----------
 
-type RecordType = 'blood_pressure' | 'blood_sugar' | 'heart_rate' | 'weight' | 'temperature';
-type InputMethod = 'manual' | 'voice';
-type SugarMeasurementType = 'fasting' | 'postprandial';
-type VoiceInputStage =
-  | 'idle'
-  | 'recording'
-  | 'transcribing'
-  | 'review'
-  | 'confirmed'
-  | 'error';
-
-interface FormValues {
-  // 血压
-  systolic: string;
-  diastolic: string;
-  // 血糖
-  bloodSugarValue: string;
-  sugarType: SugarMeasurementType;
-  // 心率
-  heartRateValue: string;
-  // 体重
-  weightValue: string;
-  // 体温
-  temperatureValue: string;
-  // 可选
-  notes: string;
-  symptoms: string;
-}
+type RecordType = HealthRecordType;
+type FormValues = HealthFormValues;
 
 interface FormErrors {
   systolic?: string;
@@ -254,23 +239,12 @@ export function buildRecordValues(
 
 // ---------- 初始表单值 ----------
 
-const INITIAL_FORM_VALUES: FormValues = {
-  systolic: '',
-  diastolic: '',
-  bloodSugarValue: '',
-  sugarType: 'fasting',
-  heartRateValue: '',
-  weightValue: '',
-  temperatureValue: '',
-  notes: '',
-  symptoms: '',
-};
-
 // ---------- 组件 ----------
 
 export default function HealthInputPage() {
   const router = useRouter();
   const createRecord = useHealthStore((s) => s.createRecord);
+  const createRecordsBatch = useHealthStore((s) => s.createRecordsBatch);
   const currentUser = useUserStore((s) => s.user);
   const { recipient, targetUserId, isFamily } = useCareRecipient();
   const canEditHealth = Boolean(recipient?.permissions.canEditHealth);
@@ -285,46 +259,70 @@ export default function HealthInputPage() {
 
   // 状态
   const [selectedType, setSelectedType] = useState<RecordType>('blood_pressure');
-  const [inputMethod, setInputMethod] = useState<InputMethod>('manual');
-  const [formValues, setFormValues] = useState<FormValues>(INITIAL_FORM_VALUES);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [drafts, setDrafts] = useState<Record<RecordType, HealthDraft>>(
+    () => createInitialHealthDrafts(),
+  );
+  const [errorsByType, setErrorsByType] = useState<Record<RecordType, FormErrors>>(
+    () => ({
+      blood_pressure: {}, blood_sugar: {}, heart_rate: {}, weight: {}, temperature: {},
+    }),
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [voiceStage, setVoiceStage] = useState<VoiceInputStage>('idle');
-  const [voiceTranscript, setVoiceTranscript] = useState('');
-  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingRecords, setPendingRecords] = useState<HealthRecordCreate[]>([]);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const voiceRunIdRef = useRef(0);
   const targetUserIdRef = useRef(targetUserId);
   const inputLocked = !targetUserId || !canEditHealth;
+  const currentDraft = drafts[selectedType];
+  const { values: formValues, inputMethod, voiceStage, voiceTranscript, voiceError } = currentDraft;
+  const errors = errorsByType[selectedType];
+  const dirtyRecordTypes = getDirtyHealthRecordTypes(drafts);
+  const isDirty = dirtyRecordTypes.length > 0;
+
+  const updateDraft = useCallback(
+    (type: RecordType, update: (draft: HealthDraft) => HealthDraft) => {
+      setDrafts((previous) => ({ ...previous, [type]: update(previous[type]) }));
+    },
+    [],
+  );
 
   // ------ 字段更新 ------
 
   const updateField = useCallback(
     <K extends keyof FormValues>(key: K, value: FormValues[K]) => {
       if (inputLocked) return;
-      setFormValues((prev) => ({ ...prev, [key]: value }));
-      if (inputMethod === 'voice' && voiceStage === 'confirmed') {
-        setVoiceStage('review');
-      }
-      setErrors((prev) => {
+      updateDraft(selectedType, (draft) => ({
+        ...draft,
+        values: { ...draft.values, [key]: value },
+        voiceStage: inputMethod === 'voice' && voiceStage === 'confirmed'
+          ? 'review'
+          : draft.voiceStage,
+      }));
+      setErrorsByType((previous) => {
+        const prev = previous[selectedType];
         if (key in prev) {
           const next = { ...prev };
           delete next[key as keyof FormErrors];
-          return next;
+          return { ...previous, [selectedType]: next };
         }
-        return prev;
+        return previous;
       });
     },
-    [inputLocked, inputMethod, voiceStage],
+    [inputLocked, inputMethod, selectedType, updateDraft, voiceStage],
   );
 
   const cancelVoiceSession = useCallback(() => {
     voiceRunIdRef.current += 1;
     cancelListening();
-    setVoiceStage('idle');
-    setVoiceTranscript('');
-    setVoiceError(null);
-  }, [cancelListening]);
+    updateDraft(selectedType, (draft) => ({
+      ...draft,
+      voiceStage: 'idle',
+      voiceTranscript: '',
+      voiceError: null,
+    }));
+  }, [cancelListening, selectedType, updateDraft]);
 
   // ------ 切换记录类型 ------
 
@@ -332,7 +330,7 @@ export default function HealthInputPage() {
     if (inputLocked || type === selectedType) return;
     cancelVoiceSession();
     setSelectedType(type);
-    setErrors({});
+    setErrorsByType((previous) => ({ ...previous, [type]: {} }));
   }, [cancelVoiceSession, inputLocked, selectedType]);
 
   // ------ 切换录入方式 ------
@@ -341,17 +339,20 @@ export default function HealthInputPage() {
     (method: InputMethod) => {
       if (inputLocked || method === inputMethod) return;
       if (inputMethod === 'voice') cancelVoiceSession();
-      setInputMethod(method);
+      updateDraft(selectedType, (draft) => ({ ...draft, inputMethod: method }));
     },
-    [cancelVoiceSession, inputLocked, inputMethod],
+    [cancelVoiceSession, inputLocked, inputMethod, selectedType, updateDraft],
   );
 
   // ------ 语音按钮 ------
 
   const finishVoiceInput = useCallback(async (): Promise<void> => {
     const runId = voiceRunIdRef.current;
-    setVoiceStage('transcribing');
-    setVoiceError(null);
+    updateDraft(selectedType, (draft) => ({
+      ...draft,
+      voiceStage: 'transcribing',
+      voiceError: null,
+    }));
 
     try {
       const result = await stopListening();
@@ -364,16 +365,23 @@ export default function HealthInputPage() {
         throw new Error('没有听清健康数值，请重试');
       }
 
-      setFormValues((previous) => ({ ...previous, ...parsed }));
-      setErrors({});
-      setVoiceTranscript(finalTranscript);
-      setVoiceStage('review');
+      updateDraft(selectedType, (draft) => ({
+        ...draft,
+        values: { ...draft.values, ...parsed },
+        voiceTranscript: finalTranscript,
+        voiceStage: 'review',
+        voiceError: null,
+      }));
+      setErrorsByType((previous) => ({ ...previous, [selectedType]: {} }));
     } catch (error) {
       if (voiceRunIdRef.current !== runId) return;
-      setVoiceError(error instanceof Error ? error.message : '语音识别失败，请重试');
-      setVoiceStage('error');
+      updateDraft(selectedType, (draft) => ({
+        ...draft,
+        voiceError: error instanceof Error ? error.message : '语音识别失败，请重试',
+        voiceStage: 'error',
+      }));
     }
-  }, [selectedType, stopListening]);
+  }, [selectedType, stopListening, updateDraft]);
 
   const handleMicToggle = useCallback(async (): Promise<void> => {
     if (inputLocked) return;
@@ -384,30 +392,39 @@ export default function HealthInputPage() {
     if (voiceStage === 'transcribing') return;
 
     const runId = ++voiceRunIdRef.current;
-    setVoiceTranscript('');
-    setVoiceError(null);
-    setVoiceStage('recording');
+    updateDraft(selectedType, (draft) => ({
+      ...draft,
+      voiceTranscript: '',
+      voiceError: null,
+      voiceStage: 'recording',
+      inputMethod: 'voice',
+    }));
     resetTranscript();
 
     try {
       await startListening();
     } catch (error) {
       if (voiceRunIdRef.current !== runId) return;
-      setVoiceError(error instanceof Error ? error.message : '无法开始录音，请检查麦克风权限');
-      setVoiceStage('error');
+      updateDraft(selectedType, (draft) => ({
+        ...draft,
+        voiceError: error instanceof Error ? error.message : '无法开始录音，请检查麦克风权限',
+        voiceStage: 'error',
+      }));
     }
-  }, [finishVoiceInput, inputLocked, resetTranscript, startListening, voiceStage]);
+  }, [finishVoiceInput, inputLocked, resetTranscript, selectedType, startListening, updateDraft, voiceStage]);
 
   useEffect(() => {
     if (targetUserIdRef.current === targetUserId) return;
     targetUserIdRef.current = targetUserId;
     cancelVoiceSession();
     setSelectedType('blood_pressure');
-    setInputMethod('manual');
-    setFormValues({ ...INITIAL_FORM_VALUES });
-    setErrors({});
+    setDrafts(createInitialHealthDrafts());
+    setErrorsByType({
+      blood_pressure: {}, blood_sugar: {}, heart_rate: {}, weight: {}, temperature: {},
+    });
     setIsSubmitting(false);
     setShowSuccess(false);
+    setShowConfirm(false);
   }, [cancelVoiceSession, targetUserId]);
 
   useEffect(() => {
@@ -418,9 +435,12 @@ export default function HealthInputPage() {
 
   useEffect(() => {
     if (inputMethod !== 'voice' || !recognitionError || voiceStage === 'idle') return;
-    setVoiceError(recognitionError);
-    setVoiceStage('error');
-  }, [inputMethod, recognitionError, voiceStage]);
+    updateDraft(selectedType, (draft) => ({
+      ...draft,
+      voiceError: recognitionError,
+      voiceStage: 'error',
+    }));
+  }, [inputMethod, recognitionError, selectedType, updateDraft, voiceStage]);
 
   useEffect(() => () => {
     voiceRunIdRef.current += 1;
@@ -430,64 +450,149 @@ export default function HealthInputPage() {
   // ------ 提交 ------
 
   const handleSubmit = useCallback(async () => {
-    if (inputMethod === 'voice' && voiceStage !== 'confirmed') {
-      setVoiceError('请先确认语音解析结果');
+    if (!targetUserId || !canEditHealth) return;
+
+    const dirtyTypes = getDirtyHealthRecordTypes(drafts);
+    const candidates = getHealthSubmissionTypes(drafts);
+    if (dirtyTypes.length === 0) {
+      const validationErrors = validateFormValues(selectedType, formValues);
+      setErrorsByType((previous) => ({ ...previous, [selectedType]: validationErrors }));
       return;
     }
 
-    const validationErrors = validateFormValues(selectedType, formValues);
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      if (!targetUserId || !canEditHealth) {
-        throw new Error('当前长辈尚未授权代录健康数据');
+    const nextErrors: Record<RecordType, FormErrors> = {
+      blood_pressure: {}, blood_sugar: {}, heart_rate: {}, weight: {}, temperature: {},
+    };
+    let firstInvalid: RecordType | null = null;
+    for (const recordType of dirtyTypes) {
+      const draft = drafts[recordType];
+      const validationErrors = validateFormValues(recordType, draft.values);
+      if (draft.inputMethod === 'voice' && draft.voiceStage !== 'confirmed') {
+        nextErrors[recordType] = validationErrors;
+        if (!firstInvalid) firstInvalid = recordType;
+        updateDraft(recordType, (current) => ({ ...current, voiceError: '请先确认语音解析结果' }));
+        continue;
       }
-      const recordData: HealthRecordCreate = {
-        user_id: targetUserId,
-        record_type: selectedType,
-        values: buildRecordValues(selectedType, formValues),
-        measured_at: new Date().toISOString(),
-        input_method: inputMethod,
-        recorded_by: currentUser?.id,
-        notes: formValues.notes.trim() || undefined,
-        symptoms: formValues.symptoms.trim() || undefined,
-      };
-
-      await createRecord(recordData);
-      setShowSuccess(true);
-
-      // 1.5秒后跳转回健康记录页
-      setTimeout(() => {
-        router.push(ROUTES.HEALTH);
-      }, 1500);
-    } catch {
-      setErrors({ systolic: '保存失败，请重试' });
-    } finally {
-      setIsSubmitting(false);
+      nextErrors[recordType] = validationErrors;
+      if (Object.keys(validationErrors).length > 0 && !firstInvalid) firstInvalid = recordType;
     }
+    setErrorsByType(nextErrors);
+    if (firstInvalid) {
+      setSelectedType(firstInvalid);
+      return;
+    }
+
+    const measuredAt = new Date().toISOString();
+    const records: HealthRecordCreate[] = candidates.map((recordType) => {
+      const draft = drafts[recordType];
+      return {
+        user_id: targetUserId,
+        record_type: recordType,
+        values: buildRecordValues(recordType, draft.values),
+        measured_at: measuredAt,
+        input_method: targetUserId === currentUser?.id ? draft.inputMethod : 'family',
+        recorded_by: currentUser?.id,
+        notes: draft.values.notes.trim() || undefined,
+        symptoms: draft.values.symptoms.trim() || undefined,
+      };
+    });
+    setPendingRecords(records);
+    setSubmitError(null);
+
+    // 保持旧测试/临时 store 实现可用；生产 store 始终提供事务批量接口。
+    if (!createRecordsBatch) {
+      setIsSubmitting(true);
+      try {
+        await createRecord(records[0]);
+        setShowSuccess(true);
+      } catch {
+        setSubmitError('保存失败，请重试');
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+    setShowConfirm(true);
   }, [
-    selectedType,
-    formValues,
-    inputMethod,
-    voiceStage,
-    currentUser,
-    createRecord,
-    router,
-    targetUserId,
     canEditHealth,
+    createRecord,
+    createRecordsBatch,
+    currentUser,
+    drafts,
+    formValues,
+    selectedType,
+    targetUserId,
+    updateDraft,
   ]);
 
   // ------ 取消 ------
 
-  const handleCancel = useCallback(() => {
+  const leavePage = useCallback(() => {
     cancelVoiceSession();
     router.push(ROUTES.HEALTH);
   }, [cancelVoiceSession, router]);
+
+  const handleCancel = useCallback(() => {
+    if (isDirty) {
+      setShowConfirm(true);
+      setPendingRecords([]);
+      return;
+    }
+    leavePage();
+  }, [isDirty, leavePage]);
+
+  const confirmDialogCancel = useCallback(() => {
+    setShowConfirm(false);
+    setPendingRecords([]);
+  }, []);
+
+  const confirmDialogConfirm = useCallback(async () => {
+    if (pendingRecords.length === 0) {
+      setShowConfirm(false);
+      leavePage();
+      return;
+    }
+    if (!createRecordsBatch) return;
+    setIsSubmitting(true);
+    try {
+      await createRecordsBatch({ user_id: targetUserId ?? undefined, records: pendingRecords });
+      setShowConfirm(false);
+      setDrafts(createInitialHealthDrafts());
+      setShowSuccess(true);
+      setPendingRecords([]);
+      setTimeout(() => router.push(ROUTES.HEALTH), 1500);
+    } catch {
+      setSubmitError('保存失败，请重试');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [createRecordsBatch, leavePage, pendingRecords, router, targetUserId]);
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [isDirty]);
+
+  useEffect(() => {
+    const marker = { healthInputGuard: true };
+    window.history.pushState(marker, '', window.location.href);
+    const onPopState = () => {
+      if (isDirty) {
+        window.history.pushState(marker, '', window.location.href);
+        setShowConfirm(true);
+        setPendingRecords([]);
+      } else {
+        router.push(ROUTES.HEALTH);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [isDirty, router]);
 
   // ------ 渲染表单字段 ------
 
@@ -620,7 +725,7 @@ export default function HealthInputPage() {
         title={isFamily && recipient ? `为${recipient.name}记录` : '录入健康数据'}
         subtitle={isFamily ? '家属代录将保留操作人审计' : undefined}
         variant="detail"
-        backHref={ROUTES.HEALTH}
+        onBack={handleCancel}
         rightAction={<FileEdit size={24} />}
       />
 
@@ -733,8 +838,11 @@ export default function HealthInputPage() {
               size="md"
               fullWidth
               onClick={() => {
-                setVoiceError(null);
-                setVoiceStage('confirmed');
+                updateDraft(selectedType, (draft) => ({
+                  ...draft,
+                  voiceError: null,
+                  voiceStage: 'confirmed',
+                }));
               }}
               disabled={voiceStage === 'confirmed'}
             >
@@ -803,6 +911,31 @@ export default function HealthInputPage() {
           保存记录
         </Button>
       </div>
+
+      {submitError && (
+        <p role="alert" className={styles.submitError}>{submitError}</p>
+      )}
+
+      <ConfirmDialog
+        open={showConfirm}
+        title={pendingRecords.length > 0 ? '确认保存健康记录' : '放弃未保存的健康草稿？'}
+        description={pendingRecords.length > 0 ? '以下记录将一次性保存，任一条失败都会全部回滚。' : '离开后本页未保存的内容将被清除。'}
+        cancelLabel="继续编辑"
+        confirmLabel={pendingRecords.length > 0 ? '确认保存' : '放弃离开'}
+        onCancel={confirmDialogCancel}
+        onConfirm={() => void confirmDialogConfirm()}
+      >
+        {pendingRecords.length > 0 && (
+          <ul className={styles.confirmSummary} aria-label="待保存的健康记录">
+            {pendingRecords.map((record) => (
+              <li key={`${record.record_type}-${record.measured_at}`}>
+                {RECORD_TYPE_CONFIG[record.record_type]?.label ?? record.record_type}
+                <span>{new Date(record.measured_at).toLocaleString('zh-CN')}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </ConfirmDialog>
 
       {/* 成功提示 */}
       {showSuccess && (

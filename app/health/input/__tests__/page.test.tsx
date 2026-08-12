@@ -573,10 +573,11 @@ describe('HealthInputPage 组件', () => {
     });
   });
 
-  it('返回按钮指向健康记录页', () => {
+  it('返回按钮使用离开保护回调而不是绕过页面状态的链接', () => {
     render(<HealthInputPage />);
     const backLink = screen.getByLabelText('返回');
-    expect(backLink.closest('a')?.getAttribute('href')).toBe('/health');
+    expect(backLink.closest('button')).not.toBeNull();
+    expect(backLink.closest('a')).toBeNull();
   });
 
   it('取消按钮导航到健康记录页', () => {

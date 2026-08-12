@@ -298,6 +298,40 @@
   backdrop-filter: blur(4px);
 }
 
+.confirmSummary {
+  display: grid;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.confirmSummary li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: 10px 12px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  font-weight: 700;
+}
+
+.confirmSummary span {
+  color: var(--text-secondary);
+  font-size: var(--font-small);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.submitError {
+  margin: 0 var(--page-gutter) var(--space-sm);
+  color: var(--color-danger);
+  font-size: var(--font-small);
+  font-weight: 700;
+  text-align: center;
+}
+
 .successCard {
   display: grid;
   width: min(100%, 320px);

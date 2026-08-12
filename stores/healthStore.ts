@@ -37,12 +37,17 @@ export interface LatestRecordsResponse {
 export interface HealthRecordCreate {
   user_id?: string;
   record_type: string;
-  values: Record<string, number>;
+  values: Record<string, unknown>;
   measured_at: string;
   input_method: 'voice' | 'manual' | 'family';
   recorded_by?: string;
   notes?: string;
   symptoms?: string;
+}
+
+export interface HealthRecordBatchCreate {
+  user_id?: string;
+  records: HealthRecordCreate[];
 }
 
 // ---------- 记录类型配置 ----------
@@ -129,6 +134,8 @@ interface HealthState {
   fetchTrend: (recordType: string, days?: number, userId?: string) => Promise<void>;
   /** 创建健康记录 */
   createRecord: (data: HealthRecordCreate) => Promise<HealthRecordResponse>;
+  /** 在一个数据库事务中批量创建健康记录 */
+  createRecordsBatch: (data: HealthRecordBatchCreate) => Promise<HealthRecordResponse[]>;
   /** 设置选中类型 */
   setSelectedType: (type: string) => void;
   /** 清空状态 */
@@ -216,6 +223,14 @@ export const useHealthStore = create<HealthState>()((set, get) => ({
       { method: 'POST', body: data },
     );
     return result;
+  },
+
+  createRecordsBatch: async (data: HealthRecordBatchCreate) => {
+    const result = await fetchApi<{ records: HealthRecordResponse[] }>(
+      '/api/v1/health/records/batch',
+      { method: 'POST', body: data },
+    );
+    return result.records;
   },
 
   setSelectedType: (type: string) => {

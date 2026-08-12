@@ -814,6 +814,14 @@ export type Database = {
         }
         Returns: Json
       }
+      oc_create_health_records_batch: {
+        Args: {
+          p_recorded_by: string
+          p_records: Json
+          p_target_user_id: string
+        }
+        Returns: Json
+      }
       oc_get_care_dashboard_snapshot: {
         Args: {
           p_end: string

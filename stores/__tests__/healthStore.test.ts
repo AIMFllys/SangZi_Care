@@ -319,6 +319,32 @@ describe('useHealthStore', () => {
     });
   });
 
+  describe('createRecordsBatch', () => {
+    it('通过批量接口一次提交多条健康记录', async () => {
+      const records = [makeRecord({ id: 'batch-1' }), makeRecord({ id: 'batch-2', record_type: 'heart_rate' })];
+      mockFetchApi.mockResolvedValue({ records });
+
+      await expect(useHealthStore.getState().createRecordsBatch({
+        user_id: 'elder-1',
+        records: [
+          {
+            record_type: 'blood_pressure', values: { systolic: 120, diastolic: 80 },
+            measured_at: '2024-06-15T08:00:00Z', input_method: 'manual',
+          },
+          {
+            record_type: 'heart_rate', values: { value: 72 },
+            measured_at: '2024-06-15T08:00:00Z', input_method: 'manual',
+          },
+        ],
+      })).resolves.toEqual(records);
+
+      expect(mockFetchApi).toHaveBeenCalledWith('/api/v1/health/records/batch', {
+        method: 'POST',
+        body: expect.objectContaining({ user_id: 'elder-1', records: expect.any(Array) }),
+      });
+    });
+  });
+
   describe('setSelectedType', () => {
     it('更新选中类型', () => {
       useHealthStore.getState().setSelectedType('heart_rate');
