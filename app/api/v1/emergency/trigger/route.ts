@@ -48,8 +48,7 @@ function parseLocation(value: unknown): Json | null {
 
 export async function POST(request: NextRequest) {
   try {
-    const { user_id: elderId, role } = await requireUser(request);
-    if (role !== 'elder') throw new ApiError(403, '仅长辈账号可触发紧急求助');
+    const { user_id: elderId } = await requireUser(request);
 
     const body = await readBoundedJson<TriggerBody | null>(request, MAX_JSON_BYTES);
     if (!body) throw new ApiError(400, '请求体必须为 JSON');

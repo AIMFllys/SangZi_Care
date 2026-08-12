@@ -39,8 +39,7 @@ const MAX_JSON_BYTES = 2 * 1024;
 
 export async function POST(request: NextRequest) {
   try {
-    const { user_id: currentUserId, role } = await requireUser(request);
-    if (role !== 'elder') throw new ApiError(403, '仅长辈本人可取消紧急求助');
+    const { user_id: currentUserId } = await requireUser(request);
 
     const body = await readBoundedJson<CancelBody | null>(request, MAX_JSON_BYTES);
     if (!body) {

@@ -41,11 +41,18 @@ describe('emergency legacy/cancel routes', () => {
     expect(mocks.getSupabaseServerClient).not.toHaveBeenCalled();
   });
 
-  it('cancel 拒绝 family 角色且不写数据库', async () => {
-    mocks.requireUser.mockResolvedValue({ user_id: 'family-1', role: 'family' });
+  it('cancel 不信任可能过期的 JWT role，仍严格按 owner 过滤', async () => {
+    mocks.requireUser.mockResolvedValue({ user_id: 'elder-1', role: 'family' });
+    const select = vi.fn().mockResolvedValue({ data: [call], error: null });
+    const eqStatus = vi.fn(() => ({ select }));
+    const eqOwner = vi.fn(() => ({ eq: eqStatus }));
+    const eqId = vi.fn(() => ({ eq: eqOwner }));
+    mocks.getSupabaseServerClient.mockReturnValue({
+      from: vi.fn(() => ({ update: vi.fn(() => ({ eq: eqId })) })),
+    });
     const response = await cancel.POST(request('/api/v1/emergency/cancel', { emergency_call_id: 'call-1' }));
-    expect(response.status).toBe(403);
-    expect(mocks.getSupabaseServerClient).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(eqOwner).toHaveBeenCalledWith('user_id', 'elder-1');
   });
 
   it('cancel 仅按 owner + triggered 更新', async () => {

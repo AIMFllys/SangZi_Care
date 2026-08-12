@@ -43,12 +43,23 @@ describe('POST /api/v1/emergency/trigger', () => {
     mocks.requireUser.mockResolvedValue({ user_id: 'elder-1', role: 'elder' });
   });
 
-  it('仅 elder 可触发', async () => {
+  it('JWT 角色可能过期时仍调用 RPC，由数据库权威角色判定', async () => {
     mocks.requireUser.mockResolvedValue({ user_id: 'family-1', role: 'family' });
+    const rpc = vi.fn().mockResolvedValue({
+      data: {
+        call: { ...call, user_id: 'family-1' },
+        notification_status: 'sent', recipient_count: 1, replayed: false,
+      },
+      error: null,
+    });
+    mocks.getSupabaseServerClient.mockReturnValue({ rpc });
     const response = await POST(request({
       request_id: '11111111-1111-4111-8111-111111111111', trigger_method: 'button',
     }));
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith('oc_trigger_emergency', expect.objectContaining({
+      p_elder_id: 'family-1',
+    }));
     expect(response.headers.get('cache-control')).toContain('private');
   });
 
