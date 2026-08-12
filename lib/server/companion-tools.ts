@@ -115,20 +115,52 @@ export function buildCompanionSystemPrompt(user: CompanionUser): string {
   ].join('\n');
 }
 
-const SHARE_TARGET_RE = /(家人|家属|孩子|子女|儿子|女儿|老伴|亲属)/;
-const SHARE_VERB_RE = /(发给|发一下|分享|同步|告诉|转告|通知)/;
 const SHARE_NEGATION_RE = /(?:没有|还没|尚未|未曾|未(?:告诉|发给|分享|同步|通知|转告)|没(?:有|告诉|发给|分享|同步|通知|转告)|不要|不用|不必|不能|不愿|不想|暂时不|先不|别|算了|拒绝)/;
 const SHARE_QUESTION_RE = /(?:[?？]$|(?:吗|么|是否|有没有|了没)[呀啊呢，。！!]*$)/;
-const DIRECT_SHARE_REQUEST_RE = /^(?:请(?:你|您)?|麻烦(?:你|您)?|帮我|帮忙|替我|把|将|告诉|转告|发给|分享|同步|通知)/;
-const DIRECT_SHARE_PERMISSION_RE = /^(?:我)?(?:同意|允许|愿意|可以)(?:请|让|把|将|帮我|帮忙|替我|告诉|转告|发给|分享|同步|通知)/;
 const AFFIRMATIVE_RE = /^(好|好的|好啊|可以|行|没问题|同意|愿意|发吧|分享吧|同步吧|告诉他们|告诉孩子|就这样)[呀啊吧嘛呢了，。！!]*$/;
+const FAMILY_TARGET_SOURCE = '(?:家人|家属|孩子|子女|儿子|女儿|老伴|亲属)';
+const OBJECT_SHARE_RE = new RegExp(
+  `^(?:把|将).+?(?:(?:告诉|同步|分享|通知|转告)(?:给|到)?|发给)${FAMILY_TARGET_SOURCE}`,
+);
+const REQUEST_SHARE_RE = new RegExp(
+  `^(?:请(?:你|您)?|麻烦(?:你|您)?|帮我|帮忙|替我).*?(?:(?:告诉|同步|分享|通知|转告)(?:给|到)|发给)${FAMILY_TARGET_SOURCE}`,
+);
+const SHORT_SHARE_RE = new RegExp(
+  `^(?:(?:告诉|通知|转告)(?:给|到)?|(?:同步|分享)(?:给|到)|发给)${FAMILY_TARGET_SOURCE}(?:吧|呀|啊|一下)?[，。！!]*$`,
+);
+const ASSISTANT_SHARE_QUESTION_PREFIX_RE =
+  /^(?:是否需要我|是否要我|要不要我|需不需要我|需要我|要我)/;
+const ASSISTANT_SHARE_QUESTION_SIGNAL_RE = /(?:是否|要不要|需不需要|吗|么|[?？])/;
+
+function normalizeConsentText(text: string): string {
+  return text.trim().replace(/\s+/g, '');
+}
+
+function hasClearFamilyShareDirection(normalizedText: string): boolean {
+  return OBJECT_SHARE_RE.test(normalizedText)
+    || REQUEST_SHARE_RE.test(normalizedText)
+    || SHORT_SHARE_RE.test(normalizedText);
+}
+
+function isFamilyShareAuthorizationQuestion(text: string): boolean {
+  const normalized = normalizeConsentText(text);
+  if (!normalized || !ASSISTANT_SHARE_QUESTION_SIGNAL_RE.test(normalized)) return false;
+
+  const prefix = normalized.match(ASSISTANT_SHARE_QUESTION_PREFIX_RE)?.[0];
+  if (!prefix) return false;
+  const direction = normalized
+    .slice(prefix.length)
+    .replace(/(?:吗|么|呢|好吗|好不好)?[?？]*$/, '');
+  if (!direction || SHARE_NEGATION_RE.test(direction)) return false;
+  return hasClearFamilyShareDirection(direction);
+}
 
 export function hasExplicitFamilyShareConsent(
   messages: CompanionConversationMessage[],
 ): boolean {
   const lastUserIndex = messages.findLastIndex((message) => message.role === 'user');
   if (lastUserIndex < 0) return false;
-  const current = messages[lastUserIndex].content.trim().replace(/\s+/g, '');
+  const current = normalizeConsentText(messages[lastUserIndex].content);
   if (!current) return false;
 
   const previousAssistant = messages
@@ -136,18 +168,13 @@ export function hasExplicitFamilyShareConsent(
     .reverse()
     .find((message) => message.role === 'assistant')
     ?.content ?? '';
-  const assistantProposedFamilyShare =
-    SHARE_VERB_RE.test(previousAssistant) && SHARE_TARGET_RE.test(previousAssistant);
   // “没问题”等短肯定只承接上一条明确的分享询问，不能单独授权。
-  if (assistantProposedFamilyShare && AFFIRMATIVE_RE.test(current)) return true;
+  if (isFamilyShareAuthorizationQuestion(previousAssistant) && AFFIRMATIVE_RE.test(current)) {
+    return true;
+  }
 
   if (SHARE_NEGATION_RE.test(current) || SHARE_QUESTION_RE.test(current)) return false;
-
-  const hasExplicitRequest = DIRECT_SHARE_REQUEST_RE.test(current)
-    || DIRECT_SHARE_PERMISSION_RE.test(current);
-  return hasExplicitRequest
-    && SHARE_VERB_RE.test(current)
-    && SHARE_TARGET_RE.test(current);
+  return hasClearFamilyShareDirection(current);
 }
 
 export function selectMurmurSourceText(

@@ -95,6 +95,28 @@ describe('companion share consent', () => {
     }
   });
 
+  it.each([
+    {
+      assistant: '我不会告诉家人。',
+      user: '可以',
+    },
+    {
+      assistant: '不要告诉家人好吗？',
+      user: '没问题',
+    },
+  ])('短肯定不会承接否定陈述或否定问句：$assistant / $user', ({ assistant, user }) => {
+    expect(hasExplicitFamilyShareConsent([
+      { role: 'assistant', content: assistant },
+      { role: 'user', content: user },
+    ])).toBe(false);
+  });
+
+  it('“告诉我孩子今天怎么样”是询问信息，不是向孩子分享', () => {
+    expect(hasExplicitFamilyShareConsent([
+      { role: 'user', content: '告诉我孩子今天怎么样' },
+    ])).toBe(false);
+  });
+
   it('同意轮仍选择前一条有意义原话作为碎碎念来源', () => {
     expect(selectMurmurSourceText([
       { role: 'user', content: '今天在公园遇见老朋友，很开心' },
