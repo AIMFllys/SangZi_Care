@@ -13,9 +13,9 @@ export interface SortableContact {
 export function contactDisplayName(
   alias: string | null | undefined,
   peerName: string | null | undefined,
-  relation: string | null | undefined,
+  fallback: string,
 ): string {
-  return alias?.trim() || peerName?.trim() || relation?.trim() || '家人';
+  return alias?.trim() || peerName?.trim() || fallback;
 }
 
 function messageTimestamp(contact: SortableContact): number {

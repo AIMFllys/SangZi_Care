@@ -155,7 +155,7 @@ export const useMessageStore = create<MessageState>()((set, get) => ({
           name: contactDisplayName(
             bind.bind.contact_preference?.alias,
             bind.user.name,
-            bind.bind.relation,
+            '家人',
           ),
           avatarUrl: bind.user.avatar_url ?? undefined,
           relationship:

@@ -42,6 +42,7 @@ export default function ContactPreferenceDialog({
   onSaved,
 }: ContactPreferenceDialogProps) {
   const titleId = useId();
+  const dialogRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const savingRef = useRef(false);
   const [alias, setAlias] = useState(initialAlias ?? '');
@@ -59,7 +60,34 @@ export default function ContactPreferenceDialog({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape' && !savingRef.current) onClose();
+      if (event.key === 'Escape' && !savingRef.current) {
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+      ));
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const active = document.activeElement;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const activeIndex = active instanceof HTMLElement ? focusable.indexOf(active) : -1;
+      if (event.shiftKey && (activeIndex <= 0)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (activeIndex === -1 || active === last)) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
@@ -100,10 +128,12 @@ export default function ContactPreferenceDialog({
       }}
     >
       <section
+        ref={dialogRef}
         className={styles.dialog}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
       >
         <h2 id={titleId} className={styles.title}>管理{displayName}</h2>
         <p className={styles.description}>备注和置顶只在您的联系人中生效。</p>

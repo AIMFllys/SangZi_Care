@@ -46,7 +46,7 @@ export default function ChatDetailPage() {
     ? contactDisplayName(
       contactBind.bind.contact_preference?.alias,
       contactBind.user.name,
-      contactBind.bind.relation,
+      '聊天',
     )
     : '聊天';
 

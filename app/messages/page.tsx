@@ -149,6 +149,7 @@ export default function MessagesPage() {
                 onPointerMove={moveLongPress}
                 onPointerUp={cancelLongPress}
                 onPointerCancel={cancelLongPress}
+                onPointerLeave={cancelLongPress}
                 onContextMenu={(event) => {
                   event.preventDefault();
                   cancelLongPress();

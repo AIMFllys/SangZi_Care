@@ -261,6 +261,23 @@ describe('MessagesPage 组件', () => {
     expect(manage).toHaveFocus();
   });
 
+  it('aria-modal 内 Tab 与 Shift+Tab 循环焦点，不逃到背景按钮', () => {
+    mockBinds = [{ bind: { status: 'active', relation: '女儿' }, user: { id: 'u1', name: '小红' } }];
+    mockContacts = [{ userId: 'u1', name: '小红', relationship: '女儿', unreadCount: 0, isPinned: false }];
+    render(<MessagesPage />);
+    fireEvent.click(screen.getByRole('button', { name: '管理小红' }));
+
+    const input = screen.getByRole('textbox', { name: '备注名' });
+    const save = screen.getByRole('button', { name: '保存' });
+    save.focus();
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(input).toHaveFocus();
+
+    input.focus();
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    expect(save).toHaveFocus();
+  });
+
   it('长按打开管理且抑制合成 click，移动超过阈值会取消', () => {
     vi.useFakeTimers();
     mockBinds = [{ bind: { status: 'active', relation: '女儿' }, user: { id: 'u1', name: '小红' } }];
@@ -287,6 +304,18 @@ describe('MessagesPage 组件', () => {
     fireEvent.contextMenu(screen.getByRole('listitem'));
     expect(screen.getByRole('dialog', { name: '管理小红' })).toBeInTheDocument();
     expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('指针在阈值前离开联系人卡片会取消长按', () => {
+    vi.useFakeTimers();
+    mockBinds = [{ bind: { status: 'active', relation: '女儿' }, user: { id: 'u1', name: '小红' } }];
+    mockContacts = [{ userId: 'u1', name: '小红', relationship: '女儿', unreadCount: 0, isPinned: false }];
+    render(<MessagesPage />);
+    const item = screen.getByRole('listitem');
+    fireEvent.pointerDown(item, { clientX: 10, clientY: 10 });
+    fireEvent.pointerLeave(item, { clientX: 12, clientY: 12 });
+    act(() => vi.advanceTimersByTime(600));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('保存失败保留对话框与输入并显示错误', async () => {
