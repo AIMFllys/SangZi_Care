@@ -9,13 +9,17 @@
 }
 
 .dialog {
+  box-sizing: border-box;
   width: min(100%, 480px);
+  max-block-size: calc(100dvh - var(--space-md) - var(--space-md));
   margin: 0 auto;
   padding: var(--space-lg);
   border: 1px solid var(--divider);
   border-radius: var(--radius-xl);
   background: var(--bg-card-solid);
   box-shadow: 0 20px 48px rgb(15 23 42 / 22%);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .title {

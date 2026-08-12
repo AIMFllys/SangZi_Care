@@ -25,4 +25,18 @@ describe('联系人偏好对话框移动端层级契约', () => {
     expect(ruleValue(dialogCss, 'overlay', 'z-index'))
       .toBeGreaterThan(ruleValue(tabBarCss, 'tabBar', 'z-index'));
   });
+
+  it('短横屏时对话框限制在遮罩内并由自身滚动', () => {
+    const dialogCss = readFileSync(resolve(
+      process.cwd(),
+      'components/messages/ContactPreferenceDialog.module.css',
+    ), 'utf8');
+
+    expect(dialogCss).toMatch(/\.dialog\s*\{[\s\S]*?box-sizing:\s*border-box;/);
+    expect(dialogCss).toMatch(
+      /\.dialog\s*\{[\s\S]*?max-block-size:\s*calc\(100dvh\s*-\s*var\(--space-md\)\s*-\s*var\(--space-md\)\);/,
+    );
+    expect(dialogCss).toMatch(/\.dialog\s*\{[\s\S]*?overflow-y:\s*auto;/);
+    expect(dialogCss).toMatch(/\.dialog\s*\{[\s\S]*?overscroll-behavior:\s*contain;/);
+  });
 });
