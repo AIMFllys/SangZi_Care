@@ -72,6 +72,23 @@ describe('POST /api/v1/health/records/batch', () => {
     }));
   });
 
+  it('normalizes an explicit null input_method for self-records before the RPC', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: [{ id: 'record-1', ...validRecord, user_id: 'elder-1' }],
+      error: null,
+    });
+    mocks.getSupabaseServerClient.mockReturnValue({ rpc, from: vi.fn() });
+
+    const response = await POST(request({
+      records: [{ ...validRecord, input_method: null }],
+    }));
+
+    expect(response.status).toBe(201);
+    expect(rpc).toHaveBeenCalledWith('oc_create_health_records_batch', expect.objectContaining({
+      p_records: [expect.objectContaining({ input_method: 'manual' })],
+    }));
+  });
+
   it('rejects more than five records before touching the database', async () => {
     const rpc = vi.fn();
     const from = vi.fn();

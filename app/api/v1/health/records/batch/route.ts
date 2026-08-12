@@ -130,7 +130,7 @@ function parseRecord(
     throw new ApiError(400, 'input_method 无效');
   }
   const inputMethod = targetUserId === currentUserId
-    ? (requestedInputMethod === undefined ? 'manual' : requestedInputMethod as string | null)
+    ? (requestedInputMethod == null ? 'manual' : requestedInputMethod)
     : 'family';
 
   return {
