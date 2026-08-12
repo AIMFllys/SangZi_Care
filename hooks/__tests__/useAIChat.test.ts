@@ -67,6 +67,19 @@ describe('useAIChat cancellation', () => {
       actions: [
         { type: 'murmur_saved', label: '碎碎念已保存', success: true },
         { type: 'share_consent_required', label: '等待长辈同意分享', success: false },
+        { type: 'no_family_recipients', label: '暂无已绑定家属', status: 'warning' },
+        {
+          type: 'murmur_shared',
+          label: '不应显示畸形动作',
+          status: 'pending',
+          success: true,
+        },
+        {
+          type: 'tool_error',
+          label: '不应显示冲突动作',
+          status: 'error',
+          success: true,
+        },
         { type: 'unknown_action', label: '不应显示', status: 'success', success: true },
         { type: 'tool_error', label: '', status: 'error', success: false },
         null,
@@ -87,6 +100,11 @@ describe('useAIChat cancellation', () => {
     }, {
       type: 'share_consent_required',
       label: '等待长辈同意分享',
+      status: 'warning',
+      success: false,
+    }, {
+      type: 'no_family_recipients',
+      label: '暂无已绑定家属',
       status: 'warning',
       success: false,
     }]);

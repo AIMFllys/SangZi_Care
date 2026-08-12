@@ -87,8 +87,20 @@ export function normalizeAIActions(value: unknown): AIAction[] {
     if (!normalizedLabel || Array.from(normalizedLabel).length > 120) return [];
 
     let status: AIActionStatus | null = null;
-    if (typeof candidate.status === 'string' && ACTION_STATUS_SET.has(candidate.status)) {
+    if (candidate.status !== undefined) {
+      if (typeof candidate.status !== 'string' || !ACTION_STATUS_SET.has(candidate.status)) {
+        return [];
+      }
       status = candidate.status as AIActionStatus;
+      if (
+        candidate.success !== undefined
+        && (
+          typeof candidate.success !== 'boolean'
+          || candidate.success !== (status === 'success')
+        )
+      ) {
+        return [];
+      }
     } else if (typeof candidate.success === 'boolean') {
       status = candidate.success
         ? 'success'
