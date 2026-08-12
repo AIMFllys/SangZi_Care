@@ -17,6 +17,7 @@ import {
 } from '@/lib/server';
 import {
   toBindResponse,
+  type ContactPreferenceResponse,
   type FamilyBindRow,
   type FamilyPeerRow,
 } from '../_lib';
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
       .map((row) => row.elder_id === user_id ? row.family_id : row.elder_id)
       .filter((id): id is string => Boolean(id));
     const peersById = new Map<string, FamilyPeerRow>();
+    const preferencesByPeerId = new Map<string, ContactPreferenceResponse>();
 
     if (peerIds.length > 0) {
       const { data: peers, error: peersError } = await supabase
@@ -56,12 +58,48 @@ export async function GET(request: NextRequest) {
         throw new ApiError(500, '获取联系人资料失败');
       }
       for (const peer of peers ?? []) peersById.set(peer.id, peer);
+
+      const uniquePeerIds = [...new Set(peerIds)];
+      const { data: preferences, error: preferencesError } = await supabase
+        .from('oc_contact_preferences')
+        .select('owner_id, peer_id, alias, is_pinned')
+        .eq('owner_id', user_id)
+        .in('peer_id', uniquePeerIds);
+      if (preferencesError) {
+        console.error('[GET /family/binds] 联系人偏好查询失败:', preferencesError);
+        throw new ApiError(500, '获取联系人设置失败');
+      }
+      for (const preference of preferences ?? []) {
+        const isValidAlias = preference.alias === null || (
+          typeof preference.alias === 'string'
+          && preference.alias.length >= 1
+          && Array.from(preference.alias).length <= 40
+          && preference.alias === preference.alias.trim()
+        );
+        if (
+          preference.owner_id !== user_id
+          || typeof preference.peer_id !== 'string'
+          || !uniquePeerIds.includes(preference.peer_id)
+          || !isValidAlias
+          || typeof preference.is_pinned !== 'boolean'
+        ) {
+          throw new ApiError(500, '联系人设置响应无效');
+        }
+        preferencesByPeerId.set(preference.peer_id, {
+          alias: preference.alias,
+          is_pinned: preference.is_pinned,
+        });
+      }
     }
 
     return withPrivateNoStore(
       NextResponse.json(rows.map((row) => {
         const peerId = row.elder_id === user_id ? row.family_id : row.elder_id;
-        return toBindResponse(row, peerId ? peersById.get(peerId) ?? null : null);
+        return toBindResponse(
+          row,
+          peerId ? peersById.get(peerId) ?? null : null,
+          peerId ? preferencesByPeerId.get(peerId) : undefined,
+        );
       })),
     );
   } catch (err) {

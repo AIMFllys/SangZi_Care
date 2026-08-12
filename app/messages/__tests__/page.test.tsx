@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import '@testing-library/jest-dom/vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { isValidElement } from 'react';
 import { getRelationIcon, formatMessageTime, getMessagePreview } from '@/lib/messageUtils';
 
@@ -73,6 +74,8 @@ describe('getMessagePreview', () => {
 
 // Mock 依赖
 const mockFetchContacts = vi.fn();
+const mockUpdateContactPreference = vi.fn();
+const mockFetchApi = vi.fn();
 const mockFetchUnreadCount = vi.fn();
 let mockContacts: any[] = [];
 let mockUnreadTotal = 0;
@@ -85,6 +88,7 @@ function messageStoreState() {
     unreadTotal: mockUnreadTotal,
     loading: mockLoading,
     error: mockError,
+    contactsOwnerUserId: 'user-1',
     fetchContacts: mockFetchContacts,
     fetchUnreadCount: mockFetchUnreadCount,
   };
@@ -112,7 +116,14 @@ vi.mock('@/stores/userStore', () => ({
 let mockBinds: any[] = [];
 const mockFetchBinds = vi.fn();
 function familyStoreState() {
-  return { binds: mockBinds, fetchBinds: mockFetchBinds, isLoading: false };
+  return {
+    binds: mockBinds,
+    fetchBinds: mockFetchBinds,
+    updateContactPreference: mockUpdateContactPreference,
+    isLoading: false,
+    ownerUserId: 'user-1',
+    error: null,
+  };
 }
 
 vi.mock('@/stores/familyStore', () => ({
@@ -126,8 +137,12 @@ const mockPush = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
+vi.mock('@/lib/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/api')>()),
+  fetchApi: (...args: unknown[]) => mockFetchApi(...args),
+}));
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 
 const { default: MessagesPage } = await import('../page');
 
@@ -139,6 +154,7 @@ describe('MessagesPage 组件', () => {
     mockLoading = false;
     mockError = null;
     mockBinds = [];
+    mockFetchApi.mockResolvedValue({ alias: '妈妈', is_pinned: true });
   });
 
   it('渲染页面标题', () => {
@@ -164,6 +180,11 @@ describe('MessagesPage 组件', () => {
     render(<MessagesPage />);
     expect(screen.getByText('还没有联系人')).toBeDefined();
     expect(screen.getByText('绑定家人后就能聊天啦')).toBeDefined();
+    expect(mockFetchContacts).toHaveBeenCalledWith([], 'user-1');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('有联系人时渲染联系人列表', () => {
@@ -206,6 +227,106 @@ describe('MessagesPage 组件', () => {
     render(<MessagesPage />);
     fireEvent.click(screen.getByText('小明'));
     expect(mockPush).toHaveBeenCalledWith('/messages/u2');
+  });
+
+  it('短按主按钮进入聊天，更多按钮只打开管理对话框', () => {
+    mockBinds = [{ bind: { status: 'active', relation: '女儿' }, user: { id: 'u1', name: '小红' } }];
+    mockContacts = [{ userId: 'u1', name: '小红', relationship: '女儿', unreadCount: 0, isPinned: false }];
+    render(<MessagesPage />);
+    fireEvent.click(screen.getByRole('button', { name: '管理小红' }));
+    expect(screen.getByRole('dialog', { name: '管理小红' })).toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: '取消' }));
+    fireEvent.click(screen.getByRole('button', { name: '和小红聊天' }));
+    expect(mockPush).toHaveBeenCalledWith('/messages/u1');
+  });
+
+  it('对话框初始聚焦备注，Escape 与遮罩关闭后把焦点还给管理按钮', () => {
+    mockBinds = [{ bind: { status: 'active', relation: '女儿' }, user: { id: 'u1', name: '小红' } }];
+    mockContacts = [{ userId: 'u1', name: '小红', relationship: '女儿', unreadCount: 0, isPinned: false }];
+    render(<MessagesPage />);
+    const manage = screen.getByRole('button', { name: '管理小红' });
+    manage.focus();
+    fireEvent.click(manage);
+    expect(screen.getByRole('textbox', { name: '备注名' })).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(manage).toHaveFocus();
+
+    fireEvent.click(manage);
+    const dialog = screen.getByRole('dialog');
+    fireEvent.pointerDown(dialog.parentElement as HTMLElement);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(manage).toHaveFocus();
+  });
+
+  it('长按打开管理且抑制合成 click，移动超过阈值会取消', () => {
+    vi.useFakeTimers();
+    mockBinds = [{ bind: { status: 'active', relation: '女儿' }, user: { id: 'u1', name: '小红' } }];
+    mockContacts = [{ userId: 'u1', name: '小红', relationship: '女儿', unreadCount: 0, isPinned: false }];
+    render(<MessagesPage />);
+    const item = screen.getByRole('listitem');
+    fireEvent.pointerDown(item, { clientX: 10, clientY: 10 });
+    act(() => vi.advanceTimersByTime(550));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '和小红聊天' }));
+    expect(mockPush).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: '取消' }));
+
+    fireEvent.pointerDown(item, { clientX: 10, clientY: 10 });
+    fireEvent.pointerMove(item, { clientX: 30, clientY: 10 });
+    act(() => vi.advanceTimersByTime(600));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('系统右键菜单也打开同一管理对话框', () => {
+    mockBinds = [{ bind: { status: 'active', relation: '女儿' }, user: { id: 'u1', name: '小红' } }];
+    mockContacts = [{ userId: 'u1', name: '小红', relationship: '女儿', unreadCount: 0, isPinned: false }];
+    render(<MessagesPage />);
+    fireEvent.contextMenu(screen.getByRole('listitem'));
+    expect(screen.getByRole('dialog', { name: '管理小红' })).toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('保存失败保留对话框与输入并显示错误', async () => {
+    mockFetchApi.mockRejectedValue(new Error('保存失败'));
+    mockBinds = [{ bind: { status: 'active', relation: '女儿' }, user: { id: 'u1', name: '小红' } }];
+    mockContacts = [{ userId: 'u1', name: '小红', relationship: '女儿', unreadCount: 0, isPinned: false }];
+    render(<MessagesPage />);
+    fireEvent.click(screen.getByRole('button', { name: '管理小红' }));
+    fireEvent.change(screen.getByRole('textbox', { name: '备注名' }), { target: { value: '女儿' } });
+    fireEvent.click(screen.getByRole('button', { name: '保存' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('保存失败');
+    expect(screen.getByRole('textbox', { name: '备注名' })).toHaveValue('女儿');
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('保存成功使用发起时 owner 局部更新，且 pending 防止重复提交', async () => {
+    let resolveSave!: (value: unknown) => void;
+    mockFetchApi.mockReturnValue(new Promise((resolve) => { resolveSave = resolve; }));
+    mockBinds = [{ bind: { status: 'active', relation: '女儿' }, user: { id: 'u1', name: '小红' } }];
+    mockContacts = [{ userId: 'u1', name: '小红', relationship: '女儿', unreadCount: 0, isPinned: false }];
+    render(<MessagesPage />);
+    fireEvent.click(screen.getByRole('button', { name: '管理小红' }));
+    fireEvent.change(screen.getByRole('textbox', { name: '备注名' }), { target: { value: ' 女儿 ' } });
+    const save = screen.getByRole('button', { name: '保存' });
+    fireEvent.click(save);
+    fireEvent.click(save);
+    expect(mockFetchApi).toHaveBeenCalledOnce();
+    expect(mockFetchApi).toHaveBeenCalledWith('/api/v1/messages/contacts/u1', {
+      method: 'PUT',
+      body: { alias: '女儿', is_pinned: false },
+    });
+
+    resolveSave({ alias: '女儿', is_pinned: false });
+    expect(await screen.findByText('添加亲友')).toBeInTheDocument();
+    expect(mockUpdateContactPreference).toHaveBeenCalledWith(
+      'user-1',
+      'u1',
+      { alias: '女儿', is_pinned: false },
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('显示添加亲友入口', () => {

@@ -1,0 +1,36 @@
+import { describe, expect, it } from 'vitest';
+import { contactDisplayName, sortContacts } from '../contactPreferences';
+
+describe('联系人展示与稳定排序', () => {
+  it('备注、真名、关系和家人逐级回退', () => {
+    expect(contactDisplayName(' 妈妈 ', '王女士', '母亲')).toBe('妈妈');
+    expect(contactDisplayName(null, ' 王女士 ', '母亲')).toBe('王女士');
+    expect(contactDisplayName(null, ' ', ' 母亲 ')).toBe('母亲');
+    expect(contactDisplayName(null, '', '')).toBe('家人');
+  });
+
+  it('按置顶、有效最近时间、中文名、userId 完全稳定排序', () => {
+    const contacts = [
+      { userId: '4', name: '赵', isPinned: false },
+      { userId: '2', name: '安', isPinned: true, lastMessage: { created_at: 'bad' } },
+      { userId: '3', name: '李', isPinned: false, lastMessage: { created_at: '2026-01-02T00:00:00Z' } },
+      { userId: '1', name: '安', isPinned: true, lastMessage: { created_at: 'bad' } },
+    ];
+    expect([...contacts].sort(sortContacts).map((item) => item.userId)).toEqual(['1', '2', '3', '4']);
+  });
+
+  it('有有效消息时间的联系人始终排在无消息联系人前，不退回姓名顺序', () => {
+    const contacts = [
+      { userId: 'no-message', name: '阿姨', isPinned: false },
+      {
+        userId: 'has-message',
+        name: '周叔叔',
+        isPinned: false,
+        lastMessage: { created_at: '2026-08-13T01:00:00Z' },
+      },
+    ];
+
+    expect([...contacts].sort(sortContacts).map((item) => item.userId))
+      .toEqual(['has-message', 'no-message']);
+  });
+});

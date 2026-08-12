@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   loading: false,
   recognitionPhase: 'idle',
   recognitionError: null as string | null,
+  binds: [] as Array<Record<string, unknown>>,
 }));
 
 vi.mock('@/stores/messageStore', () => ({
@@ -40,6 +41,10 @@ vi.mock('@/stores/userStore', () => ({
     const state = { user: { id: 'user-1', role: 'elder', name: '李奶奶' }, isElder: true };
     return selector ? selector(state) : state;
   },
+}));
+
+vi.mock('@/hooks/useFamilyBinds', () => ({
+  useFamilyBinds: () => ({ binds: mocks.binds, isLoading: false, error: null, retry: vi.fn() }),
 }));
 
 vi.mock('@/lib/api', async (importOriginal) => ({
@@ -147,6 +152,7 @@ describe('ChatDetailPage 真实语音消息', () => {
     mocks.loading = false;
     mocks.recognitionPhase = 'idle';
     mocks.recognitionError = null;
+    mocks.binds = [];
     mocks.fetchMessages.mockResolvedValue(undefined);
     mocks.sendTextMessage.mockResolvedValue({});
     mocks.sendVoiceMessage.mockResolvedValue({});
@@ -160,7 +166,7 @@ describe('ChatDetailPage 真实语音消息', () => {
 
   it('渲染、加载会话并保留文字发送', async () => {
     render(<ChatDetailPage />);
-    expect(screen.getByText('对话')).toBeInTheDocument();
+    expect(screen.getByText('聊天')).toBeInTheDocument();
     expect(mocks.fetchMessages).toHaveBeenCalledWith('contact-1');
     fireEvent.change(screen.getByTestId('text-input'), { target: { value: '你好啊' } });
     fireEvent.click(screen.getByRole('button', { name: '发送消息' }));
@@ -189,6 +195,18 @@ describe('ChatDetailPage 真实语音消息', () => {
         }),
       );
     });
+  });
+
+  it('直接深链从 active bind 恢复私有备注标题', () => {
+    mocks.binds = [{
+      bind: {
+        status: 'active', elder_id: 'user-1', family_id: 'contact-1', relation: '女儿',
+        contact_preference: { alias: '小棉袄', is_pinned: false },
+      },
+      user: { id: 'contact-1', name: '小红' },
+    }];
+    render(<ChatDetailPage />);
+    expect(screen.getByRole('heading', { name: '小棉袄' })).toBeInTheDocument();
   });
 
   it('转写自动进入可编辑文字草稿，编辑后只发送文字消息', async () => {

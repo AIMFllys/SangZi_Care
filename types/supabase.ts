@@ -264,6 +264,48 @@ export type Database = {
           },
         ]
       }
+      oc_contact_preferences: {
+        Row: {
+          alias: string | null
+          created_at: string
+          is_pinned: boolean
+          owner_id: string
+          peer_id: string
+          updated_at: string
+        }
+        Insert: {
+          alias?: string | null
+          created_at?: string
+          is_pinned?: boolean
+          owner_id: string
+          peer_id: string
+          updated_at?: string
+        }
+        Update: {
+          alias?: string | null
+          created_at?: string
+          is_pinned?: boolean
+          owner_id?: string
+          peer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oc_contact_preferences_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "oc_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oc_contact_preferences_peer_id_fkey"
+            columns: ["peer_id"]
+            isOneToOne: false
+            referencedRelation: "oc_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oc_elder_family_binds: {
         Row: {
           bind_code: string | null

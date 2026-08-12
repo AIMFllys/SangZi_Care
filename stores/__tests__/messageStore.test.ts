@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { encodePcm16Wav } from '@/lib/audio/wav';
 import { useMessageStore } from '../messageStore';
-import type { MessageResponse } from '../messageStore';
+import type { ConversationOverviewResponse, MessageResponse } from '../messageStore';
 
 // Mock fetchApi
 vi.mock('@/lib/api', () => ({
@@ -369,6 +369,47 @@ describe('useMessageStore', () => {
       expect(useMessageStore.getState().contacts.map((contact) => contact.name))
         .toEqual(['小红']);
       expect(mockFetchApi).toHaveBeenCalledOnce();
+    });
+
+    it('应用私有备注和置顶并使用稳定排序', async () => {
+      const pinned = makeBind({
+        bind: { contact_preference: { alias: '妈妈', is_pinned: true } },
+        user: { id: 'pinned', name: '王女士' },
+      });
+      const latest = makeBind({
+        bind: { contact_preference: { alias: null, is_pinned: false } },
+        user: { id: 'latest', name: '李女士' },
+      });
+      mockFetchApi.mockResolvedValueOnce([{
+        peer_id: 'latest',
+        last_message: makeMessage({ id: 'latest-message', created_at: '2026-08-13T01:00:00Z' }),
+        unread_count: 0,
+      }]);
+      await useMessageStore.getState().fetchContacts([latest, pinned], 'me');
+      expect(useMessageStore.getState().contacts.map(({ userId, name, isPinned }) => ({ userId, name, isPinned })))
+        .toEqual([
+          { userId: 'pinned', name: '妈妈', isPinned: true },
+          { userId: 'latest', name: '李女士', isPinned: false },
+        ]);
+    });
+
+    it('账号切换为空绑定时清空旧联系人并忽略前一账号迟到 overview', async () => {
+      let resolveOverview!: (value: ConversationOverviewResponse[]) => void;
+      mockFetchApi.mockReturnValueOnce(new Promise((resolve) => {
+        resolveOverview = resolve;
+      }));
+      const oldRequest = useMessageStore.getState().fetchContacts([makeBind()], 'old-owner');
+
+      await useMessageStore.getState().fetchContacts([], 'new-owner');
+      expect(useMessageStore.getState().contacts).toEqual([]);
+
+      resolveOverview([{
+        peer_id: 'user-contact',
+        last_message: makeMessage(),
+        unread_count: 1,
+      }]);
+      await oldRequest;
+      expect(useMessageStore.getState().contacts).toEqual([]);
     });
   });
 

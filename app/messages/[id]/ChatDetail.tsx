@@ -9,7 +9,9 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useMessageStore } from '@/stores/messageStore';
 import { useUserStore } from '@/stores/userStore';
+import { useFamilyBinds } from '@/hooks/useFamilyBinds';
 import { fetchBlob } from '@/lib/api';
+import { contactDisplayName } from '@/lib/contactPreferences';
 import { ROUTES } from '@/lib/constants';
 import MessageList from '@/components/messages/MessageList';
 import VoiceRecorder from '@/components/messages/VoiceRecorder';
@@ -33,8 +35,20 @@ export default function ChatDetailPage() {
   const contactId = params?.id ?? '';
 
   const user = useUserStore((s) => s.user);
+  const { binds, isLoading: bindsLoading } = useFamilyBinds();
   const { messages, loading, fetchMessages, sendTextMessage, sendVoiceMessage, markConversationAsRead } =
     useMessageStore();
+
+  const contactBind = binds.find((item) => (
+    item.bind.status === 'active' && item.user.id === contactId
+  ));
+  const contactTitle = !bindsLoading && contactBind
+    ? contactDisplayName(
+      contactBind.bind.contact_preference?.alias,
+      contactBind.user.name,
+      contactBind.bind.relation,
+    )
+    : '聊天';
 
   // 输入模式：text 或 voice
   const [inputMode, setInputMode] = useState<'text' | 'voice'>('text');
@@ -274,7 +288,7 @@ export default function ChatDetailPage() {
           <ChevronLeft size={24} />
         </button>
         <h1 className={styles.title}>
-          {contactId ? `对话` : '聊天'}
+          {contactTitle}
         </h1>
         <span className={styles.headerSpacer} aria-hidden="true" />
       </header>

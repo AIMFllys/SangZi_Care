@@ -1,6 +1,6 @@
 'use client';
 
-import { InputHTMLAttributes, ReactNode } from 'react';
+import { InputHTMLAttributes, ReactNode, type Ref } from 'react';
 import styles from './Input.module.css';
 
 interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'prefix'> {
@@ -10,6 +10,7 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChan
   error?: string;
   prefix?: ReactNode;
   suffix?: ReactNode;
+  inputRef?: Ref<HTMLInputElement>;
 }
 
 export function Input({
@@ -22,6 +23,7 @@ export function Input({
   disabled,
   prefix,
   suffix,
+  inputRef,
   id,
   className,
   ...rest
@@ -40,6 +42,7 @@ export function Input({
       >
         {prefix && <span className={styles.affix}>{prefix}</span>}
         <input
+          ref={inputRef}
           id={inputId}
           type={type}
           value={value}

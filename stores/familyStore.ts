@@ -28,6 +28,10 @@ export interface FamilyBind {
     last_active_at?: string | null;
     role: string;
   } | null;
+  contact_preference?: {
+    alias: string | null;
+    is_pinned: boolean;
+  };
 }
 
 /** 绑定关系 + 对方用户信息（前端组合） */
@@ -71,6 +75,11 @@ interface FamilyState {
   fetchElderHealthSummary: (elderId: string) => Promise<void>;
   /** 选择当前照护长辈；页面仍会校验其属于 active 绑定 */
   setSelectedElderId: (elderId: string | null) => void;
+  updateContactPreference: (
+    ownerId: string,
+    peerId: string,
+    preference: { alias: string | null; is_pinned: boolean },
+  ) => void;
   /** 清空状态 */
   reset: () => void;
 }
@@ -174,6 +183,19 @@ export const useFamilyStore = create<FamilyState>()((set, get) => ({
 
   setSelectedElderId: (elderId) => {
     set({ selectedElderId: elderId });
+  },
+
+  updateContactPreference: (ownerId, peerId, preference) => {
+    if (get().ownerUserId !== ownerId) return;
+    set((state) => ({
+      binds: state.binds.map((item) => item.user.id === peerId
+        ? { ...item, bind: { ...item.bind, contact_preference: preference } }
+        : item),
+      rawBinds: state.rawBinds.map((bind) => {
+        const otherId = bind.elder_id === ownerId ? bind.family_id : bind.elder_id;
+        return otherId === peerId ? { ...bind, contact_preference: preference } : bind;
+      }),
+    }));
   },
 
   reset: () => {

@@ -32,6 +32,12 @@ export interface FamilyBindResponse {
   expires_at: string | null;
   can_edit_health: boolean;
   peer: FamilyPeer | null;
+  contact_preference: ContactPreferenceResponse;
+}
+
+export interface ContactPreferenceResponse {
+  alias: string | null;
+  is_pinned: boolean;
 }
 
 export interface FamilyPeer {
@@ -55,6 +61,7 @@ export type FamilyPeerRow = Pick<
 export function toBindResponse(
   row: FamilyBindRow,
   peer: FamilyPeerRow | null = null,
+  contactPreference: ContactPreferenceResponse = { alias: null, is_pinned: false },
 ): FamilyBindResponse {
   return {
     id: row.id,
@@ -71,6 +78,7 @@ export function toBindResponse(
     expires_at: row.expires_at ?? null,
     can_edit_health: row.can_edit_health ?? false,
     peer,
+    contact_preference: contactPreference,
   };
 }
 

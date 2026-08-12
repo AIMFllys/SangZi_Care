@@ -4,6 +4,7 @@
 
 import { create } from 'zustand';
 import { fetchApi, fetchFormData } from '@/lib/api';
+import { contactDisplayName, sortContacts } from '@/lib/contactPreferences';
 
 // ---------- 类型定义（对齐后端响应） ----------
 
@@ -32,6 +33,7 @@ export interface ContactInfo {
   relationship: string;
   lastMessage?: MessageResponse;
   unreadCount: number;
+  isPinned?: boolean;
 }
 
 /** 发送文字消息请求体 */
@@ -75,11 +77,19 @@ interface MessageState {
   loading: boolean;
   /** 错误信息 */
   error: string | null;
+  contactsOwnerUserId: string | null;
+  contactsRequestId: number;
 
   /** 构建联系人列表（从家属绑定 + 获取每个联系人最新消息） */
   fetchContacts: (
     binds: Array<{
-      bind: { elder_id: string; family_id: string; relation: string; status?: string | null };
+      bind: {
+        elder_id: string;
+        family_id: string;
+        relation: string;
+        status?: string | null;
+        contact_preference?: { alias: string | null; is_pinned: boolean };
+      };
       user: { id: string; name: string; avatar_url?: string | null };
     }>,
     currentUserId: string,
@@ -104,15 +114,23 @@ interface MessageState {
   reset: () => void;
 }
 
-export const useMessageStore = create<MessageState>()((set) => ({
+export const useMessageStore = create<MessageState>()((set, get) => ({
   contacts: [],
   messages: [],
   unreadTotal: 0,
   loading: false,
   error: null,
+  contactsOwnerUserId: null,
+  contactsRequestId: 0,
 
   fetchContacts: async (binds, currentUserId) => {
-    set({ loading: true, error: null });
+    const requestId = get().contactsRequestId + 1;
+    set({
+      contactsOwnerUserId: currentUserId,
+      contactsRequestId: requestId,
+      loading: true,
+      error: null,
+    });
     try {
       // 后端与前端都只接受明确活跃的绑定，未知或待确认状态不能暴露联系人。
       const activeBinds = binds.filter((b) => b.bind.status === 'active');
@@ -134,28 +152,35 @@ export const useMessageStore = create<MessageState>()((set) => ({
         const summary = overviewByPeer.get(bind.user.id);
         return {
           userId: bind.user.id,
-          name: bind.user.name,
+          name: contactDisplayName(
+            bind.bind.contact_preference?.alias,
+            bind.user.name,
+            bind.bind.relation,
+          ),
           avatarUrl: bind.user.avatar_url ?? undefined,
           relationship:
             bind.bind.elder_id === currentUserId ? '家属' : bind.bind.relation,
           lastMessage: summary?.last_message ?? undefined,
           unreadCount: summary?.unread_count ?? 0,
+          isPinned: bind.bind.contact_preference?.is_pinned ?? false,
         };
       });
 
-      // 按最新消息时间排序（有消息的排前面）
-      contacts.sort((a, b) => {
-        if (!a.lastMessage && !b.lastMessage) return 0;
-        if (!a.lastMessage) return 1;
-        if (!b.lastMessage) return -1;
-        return new Date(b.lastMessage.created_at).getTime() - new Date(a.lastMessage.created_at).getTime();
-      });
+      contacts.sort(sortContacts);
 
       // 计算总未读数
       const unreadTotal = contacts.reduce((sum, c) => sum + c.unreadCount, 0);
 
+      if (
+        get().contactsRequestId !== requestId
+        || get().contactsOwnerUserId !== currentUserId
+      ) return;
       set({ contacts, unreadTotal, loading: false });
     } catch (err) {
+      if (
+        get().contactsRequestId !== requestId
+        || get().contactsOwnerUserId !== currentUserId
+      ) return;
       set({
         error: err instanceof Error ? err.message : '加载联系人失败',
         loading: false,
@@ -271,6 +296,8 @@ export const useMessageStore = create<MessageState>()((set) => ({
       unreadTotal: 0,
       loading: false,
       error: null,
+      contactsOwnerUserId: null,
+      contactsRequestId: get().contactsRequestId + 1,
     });
   },
 }));

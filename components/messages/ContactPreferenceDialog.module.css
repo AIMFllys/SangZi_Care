@@ -1,0 +1,94 @@
+.overlay {
+  position: fixed;
+  z-index: 80;
+  inset: 0;
+  display: grid;
+  align-items: end;
+  padding: var(--space-md);
+  background: rgb(15 23 42 / 48%);
+}
+
+.dialog {
+  width: min(100%, 480px);
+  margin: 0 auto;
+  padding: var(--space-lg);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-xl);
+  background: var(--bg-card-solid);
+  box-shadow: 0 20px 48px rgb(15 23 42 / 22%);
+}
+
+.title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-title);
+}
+
+.description {
+  margin: var(--space-xs) 0 var(--space-md);
+  color: var(--text-secondary);
+  font-size: var(--font-small);
+}
+
+.pinRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  min-height: 64px;
+  margin-top: var(--space-md);
+  padding: var(--space-sm) 0;
+}
+
+.pinRow :global([role='switch']) {
+  min-height: 48px;
+}
+
+.pinLabel,
+.pinHint {
+  display: block;
+}
+
+.pinLabel {
+  color: var(--text-primary);
+  font-size: var(--font-body);
+  font-weight: 700;
+}
+
+.pinHint {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: var(--font-small);
+}
+
+.error {
+  margin: var(--space-sm) 0 0;
+  color: var(--color-danger);
+  font-size: var(--font-small);
+  font-weight: 650;
+}
+
+.clearRow {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: var(--space-xs);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+@media (min-width: 640px) {
+  .overlay {
+    align-items: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog {
+    scroll-behavior: auto;
+  }
+}

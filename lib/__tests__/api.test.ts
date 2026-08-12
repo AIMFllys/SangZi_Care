@@ -315,4 +315,24 @@ describe('authenticated API transports', () => {
     expect(headers.get('content-type')).toBe('application/json');
     expect(init.body).toBe(JSON.stringify({ value: 1 }));
   });
+
+  it('fetchApi 支持联系人偏好的 PUT JSON 请求', async () => {
+    localStorage.setItem('token', 'access-one');
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({
+      alias: '妈妈',
+      is_pinned: true,
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { fetchApi } = await import('../api');
+
+    await expect(fetchApi('/api/v1/messages/contacts/peer-1', {
+      method: 'PUT',
+      body: { alias: '妈妈', is_pinned: true },
+    })).resolves.toEqual({ alias: '妈妈', is_pinned: true });
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(init.method).toBe('PUT');
+    expect(init.body).toBe(JSON.stringify({ alias: '妈妈', is_pinned: true }));
+    expect(new Headers(init.headers).get('authorization')).toBe('Bearer access-one');
+  });
 });
