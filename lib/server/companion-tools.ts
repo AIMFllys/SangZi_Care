@@ -117,7 +117,10 @@ export function buildCompanionSystemPrompt(user: CompanionUser): string {
 
 const SHARE_TARGET_RE = /(家人|家属|孩子|子女|儿子|女儿|老伴|亲属)/;
 const SHARE_VERB_RE = /(发给|发一下|分享|同步|告诉|转告|通知)/;
-const SHARE_NEGATION_RE = /(不|别|不要|不用|暂时不|先不|算了|拒绝)/;
+const SHARE_NEGATION_RE = /(?:没有|还没|尚未|未曾|未(?:告诉|发给|分享|同步|通知|转告)|没(?:有|告诉|发给|分享|同步|通知|转告)|不要|不用|不必|不能|不愿|不想|暂时不|先不|别|算了|拒绝)/;
+const SHARE_QUESTION_RE = /(?:[?？]$|(?:吗|么|是否|有没有|了没)[呀啊呢，。！!]*$)/;
+const DIRECT_SHARE_REQUEST_RE = /^(?:请(?:你|您)?|麻烦(?:你|您)?|帮我|帮忙|替我|把|将|告诉|转告|发给|分享|同步|通知)/;
+const DIRECT_SHARE_PERMISSION_RE = /^(?:我)?(?:同意|允许|愿意|可以)(?:请|让|把|将|帮我|帮忙|替我|告诉|转告|发给|分享|同步|通知)/;
 const AFFIRMATIVE_RE = /^(好|好的|好啊|可以|行|没问题|同意|愿意|发吧|分享吧|同步吧|告诉他们|告诉孩子|就这样)[呀啊吧嘛呢了，。！!]*$/;
 
 export function hasExplicitFamilyShareConsent(
@@ -126,9 +129,7 @@ export function hasExplicitFamilyShareConsent(
   const lastUserIndex = messages.findLastIndex((message) => message.role === 'user');
   if (lastUserIndex < 0) return false;
   const current = messages[lastUserIndex].content.trim().replace(/\s+/g, '');
-  if (!current || SHARE_NEGATION_RE.test(current)) return false;
-
-  if (SHARE_VERB_RE.test(current) && SHARE_TARGET_RE.test(current)) return true;
+  if (!current) return false;
 
   const previousAssistant = messages
     .slice(0, lastUserIndex)
@@ -137,10 +138,16 @@ export function hasExplicitFamilyShareConsent(
     ?.content ?? '';
   const assistantProposedFamilyShare =
     SHARE_VERB_RE.test(previousAssistant) && SHARE_TARGET_RE.test(previousAssistant);
-  return assistantProposedFamilyShare && (
-    AFFIRMATIVE_RE.test(current)
-    || /^(可以|好|行|同意).*(发|分享|同步|告诉)/.test(current)
-  );
+  // “没问题”等短肯定只承接上一条明确的分享询问，不能单独授权。
+  if (assistantProposedFamilyShare && AFFIRMATIVE_RE.test(current)) return true;
+
+  if (SHARE_NEGATION_RE.test(current) || SHARE_QUESTION_RE.test(current)) return false;
+
+  const hasExplicitRequest = DIRECT_SHARE_REQUEST_RE.test(current)
+    || DIRECT_SHARE_PERMISSION_RE.test(current);
+  return hasExplicitRequest
+    && SHARE_VERB_RE.test(current)
+    && SHARE_TARGET_RE.test(current);
 }
 
 export function selectMurmurSourceText(

@@ -29,7 +29,7 @@ import {
   type CompanionAction,
   type CompanionConversationMessage,
 } from '@/lib/server/companion-tools';
-import type { MimoChatMessage } from '@/lib/server/mimo';
+import type { MimoChatMessage, MimoToolCall } from '@/lib/server/mimo';
 import type { Json } from '@/types/supabase';
 import { readBoundedJson, withPrivateNoStore } from '../../_http';
 import type {
@@ -55,6 +55,16 @@ function toolFallbackReply(toolResults: Array<{ content: string }>): string {
       return '';
     }
   }).filter(Boolean).join(' ');
+}
+
+function findDuplicateToolCallIds(toolCalls: MimoToolCall[]): string[] {
+  const seen = new Set<string>();
+  const duplicateIds = new Set<string>();
+  for (const toolCall of toolCalls) {
+    if (seen.has(toolCall.id)) duplicateIds.add(toolCall.id);
+    seen.add(toolCall.id);
+  }
+  return [...duplicateIds];
 }
 
 function logToolAction(
@@ -154,11 +164,22 @@ export async function POST(request: NextRequest) {
       })),
     ];
 
-    const supabase = getSupabaseServerClient();
     const firstTurn = await completeMimoChat(
       mimoMessages,
       currentRole === 'elder' ? COMPANION_TOOLS : [],
     );
+    const duplicateToolCallIds = findDuplicateToolCallIds(firstTurn.toolCalls);
+    if (duplicateToolCallIds.length > 0) {
+      console.error('[POST /ai/chat] duplicate_tool_call_ids', {
+        sessionId,
+        userId: currentUserId,
+        role: currentRole,
+        duplicateIds: duplicateToolCallIds,
+      });
+      throw new ApiError(502, 'AI 返回了重复的工具调用，本轮未执行任何操作');
+    }
+
+    const supabase = getSupabaseServerClient();
     const actions: CompanionAction[] = [];
     let reply = firstTurn.content;
 

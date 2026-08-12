@@ -53,10 +53,26 @@ describe('companion share consent', () => {
     expect(prompt).toContain('不要声称未成功的操作已经完成');
   });
 
-  it('直接要求同步给女儿属于明确同意', () => {
+  it.each([
+    '把今天散步的事告诉孩子吧',
+    '请帮我同步给家人',
+    '告诉女儿吧',
+  ])('直接分享请求“%s”属于明确同意', (content) => {
     expect(hasExplicitFamilyShareConsent([
-      { role: 'user', content: '把我今天去公园的事告诉女儿吧' },
+      { role: 'user', content },
     ])).toBe(true);
+  });
+
+  it.each([
+    '我没有告诉女儿这件事',
+    '我还没告诉家人',
+    '这件事尚未同步给孩子',
+    '你告诉女儿了吗？',
+    '我已经告诉家人了',
+  ])('陈述、否定或问句“%s”不构成分享授权', (content) => {
+    expect(hasExplicitFamilyShareConsent([
+      { role: 'user', content },
+    ])).toBe(false);
   });
 
   it('拒绝、含糊回应或无前置询问不会授权分享', () => {
@@ -69,12 +85,14 @@ describe('companion share consent', () => {
     ])).toBe(false);
   });
 
-  it('在助手明确询问后回答可以属于明确同意', () => {
-    expect(hasExplicitFamilyShareConsent([
-      { role: 'user', content: '今天在公园遇见老朋友，很开心' },
-      { role: 'assistant', content: '需要我把这条碎碎念同步给家人吗？' },
-      { role: 'user', content: '可以' },
-    ])).toBe(true);
+  it('在助手明确询问后，短肯定可以、发吧和没问题都属于明确同意', () => {
+    for (const content of ['可以', '发吧', '没问题']) {
+      expect(hasExplicitFamilyShareConsent([
+        { role: 'user', content: '今天在公园遇见老朋友，很开心' },
+        { role: 'assistant', content: '需要我把这条碎碎念同步给家人吗？' },
+        { role: 'user', content },
+      ])).toBe(true);
+    }
   });
 
   it('同意轮仍选择前一条有意义原话作为碎碎念来源', () => {

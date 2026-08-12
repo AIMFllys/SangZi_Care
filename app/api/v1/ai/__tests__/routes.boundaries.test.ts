@@ -198,6 +198,54 @@ describe('AI API 生产边界', () => {
       );
     });
 
+    it('同一轮出现重复 tool call id 时整轮拒绝，且不执行任何工具或数据库副作用', async () => {
+      const database = createChatDatabase();
+      mocks.getSupabaseServerClient.mockReturnValue(database.client);
+      mocks.completeMimoChat.mockResolvedValueOnce({
+        content: '',
+        toolCalls: [
+          {
+            id: 'call-duplicate',
+            type: 'function',
+            function: {
+              name: 'save_murmur',
+              arguments: '{"summary":"第一次","share_with_family":false}',
+            },
+          },
+          {
+            id: 'call-duplicate',
+            type: 'function',
+            function: {
+              name: 'save_murmur',
+              arguments: '{"summary":"第二次","share_with_family":false}',
+            },
+          },
+        ],
+      });
+
+      const response = await postChat(jsonRequest('/api/v1/ai/chat', {
+        messages: [{ role: 'user', content: '帮我记下今天散步' }],
+        session_id: 'session-duplicate-tools',
+      }));
+
+      expect(response.status).toBe(502);
+      await expect(response.json()).resolves.toMatchObject({
+        detail: expect.stringContaining('重复'),
+      });
+      expect(mocks.executeCompanionToolCall).not.toHaveBeenCalled();
+      expect(mocks.getSupabaseServerClient).not.toHaveBeenCalled();
+      expect(database.insert).not.toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalledWith(
+        '[POST /ai/chat] duplicate_tool_call_ids',
+        expect.objectContaining({
+          sessionId: 'session-duplicate-tools',
+          userId: 'user-1',
+          role: 'elder',
+          duplicateIds: ['call-duplicate'],
+        }),
+      );
+    });
+
     it('工具已执行但 MiMo 收尾失败时用真实工具消息兜底并返回 200，避免客户端重试副作用', async () => {
       mocks.completeMimoChat
         .mockResolvedValueOnce({
