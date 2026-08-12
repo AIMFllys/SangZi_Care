@@ -1,5 +1,10 @@
 import { type NextRequest } from 'next/server';
-import { ApiError, requireUser, toApiResponse } from '@/lib/server';
+import {
+  ApiError,
+  requireUser,
+  toApiResponse,
+  withPrivateNoStore,
+} from '@/lib/server';
 
 export const runtime = 'nodejs';
 
@@ -12,6 +17,6 @@ export async function POST(request: NextRequest) {
     await requireUser(request);
     throw new ApiError(410, '该通知接口已停用，请重新发起紧急求助');
   } catch (error) {
-    return toApiResponse(error);
+    return withPrivateNoStore(toApiResponse(error));
   }
 }
