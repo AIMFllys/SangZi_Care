@@ -11,6 +11,7 @@ module.exports = [
       'dist/**',
       'out/**',
       'coverage/**',
+      'output/**',
       'android/**/build/**',
       '.trae/**',
       '.worktrees/**',
