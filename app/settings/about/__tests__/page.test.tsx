@@ -8,10 +8,10 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ back }) }));
 const { default: AboutPage } = await import('../page');
 
 describe('AboutPage', () => {
-  it('展示项目归属与 v1.1.0 版本', () => {
+  it('展示项目归属与 v1.2.0 版本', () => {
     render(<AboutPage />);
     expect(screen.getByRole('heading', { level: 2, name: '智护银龄' })).toBeInTheDocument();
-    expect(screen.getByText('v1.1.0')).toBeInTheDocument();
+    expect(screen.getByText('v1.2.0')).toBeInTheDocument();
     expect(
       screen.getByText('华中科技大学基础医学院“慧老智治医心为民”AI智慧医养暑期实践项目'),
     ).toBeInTheDocument();

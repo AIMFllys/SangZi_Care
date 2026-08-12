@@ -727,7 +727,7 @@ def build_document(output_path: Path, source_root: Path) -> None:
     meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
     meta.paragraph_format.first_line_indent = Pt(0)
     meta.paragraph_format.line_spacing = 1.6
-    r = meta.add_run(f"{TEAM_NAME}\n当前展示版本：1.1.0\n2026年8月")
+    r = meta.add_run(f"{TEAM_NAME}\n当前展示版本：1.2.0\n2026年8月")
     set_run_font(r, east_asia=FONT_BODY, size=13, color=CHARCOAL)
 
     page_break(doc)
@@ -1131,7 +1131,7 @@ def build_document(output_path: Path, source_root: Path) -> None:
 
     add_small_note(
         doc,
-        "项目内容依据：智护银龄现行功能说明、1.1.0 版本说明、关于我们页面及 2026 年 8 月 11 日线上运行页面。",
+        "项目内容依据：智护银龄现行功能说明、1.2.0 版本说明、关于我们页面及 2026 年 8 月 13 日线上运行页面。",
     )
     add_callout(
         doc,

@@ -8,13 +8,13 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ back }) }));
 const { default: NotificationsPage } = await import('../page');
 
 describe('NotificationsPage', () => {
-  it('展示 v1.1.0 更新通知和四类更新内容', () => {
+  it('展示 v1.2.0 更新通知和四类更新内容', () => {
     render(<NotificationsPage />);
-    expect(screen.getByText('智护银龄 v1.1.0')).toBeInTheDocument();
-    expect(screen.getByText('监护看板更清晰')).toBeInTheDocument();
-    expect(screen.getByText('健康与用药协作')).toBeInTheDocument();
-    expect(screen.getByText('AI 陪伴与碎碎念')).toBeInTheDocument();
-    expect(screen.getByText('界面与加载优化')).toBeInTheDocument();
+    expect(screen.getByText('智护银龄 v1.2.0')).toBeInTheDocument();
+    expect(screen.getByText('消息与语音更顺手')).toBeInTheDocument();
+    expect(screen.getByText('AI 回复更清楚')).toBeInTheDocument();
+    expect(screen.getByText('紧急求助更安全')).toBeInTheDocument();
+    expect(screen.getByText('健康草稿不丢失')).toBeInTheDocument();
   });
 
   it('返回按钮遵循访问历史', () => {

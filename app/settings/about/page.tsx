@@ -37,6 +37,10 @@ export default function AboutPage() {
           <strong>v{APP_VERSION}</strong>
         </section>
 
+        <p className={styles.releaseNote}>
+          v{APP_VERSION} 聚焦消息、AI 语音、紧急求助与健康记录体验升级。
+        </p>
+
         <section className={styles.projectCard} aria-labelledby="project-title">
           <span className={styles.projectIcon} aria-hidden="true">
             <GraduationCap size={23} />

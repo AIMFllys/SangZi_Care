@@ -15,27 +15,27 @@ import styles from './page.module.css';
 
 const UPDATES = [
   {
-    icon: ShieldCheck,
-    title: '监护看板更清晰',
-    description: '家属可切换照护长辈，查看今日用药、七日依从率、心率趋势和异常提醒。',
+    icon: Mic2,
+    title: '消息与语音更顺手',
+    description: '语音转文字后可以直接编辑；手动输入不会被覆盖，文字和语音发送也会保持清晰分流。',
     tone: 'blue',
   },
   {
-    icon: HeartHandshake,
-    title: '健康与用药协作',
-    description: '长辈授权后，家属可代录健康、设置用药计划、提醒时间并代确认服药。',
+    icon: Gauge,
+    title: 'AI 回复更清楚',
+    description: '长回复支持卡片内滚动，记录、提醒和同步结果会明确显示成功、提醒或失败状态。',
     tone: 'green',
   },
   {
-    icon: Mic2,
-    title: 'AI 陪伴与碎碎念',
-    description: '语音陪伴支持文字朗读、健康信息整理，以及经长辈同意后同步碎碎念给家人。',
+    icon: ShieldCheck,
+    title: '紧急求助更安全',
+    description: '紧急求助防止重复点击，通知过程保持一致；没有可通知家属时也会明确提示。',
     tone: 'violet',
   },
   {
-    icon: Gauge,
-    title: '界面与加载优化',
-    description: '统一按钮、开关和导航反馈，减少重复请求，让常用页面打开更快、更稳定。',
+    icon: HeartHandshake,
+    title: '健康草稿不丢失',
+    description: '切换健康记录 Tab 会保留草稿，统一确认后一次保存，离开页面前会提醒你处理未保存内容。',
     tone: 'orange',
   },
 ] as const;
@@ -64,7 +64,7 @@ export default function NotificationsPage() {
           <div className={styles.releaseCopy}>
             <span className={styles.eyebrow}>PRODUCT UPDATE</span>
             <h2 id="release-title">智护银龄 v{APP_VERSION}</h2>
-            <p>让长辈更安心，让家属更清楚。</p>
+            <p>1.2.0 聚焦消息、AI 语音、紧急求助与健康记录体验升级。</p>
           </div>
           <span className={styles.versionBadge}>本次更新</span>
         </section>

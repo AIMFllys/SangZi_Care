@@ -136,14 +136,14 @@ describe('SettingsPage 设置主页', () => {
     expect(link?.getAttribute('href')).toBe('/settings/accessibility');
   });
 
-  it('消息通知与关于我们均为真实入口并展示 v1.1.0', () => {
+  it('消息通知与关于我们均为真实入口并展示 v1.2.0', () => {
     render(<SettingsPage />);
 
     expect(screen.getByText('消息通知').closest('a')?.getAttribute('href'))
       .toBe('/notifications');
     expect(screen.getByText('关于我们').closest('a')?.getAttribute('href'))
       .toBe('/settings/about');
-    expect(screen.getByText('桑梓智护 v1.1.0')).toBeDefined();
+    expect(screen.getByText('桑梓智护 v1.2.0')).toBeDefined();
     expect(screen.queryByText('即将推出')).toBeNull();
   });
 });

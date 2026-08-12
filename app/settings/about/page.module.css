@@ -86,6 +86,14 @@
   font-weight: 850;
 }
 
+.releaseNote {
+  margin: 12px 4px 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+}
+
 .projectCard {
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);
