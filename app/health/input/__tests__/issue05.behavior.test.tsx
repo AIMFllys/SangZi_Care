@@ -83,7 +83,14 @@ describe('Issue #5 健康草稿与离开保护', () => {
       fireEvent.click(screen.getByRole('button', { name: '确认保存' }));
     });
     expect(mockCreateRecordsBatch).toHaveBeenCalledTimes(1);
-    expect(mockCreateRecordsBatch.mock.calls[0][0].records).toHaveLength(2);
+    const payload = mockCreateRecordsBatch.mock.calls[0][0];
+    expect(payload.records).toHaveLength(2);
+    for (const record of payload.records) {
+      // The batch route derives these values from the authenticated request;
+      // they must not be duplicated inside each strict record object.
+      expect(record).not.toHaveProperty('user_id');
+      expect(record).not.toHaveProperty('recorded_by');
+    }
   });
 
   it('批量保存进行中重复点击确认只发起一次请求并禁用操作按钮', async () => {

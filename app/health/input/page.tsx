@@ -487,12 +487,10 @@ export default function HealthInputPage() {
     const records: HealthRecordCreate[] = candidates.map((recordType) => {
       const draft = drafts[recordType];
       return {
-        user_id: targetUserId,
         record_type: recordType,
         values: buildRecordValues(recordType, draft.values),
         measured_at: measuredAt,
         input_method: targetUserId === currentUser?.id ? draft.inputMethod : 'family',
-        recorded_by: currentUser?.id,
         notes: draft.values.notes.trim() || undefined,
         symptoms: draft.values.symptoms.trim() || undefined,
       };
@@ -504,7 +502,14 @@ export default function HealthInputPage() {
     if (!createRecordsBatch) {
       setIsSubmitting(true);
       try {
-        await createRecord(records[0]);
+        // Keep the legacy single-record fallback compatible with its older
+        // endpoint; the strict batch endpoint receives identity at the
+        // top-level and must not get these fields nested in each record.
+        await createRecord({
+          ...records[0],
+          user_id: targetUserId,
+          recorded_by: currentUser?.id,
+        });
         setShowSuccess(true);
       } catch {
         setSubmitError('保存失败，请重试');
