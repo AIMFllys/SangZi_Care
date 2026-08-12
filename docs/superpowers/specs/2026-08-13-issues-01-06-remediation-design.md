@@ -3,7 +3,7 @@
 > 创建日期：2026-08-13
 > 状态：已接受（用户授权无人值守推进）
 > 适用仓库：`AIMFllys/SangZi_Care`
-> 目标：完整修复当前全部 GitHub Issues，并以真实 Android Debug APK 端测和统一工程门禁验证
+> 目标：完整修复当前全部 GitHub Issues，并以真实浏览器端测、Android 薄壳冒烟和统一工程门禁验证
 
 ## 1. 背景与现状结论
 
@@ -68,11 +68,13 @@
 - 联系人备注/置顶是 owner 私有偏好，不得修改用户全局姓名，也不得复用家庭关系字段。
 - 多条健康记录必须在数据库单事务内全成全败；客户端循环调用单条接口不算事务。
 
-### 3.3 Android 在线壳
+### 3.3 浏览器端测与 Android 在线壳
 
 - Android 仍是在线 WebView 壳，Release 打开正式 HTTPS 域名，Debug 才打开 `http://127.0.0.1:7742`。
 - 不注入业务 JSBridge。硬件返回保护使用可取消的 DOM 事件；页面未取消时才执行 WebView 历史返回。
-- 本轮本机没有物理设备，因此每个 Loop 使用实际构建、安装并启动的 Debug APK 在 API 35 AVD 上验证。模拟器、mock API、真实线上账号三种证据必须分开标注。
+- 用户已明确 WebView 只是浏览器套壳，因此每个 Loop 以真实 Chromium 运行当前代码作为端测主证据；使用 Playwright 验证 DOM、手势、布局、网络请求和双角色业务流程。
+- Android 不重复执行与浏览器相同的业务场景。全部 Issue 修复后统一构建、安装并启动一次 Debug APK，在 API 35 AVD 验证在线地址、WebView 加载、麦克风权限、系统返回与前后台恢复。
+- 本轮本机没有物理设备。浏览器、mock API、本地真实服务、AVD 和正式线上账号五种证据必须分开标注。
 - Release APK 只有在部署 revision 等于源码 HEAD、签名配置存在并且正式域名可验证时才可声明完成；Debug/AVD 不能冒充 Release/物理机证据。
 
 ## 4. 共享实现原则
@@ -186,22 +188,22 @@ type ActionResult = {
 2. 分析子智能体独立复核事实、根因、最小完整修复与回归风险。
 3. 实现子智能体按 TDD 写一个聚焦失败测试，再集中修改真实代码，只运行触及范围的测试。
 4. 主智能体审阅 diff、测试和架构边界；发现偏差交回原实现者修正。
-5. 构建并安装真实 Debug APK，在 API 35 AVD 执行该 Issue 的端侧场景；记录 live/local/mock 边界。
+5. 在真实 Chromium 中执行该 Issue 的端侧场景；记录 live/local/mock 边界并保留截图、几何或网络证据。
 6. 规格审查子智能体逐条核对 Issue 验收；代码审查子智能体检查安全、维护性、错误处理和测试有效性。
 7. 修复所有阻塞意见并复审，通过后精确暂存该 Loop 文件、检查中文/secret/diff，再做本地提交。
 
 Loop 内只跑聚焦测试和必要的 Android 场景；`lint + tsc + 全量 test + build` 留到六个 Loop 完成后的统一门禁，避免重复消耗时间。
 
-## 7. Android 证据分层
+## 7. 端测证据分层
 
 | 等级 | 环境 | 能证明 | 不能证明 |
 |---|---|---|---|
 | A | Vitest/RTL/Route 测试 | 状态、校验、API 与 SQL 契约 | WebView 手势、布局、真实服务 |
-| B | Debug APK + API 35 AVD + 本地 Next | 实际 APK 安装启动、WebView、手势、布局、返回键 | 正式域名、Release 签名、物理麦克风 |
-| C | Debug APK + AVD + mock/测试账号 | 可重复异常分支和双角色 UI | 目标 Supabase/EdgeOne 已部署 |
+| B | 真实 Chromium + 本地 Next + mock/测试账号 | 当前代码的 DOM、手势、布局、请求路径和可重复异常分支 | 目标 Supabase/EdgeOne 已部署 |
+| C | 真实 Chromium + 本地或目标 Supabase/MiMo 双账号 | 浏览器端完整业务与同步闭环 | Android 壳行为、Release 签名、物理麦克风 |
 | D | Release APK + 正式域名 + 双真实账号 + 物理机 | 完整生产闭环 | 无 |
 
-本轮在 D 条件缺失时不得把 B/C 写成“真机生产通过”。但应完成所有可完成的 A/B/C，并把 D 的精确外部阻塞和复测命令记录在最终验收中。
+最终另做一次 Debug APK + API 35 AVD 的薄壳冒烟，它证明 APK 安装启动、WebView、安全来源、权限和返回协议，但不重复替代 B/C 的业务端测。本轮在 D 条件缺失时不得把 B/C 或 AVD 写成“真机生产通过”。应完成所有可完成的 A/B/C 和薄壳冒烟，并把 D 的精确外部阻塞与复测命令记录在最终验收中。
 
 ## 8. 最终统一门禁
 
@@ -212,7 +214,7 @@ Loop 内只跑聚焦测试和必要的 Android 场景；`lint + tsc + 全量 tes
 3. `npm test`
 4. `npm run build`
 5. Android unit/lint/Debug build
-6. 安装最终 Debug APK，按 #1–#6 顺序回归关键场景
+6. 安装最终 Debug APK，统一验证在线壳加载、来源策略、麦克风权限、系统返回和前后台恢复
 7. `git diff --check`、中文 U+FFFD 扫描、tracked secret/`.env`/keystore/APK 扫描
 8. 确认 `next.config.ts` 无 `output: 'export'`，无 Python `backend/`，无未说明的工作树改动
 

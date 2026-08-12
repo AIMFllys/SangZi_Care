@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILLS: `subagent-driven-development`, `systematic-debugging`, `test-driven-development`, `requesting-code-review`, and `verification-before-completion`. Execute one Loop at a time; do not run parallel implementers against the shared worktree.
 
-**Goal:** Fix all six open repository Issues in dependency order, preserving the full-stack Next.js/Supabase/Android online-shell architecture, and finish each Loop with focused tests, real Debug APK endpoint validation, independent review, and an exact-scope local commit.
+**Goal:** Fix all six open repository Issues in dependency order, preserving the full-stack Next.js/Supabase/Android online-shell architecture, and finish each Loop with focused tests, real Chromium endpoint validation, independent review, and an exact-scope local commit. Run Android thin-shell smoke once after all business Loops.
 
 **Architecture:** Ordinary chat, AI murmur sharing, and SOS all write `oc_elder_care_messages` but keep distinct authorization and recipient policies. Server-side Route Handlers own actor validation and side effects; atomic multi-row operations use narrowly granted Supabase RPCs. Client UI consumes structured action results. Android remains an online WebView shell with no business JSBridge.
 
@@ -39,7 +39,7 @@
 - [ ] Implement a typed transcript-draft callback and explicit voice/text send choices without duplicating send effects.
 - [ ] Run only focused message component/store tests and `npm run tsc` if shared types changed.
 - [ ] Main agent inspects the complete diff and focused test output.
-- [ ] Build/install Debug APK; in AVD verify transcript review → editable draft → edit → text send UI, plus empty/failure feedback. Use deterministic test boundary if live ASR credentials are unavailable and label it.
+- [ ] In real Chromium verify transcript review → editable draft → edit → text send UI, plus empty/failure feedback. Use deterministic runtime boundaries if live ASR credentials are unavailable and label them.
 - [ ] Spec reviewer and code-quality reviewer approve; original implementer fixes any findings and reviewers recheck.
 - [ ] Exact-stage Loop #1 files and commit `fix(messages): edit and send voice transcripts as text`.
 
@@ -61,7 +61,7 @@
 - [ ] Implement client-safe action types, visible accessible feedback, redacted structured logs and retry idempotency.
 - [ ] Run focused AI/voice/tool/SQL contract tests only.
 - [ ] Main agent audits authorization, content privacy, RPC grants and duplicate-send behavior.
-- [ ] Install updated Debug APK; in AVD exercise voice → AI result → action feedback. If target MiMo/Supabase is unavailable, separately run deterministic tool-response scenarios and retain the missing live-environment gate.
+- [ ] In real Chromium exercise voice → AI result → action feedback. If target MiMo/Supabase is unavailable, separately run deterministic tool-response scenarios and retain the missing live-environment gate.
 - [ ] Spec and code-quality reviewers approve after any fixes.
 - [ ] Exact-stage Loop #6 files and commit `fix(ai): expose reliable companion action results`.
 
@@ -83,7 +83,7 @@
 - [ ] Unify both SOS entry points behind the same structured client result; never claim notification on partial/zero success.
 - [ ] Run focused emergency tests and migration contract checks only.
 - [ ] Main agent inspects grants, `search_path`, actor derivation, request id uniqueness and message visibility.
-- [ ] Install Debug APK; in AVD verify both SOS buttons, confirmation, pending state, truthful success/no-contact/failure/retry UI. Use test backend states where target accounts are unavailable and label them.
+- [ ] In real Chromium verify both SOS buttons, confirmation, pending state, truthful success/no-contact/failure/retry UI. Use test backend states where target accounts are unavailable and label them.
 - [ ] Spec and code-quality reviewers approve after any fixes.
 - [ ] Exact-stage Loop #3 files and commit `fix(emergency): notify authorized family atomically`.
 
@@ -105,7 +105,7 @@
 - [ ] Implement private preferences table/API, store projection and shared accessible operation dialog.
 - [ ] Run focused contact/store/route tests only.
 - [ ] Main agent inspects RLS/grants, authorization and avoidance of global-name mutation.
-- [ ] Install Debug APK; in AVD verify touch long press, visible more button, edit/clear alias, pin/unpin, refresh persistence, list/chat-title consistency and scroll behavior.
+- [ ] In real Chromium verify touch long press, visible more button, edit/clear alias, pin/unpin, refresh persistence, list/chat-title consistency and scroll behavior.
 - [ ] Spec and code-quality reviewers approve after any fixes.
 - [ ] Exact-stage Loop #2 files and commit `feat(messages): persist private contact preferences`.
 
@@ -122,7 +122,7 @@
 - [ ] Implement flex/min-height/max-height/overflow/overscroll rules; keep short replies naturally sized.
 - [ ] Run focused voice tests only.
 - [ ] Main agent checks reduced motion, large text, safe areas and nested-scroll behavior.
-- [ ] Install Debug APK; in AVD verify short and long replies at portrait 360×640, landscape, and enlarged font. Capture geometry showing response can reach its end while microphone/end controls remain in viewport.
+- [ ] In real Chromium verify short and long replies at portrait 360×640, landscape, and enlarged font. Capture geometry showing response can reach its end while microphone/end controls remain in viewport.
 - [ ] Spec and code-quality reviewers approve after any fixes.
 - [ ] Exact-stage Loop #4 files and commit `fix(voice): keep long replies independently scrollable`.
 
@@ -146,7 +146,7 @@
 - [ ] Update Android hardware back to dispatch a cancelable DOM event before WebView history navigation, without adding a business JSBridge.
 - [ ] Run focused health/route/Android unit tests only.
 - [ ] Main agent inspects transaction semantics, validation parity, recipient isolation and WebView security.
-- [ ] Install Debug APK; in AVD enter multiple tabs, navigate away/cancel/continue, press Android back, correct an invalid tab and save; verify success clears dirty state and no partial-save UI appears.
+- [ ] In real Chromium enter multiple tabs, navigate away/cancel/continue, use browser history, correct an invalid tab and save; verify success clears dirty state and no partial-save UI appears. Defer the Android hardware-back adapter itself to final thin-shell smoke.
 - [ ] Spec and code-quality reviewers approve after any fixes.
 - [ ] Exact-stage Loop #5 files and commit `feat(health): save multi-type drafts atomically`.
 
@@ -158,7 +158,7 @@
 - [ ] Run `npm test`; require all non-opt-in tests pass.
 - [ ] Run `npm run build`; require exit 0 and `.next` output.
 - [ ] Run Android unit tests, lint and Debug build with JDK 17.
-- [ ] Install the final Debug APK on API 35 AVD and run one ordered #1–#6 regression pass.
+- [ ] Install the final Debug APK on API 35 AVD and run one thin-shell smoke for startup, local/production URL policy, microphone permission, system back and background/resume; business #1–#6 regression remains the real Chromium pass.
 - [ ] Run `git diff --check`, U+FFFD scan, tracked `.env`/secret/keystore/APK scan and forbidden-architecture scan.
 - [ ] Update live `docs/详解/功能详解.md` and any affected architecture/ops docs to match implementation, then exact-stage and locally commit the final evidence.
 - [ ] Keep remote Issues open and do not push, merge or publish unless separately authorized.
