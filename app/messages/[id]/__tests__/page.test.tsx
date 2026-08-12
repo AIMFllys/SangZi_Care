@@ -129,6 +129,15 @@ async function openVoiceRecorder(): Promise<void> {
   expect(screen.getByTestId('voice-recorder')).toBeInTheDocument();
 }
 
+async function recordTranscript(expected = '今天记得吃药'): Promise<void> {
+  fireEvent.click(screen.getByRole('button', { name: '开始录音' }));
+  await waitFor(() => expect(mocks.startListening).toHaveBeenCalled());
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: '停止录音' }));
+  });
+  await waitFor(() => expect(screen.getByText(expected)).toBeInTheDocument());
+}
+
 describe('ChatDetailPage 真实语音消息', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -182,6 +191,106 @@ describe('ChatDetailPage 真实语音消息', () => {
     });
   });
 
+  it('转写自动进入可编辑文字草稿，编辑后只发送文字消息', async () => {
+    render(<ChatDetailPage />);
+    await openVoiceRecorder();
+    await recordTranscript();
+
+    fireEvent.click(screen.getByRole('button', { name: '编辑转写文字' }));
+    const input = screen.getByTestId('text-input');
+    expect(input).toHaveValue('今天记得吃药');
+
+    fireEvent.change(input, { target: { value: '今天记得吃药，别忘了' } });
+    fireEvent.click(screen.getByRole('button', { name: '发送消息' }));
+
+    await waitFor(() => {
+      expect(mocks.sendTextMessage).toHaveBeenCalledWith(
+        'user-1',
+        'contact-1',
+        '今天记得吃药，别忘了',
+      );
+    });
+    expect(mocks.sendVoiceMessage).not.toHaveBeenCalled();
+  });
+
+  it('转写完成即种入父级草稿，从模式按钮进入文字时仍可发送', async () => {
+    render(<ChatDetailPage />);
+    await openVoiceRecorder();
+    await recordTranscript();
+
+    expect(screen.getByRole('status')).toHaveTextContent('转写已加入文字草稿');
+    fireEvent.click(screen.getByRole('button', { name: '切换到文字模式' }));
+
+    expect(screen.getByTestId('text-input')).toHaveValue('今天记得吃药');
+    expect(screen.getByRole('button', { name: '发送消息' })).toBeEnabled();
+  });
+
+  it('已有手输草稿时不覆盖，只在用户确认后追加转写', async () => {
+    render(<ChatDetailPage />);
+    fireEvent.change(screen.getByTestId('text-input'), { target: { value: '这是手动输入' } });
+    await openVoiceRecorder();
+    await recordTranscript();
+
+    expect(screen.getByRole('status')).toHaveTextContent('已有文字草稿，转写未覆盖');
+    fireEvent.click(screen.getByRole('button', {
+      name: '将转写追加到已有文字并编辑',
+    }));
+
+    expect(screen.getByTestId('text-input')).toHaveValue('这是手动输入 今天记得吃药');
+    expect(screen.getByTestId('text-input')).toHaveFocus();
+  });
+
+  it('直接发送语音成功后清理自动转写副本，不会重复发送', async () => {
+    render(<ChatDetailPage />);
+    await openVoiceRecorder();
+    await recordTranscript();
+
+    fireEvent.click(screen.getByRole('button', { name: '发送语音消息' }));
+    await waitFor(() => expect(mocks.sendVoiceMessage).toHaveBeenCalledOnce());
+    fireEvent.click(screen.getByRole('button', { name: '切换到文字模式' }));
+
+    expect(screen.getByTestId('text-input')).toHaveValue('');
+    expect(mocks.sendTextMessage).not.toHaveBeenCalled();
+  });
+
+  it('取消转写会只清理自动种入的副本', async () => {
+    render(<ChatDetailPage />);
+    await openVoiceRecorder();
+    await recordTranscript();
+
+    fireEvent.click(screen.getByRole('button', { name: '取消录音' }));
+    fireEvent.click(screen.getByRole('button', { name: '切换到文字模式' }));
+
+    expect(screen.getByTestId('text-input')).toHaveValue('');
+  });
+
+  it.each([
+    {
+      name: '空转写',
+      stop: () => Promise.resolve({ transcript: '   ', audioBlob: WAV, durationMs: 2_450 }),
+      error: '未识别到有效语音',
+    },
+    {
+      name: 'ASR 失败',
+      stop: () => Promise.reject(new Error('语音识别服务暂时不可用')),
+      error: '语音识别服务暂时不可用',
+    },
+  ])('$name 不修改已有手输草稿', async ({ stop, error }) => {
+    mocks.stopListening.mockImplementationOnce(stop);
+    render(<ChatDetailPage />);
+    fireEvent.change(screen.getByTestId('text-input'), { target: { value: '保留我的手输内容' } });
+    await openVoiceRecorder();
+    fireEvent.click(screen.getByRole('button', { name: '开始录音' }));
+    await waitFor(() => expect(mocks.startListening).toHaveBeenCalledOnce());
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '停止录音' }));
+    });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(error);
+    fireEvent.click(screen.getByRole('button', { name: '切换到文字模式' }));
+    expect(screen.getByTestId('text-input')).toHaveValue('保留我的手输内容');
+  });
+
   it('上传失败显示错误且不会伪装已发送', async () => {
     mocks.sendVoiceMessage.mockRejectedValue(new Error('语音上传失败'));
     render(<ChatDetailPage />);
@@ -193,6 +302,8 @@ describe('ChatDetailPage 真实语音消息', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('语音上传失败');
     expect(screen.getByText('今天记得吃药')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '编辑转写文字' }));
+    expect(screen.getByTestId('text-input')).toHaveValue('今天记得吃药');
   });
 
   it('播放按钮通过鉴权下载真实音频，不再用 TTS 朗读转写', async () => {

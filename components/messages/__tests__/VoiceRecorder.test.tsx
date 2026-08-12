@@ -26,7 +26,7 @@ vi.mock('@/hooks/useVoiceRecognition', () => ({
   }),
 }));
 
-import VoiceRecorder from '../VoiceRecorder';
+import VoiceRecorder, { type TranscriptDraftPlacement } from '../VoiceRecorder';
 
 interface Deferred<T> {
   promise: Promise<T>;
@@ -76,6 +76,19 @@ async function recordAndStop(): Promise<void> {
 describe('VoiceRecorder 真实 WAV 草稿', () => {
   const onSend = vi.fn();
   const onCancel = vi.fn();
+  const onTranscriptReady = vi.fn<() => TranscriptDraftPlacement>(() => 'seeded');
+  const onEditAsText = vi.fn();
+  const onTranscriptDiscard = vi.fn();
+
+  const recorder = () => (
+    <VoiceRecorder
+      onSend={onSend}
+      onCancel={onCancel}
+      onTranscriptReady={onTranscriptReady}
+      onEditAsText={onEditAsText}
+      onTranscriptDiscard={onTranscriptDiscard}
+    />
+  );
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -87,7 +100,7 @@ describe('VoiceRecorder 真实 WAV 草稿', () => {
   });
 
   it('空闲时只渲染紧凑的开始录音按钮', () => {
-    render(<VoiceRecorder onSend={onSend} onCancel={onCancel} />);
+    render(recorder());
     expect(screen.getByRole('button', { name: '开始录音' })).toBeInTheDocument();
     expect(screen.queryByText('发送')).not.toBeInTheDocument();
   });
@@ -95,7 +108,7 @@ describe('VoiceRecorder 真实 WAV 草稿', () => {
   it('申请麦克风权限时不能抢先停止，并可取消迟到的启动', async () => {
     const start = deferred<void>();
     mocks.startListening.mockReturnValue(start.promise);
-    render(<VoiceRecorder onSend={onSend} onCancel={onCancel} />);
+    render(recorder());
 
     fireEvent.click(screen.getByRole('button', { name: '开始录音' }));
     expect(screen.getByText('正在申请麦克风权限...')).toBeInTheDocument();
@@ -120,7 +133,7 @@ describe('VoiceRecorder 真实 WAV 草稿', () => {
   it('停止会等待 StopResult 并展示最终转写与真实时长', async () => {
     const stopResult = deferred<typeof RESULT | null>();
     mocks.stopListening.mockReturnValue(stopResult.promise);
-    render(<VoiceRecorder onSend={onSend} onCancel={onCancel} />);
+    render(recorder());
     fireEvent.click(screen.getByRole('button', { name: '开始录音' }));
     await waitFor(() => {
       expect(mocks.startListening).toHaveBeenCalledOnce();
@@ -138,13 +151,42 @@ describe('VoiceRecorder 真实 WAV 草稿', () => {
 
     expect(screen.getByText('今天记得吃药')).toBeInTheDocument();
     expect(screen.getByText('2.5秒')).toBeInTheDocument();
+    expect(onTranscriptReady).toHaveBeenCalledWith('今天记得吃药');
+    expect(screen.getByRole('status')).toHaveTextContent('转写已加入文字草稿');
+    expect(screen.getByRole('button', { name: '编辑转写文字' })).toBeEnabled();
     expect(screen.getByRole('button', { name: '发送语音消息' })).toBeEnabled();
+  });
+
+  it('已有手输草稿时显示追加选择，点击只交接文字而不发语音', async () => {
+    onTranscriptReady.mockReturnValueOnce('manual-preserved');
+    render(recorder());
+    await recordAndStop();
+
+    expect(screen.getByRole('status')).toHaveTextContent('转写未覆盖');
+    fireEvent.click(screen.getByRole('button', {
+      name: '将转写追加到已有文字并编辑',
+    }));
+
+    expect(onEditAsText).toHaveBeenCalledWith('今天记得吃药', 'manual-preserved');
+    expect(onSend).not.toHaveBeenCalled();
+    expect(screen.queryByText('今天记得吃药')).not.toBeInTheDocument();
+  });
+
+  it('重录会先废弃旧转写，不让父级草稿残留', async () => {
+    render(recorder());
+    await recordAndStop();
+
+    fireEvent.click(screen.getByRole('button', { name: '重新录音' }));
+
+    expect(onTranscriptDiscard).toHaveBeenCalledWith('今天记得吃药');
+    await waitFor(() => expect(mocks.startListening).toHaveBeenCalledTimes(2));
+    expect(screen.queryByText('今天记得吃药')).not.toBeInTheDocument();
   });
 
   it('识别等待期间可取消，并忽略真正迟到的转写结果', async () => {
     const stopResult = deferred<typeof RESULT | null>();
     mocks.stopListening.mockReturnValue(stopResult.promise);
-    render(<VoiceRecorder onSend={onSend} onCancel={onCancel} />);
+    render(recorder());
     fireEvent.click(screen.getByRole('button', { name: '开始录音' }));
     await waitFor(() => {
       expect(mocks.startListening).toHaveBeenCalledOnce();
@@ -165,13 +207,14 @@ describe('VoiceRecorder 真实 WAV 草稿', () => {
     });
 
     expect(screen.queryByText('今天记得吃药')).not.toBeInTheDocument();
+    expect(onTranscriptReady).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: '开始录音' })).toBeInTheDocument();
   });
 
   it('发送完整 WAV 草稿，等待成功后才清空', async () => {
     const upload = deferred<void>();
     onSend.mockReturnValue(upload.promise);
-    render(<VoiceRecorder onSend={onSend} onCancel={onCancel} />);
+    render(recorder());
     await recordAndStop();
 
     fireEvent.click(screen.getByRole('button', { name: '发送语音消息' }));
@@ -193,7 +236,7 @@ describe('VoiceRecorder 真实 WAV 草稿', () => {
   it('上传等待期间可取消、中止请求，并忽略迟到的发送完成', async () => {
     const upload = deferred<void>();
     onSend.mockReturnValue(upload.promise);
-    render(<VoiceRecorder onSend={onSend} onCancel={onCancel} />);
+    render(recorder());
     await recordAndStop();
 
     fireEvent.click(screen.getByRole('button', { name: '发送语音消息' }));
@@ -218,7 +261,7 @@ describe('VoiceRecorder 真实 WAV 草稿', () => {
   it('快速双击发送也只启动一次上传', async () => {
     const upload = deferred<void>();
     onSend.mockReturnValue(upload.promise);
-    render(<VoiceRecorder onSend={onSend} onCancel={onCancel} />);
+    render(recorder());
     await recordAndStop();
 
     const send = screen.getByRole('button', { name: '发送语音消息' });
@@ -233,7 +276,7 @@ describe('VoiceRecorder 真实 WAV 草稿', () => {
 
   it('发送失败保留草稿并显示错误，不能伪装成功', async () => {
     onSend.mockRejectedValue(new Error('语音上传失败'));
-    render(<VoiceRecorder onSend={onSend} onCancel={onCancel} />);
+    render(recorder());
     await recordAndStop();
 
     await act(async () => {
@@ -246,7 +289,7 @@ describe('VoiceRecorder 真实 WAV 草稿', () => {
   });
 
   it('取消使用 cancelListening，迟到转写不会重新出现', async () => {
-    render(<VoiceRecorder onSend={onSend} onCancel={onCancel} />);
+    render(recorder());
     await recordAndStop();
 
     fireEvent.click(screen.getByRole('button', { name: '取消录音' }));
@@ -254,16 +297,17 @@ describe('VoiceRecorder 真实 WAV 草稿', () => {
     expect(mocks.cancelListening).toHaveBeenCalledOnce();
     expect(mocks.stopListening).toHaveBeenCalledOnce();
     expect(onCancel).toHaveBeenCalledOnce();
+    expect(onTranscriptDiscard).toHaveBeenCalledWith('今天记得吃药');
     expect(screen.queryByText('今天记得吃药')).not.toBeInTheDocument();
   });
 
   it('ASR 60 秒自动成功时读取缓存结果', async () => {
-    const view = render(<VoiceRecorder onSend={onSend} onCancel={onCancel} />);
+    const view = render(recorder());
     fireEvent.click(screen.getByRole('button', { name: '开始录音' }));
     await waitFor(() => expect(mocks.startListening).toHaveBeenCalledOnce());
 
     mocks.phase = 'success';
-    view.rerender(<VoiceRecorder onSend={onSend} onCancel={onCancel} />);
+    view.rerender(recorder());
 
     await waitFor(() => {
       expect(mocks.stopListening).toHaveBeenCalledOnce();
@@ -274,7 +318,7 @@ describe('VoiceRecorder 真实 WAV 草稿', () => {
   it('卸载会取消录音并中止仍在发送的上传', async () => {
     const upload = deferred<void>();
     onSend.mockReturnValue(upload.promise);
-    const view = render(<VoiceRecorder onSend={onSend} onCancel={onCancel} />);
+    const view = render(recorder());
     await recordAndStop();
     fireEvent.click(screen.getByRole('button', { name: '发送语音消息' }));
     const signal = onSend.mock.calls[0][0].signal as AbortSignal;

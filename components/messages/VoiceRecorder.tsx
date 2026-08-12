@@ -20,9 +20,14 @@ export interface VoiceMessageDraft {
   signal: AbortSignal;
 }
 
+export type TranscriptDraftPlacement = 'seeded' | 'manual-preserved';
+
 export interface VoiceRecorderProps {
   onSend: (data: VoiceMessageDraft) => Promise<void> | void;
   onCancel: () => void;
+  onTranscriptReady: (transcript: string) => TranscriptDraftPlacement;
+  onEditAsText: (transcript: string, placement: TranscriptDraftPlacement) => void;
+  onTranscriptDiscard: (transcript: string) => void;
 }
 
 function isAbortError(error: unknown): boolean {
@@ -33,7 +38,13 @@ function formatDuration(durationMs: number): string {
   return `${(durationMs / 1_000).toFixed(1)}秒`;
 }
 
-export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) {
+export default function VoiceRecorder({
+  onSend,
+  onCancel,
+  onTranscriptReady,
+  onEditAsText,
+  onTranscriptDiscard,
+}: VoiceRecorderProps) {
   const {
     phase: recognitionPhase,
     error: recognitionError,
@@ -45,10 +56,12 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
 
   const [stage, setStage] = useState<RecorderStage>('idle');
   const [draft, setDraft] = useState<StopResult | null>(null);
+  const [draftPlacement, setDraftPlacement] = useState<TranscriptDraftPlacement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const runIdRef = useRef(0);
   const uploadControllerRef = useRef<AbortController | null>(null);
   const sendInFlightRef = useRef(false);
+  const editHandledRef = useRef(false);
 
   const finishRecording = useCallback(async (): Promise<void> => {
     const runId = runIdRef.current;
@@ -65,22 +78,29 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
         throw new Error('录音文件无效，请重新录制');
       }
 
-      setDraft({ ...result, transcript: result.transcript.trim() });
+      const transcript = result.transcript.trim();
+      const placement = onTranscriptReady(transcript);
+      setDraft({ ...result, transcript });
+      setDraftPlacement(placement);
+      editHandledRef.current = false;
       setStage('review');
     } catch (cause) {
       if (runIdRef.current !== runId || isAbortError(cause)) return;
       setError(cause instanceof Error ? cause.message : '语音识别失败，请重试');
       setStage('error');
     }
-  }, [stopListening]);
+  }, [onTranscriptReady, stopListening]);
 
   const startRecording = useCallback(async (): Promise<void> => {
     const runId = ++runIdRef.current;
+    if (draft) onTranscriptDiscard(draft.transcript);
     uploadControllerRef.current?.abort();
     uploadControllerRef.current = null;
     sendInFlightRef.current = false;
+    editHandledRef.current = false;
     resetTranscript();
     setDraft(null);
+    setDraftPlacement(null);
     setError(null);
     setStage('requesting');
 
@@ -93,7 +113,7 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
       setError(cause instanceof Error ? cause.message : '无法开始录音，请检查麦克风权限');
       setStage('error');
     }
-  }, [resetTranscript, startListening]);
+  }, [draft, onTranscriptDiscard, resetTranscript, startListening]);
 
   const handleMicToggle = useCallback((): void => {
     if (stage === 'recording') {
@@ -106,7 +126,7 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
   }, [finishRecording, stage, startRecording]);
 
   const handleSend = useCallback(async (): Promise<void> => {
-    if (!draft || sendInFlightRef.current) return;
+    if (!draft || sendInFlightRef.current || editHandledRef.current) return;
     sendInFlightRef.current = true;
     const runId = runIdRef.current;
     const controller = new AbortController();
@@ -125,6 +145,7 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
       if (runIdRef.current !== runId || controller.signal.aborted) return;
       resetTranscript();
       setDraft(null);
+      setDraftPlacement(null);
       setStage('idle');
     } catch (cause) {
       if (runIdRef.current !== runId || isAbortError(cause)) return;
@@ -138,6 +159,27 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
     }
   }, [draft, onSend, resetTranscript]);
 
+  const handleEditAsText = useCallback((): void => {
+    if (
+      !draft
+      || !draftPlacement
+      || sendInFlightRef.current
+      || editHandledRef.current
+    ) return;
+
+    editHandledRef.current = true;
+    runIdRef.current += 1;
+    uploadControllerRef.current?.abort();
+    uploadControllerRef.current = null;
+    cancelListening();
+    resetTranscript();
+    onEditAsText(draft.transcript, draftPlacement);
+    setDraft(null);
+    setDraftPlacement(null);
+    setError(null);
+    setStage('idle');
+  }, [cancelListening, draft, draftPlacement, onEditAsText, resetTranscript]);
+
   const handleCancel = useCallback((): void => {
     runIdRef.current += 1;
     uploadControllerRef.current?.abort();
@@ -145,11 +187,13 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
     sendInFlightRef.current = false;
     cancelListening();
     resetTranscript();
+    if (draft) onTranscriptDiscard(draft.transcript);
     setDraft(null);
+    setDraftPlacement(null);
     setError(null);
     setStage('idle');
     onCancel();
-  }, [cancelListening, onCancel, resetTranscript]);
+  }, [cancelListening, draft, onCancel, onTranscriptDiscard, resetTranscript]);
 
   useEffect(() => {
     if (stage === 'recording' && recognitionPhase === 'success') {
@@ -218,8 +262,26 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
             <span>{formatDuration(draft.durationMs)}</span>
           </div>
           <p className={styles.transcript}>{draft.transcript}</p>
+          {draftPlacement && (
+            <p className={styles.draftNotice} role="status">
+              {draftPlacement === 'seeded'
+                ? '转写已加入文字草稿，可编辑后作为文字发送。'
+                : '已有文字草稿，转写未覆盖。可选择追加后编辑。'}
+            </p>
+          )}
           {error && <p className={styles.error} role="alert">{error}</p>}
           <div className={styles.actions}>
+            <button
+              className={styles.editBtn}
+              onClick={handleEditAsText}
+              type="button"
+              aria-label={draftPlacement === 'manual-preserved'
+                ? '将转写追加到已有文字并编辑'
+                : '编辑转写文字'}
+              disabled={stage === 'sending' || !draftPlacement}
+            >
+              {draftPlacement === 'manual-preserved' ? '追加并编辑' : '编辑文字'}
+            </button>
             <button
               className={styles.cancelBtn}
               onClick={handleCancel}
@@ -235,7 +297,7 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
               aria-label={stage === 'sending' ? '正在发送语音' : '发送语音消息'}
               disabled={stage === 'sending'}
             >
-              {stage === 'sending' ? '发送中...' : '发送'}
+              {stage === 'sending' ? '发送中...' : '发送语音'}
             </button>
           </div>
         </div>
@@ -247,7 +309,7 @@ export default function VoiceRecorder({ onSend, onCancel }: VoiceRecorderProps) 
         className={`${styles.micBtn} ${isRecording ? styles.micBtnRecording : ''}`}
         onClick={handleMicToggle}
         type="button"
-        aria-label={isRecording ? '停止录音' : '开始录音'}
+        aria-label={isRecording ? '停止录音' : draft ? '重新录音' : '开始录音'}
         data-testid="mic-button"
         disabled={isBusy}
       >

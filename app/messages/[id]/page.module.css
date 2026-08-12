@@ -95,6 +95,11 @@
   color: var(--accent-action);
 }
 
+.modeToggle:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 .textInputRow {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

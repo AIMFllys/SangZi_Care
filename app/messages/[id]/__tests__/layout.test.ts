@@ -43,7 +43,9 @@ describe('聊天页窄屏与横屏布局契约', () => {
     expect(pageCss).toMatch(/\.sendBtn\s*\{[\s\S]*?height:\s*48px/);
     expect(recorderCss).toMatch(/\.micBtn\s*\{[\s\S]*?height:\s*52px/);
     expect(recorderCss).toMatch(/\.pendingCancelBtn\s*\{[\s\S]*?min-height:\s*44px/);
-    expect(recorderCss).toMatch(/\.cancelBtn,\s*\.sendBtn\s*\{[\s\S]*?min-height:\s*44px/);
+    expect(recorderCss).toMatch(
+      /\.cancelBtn,\s*\.editBtn,\s*\.sendBtn\s*\{[\s\S]*?min-height:\s*44px/,
+    );
     expect(bubbleCss).toMatch(/\.voiceBar\s*\{[\s\S]*?min-height:\s*48px/);
     expect(bubbleCss).toMatch(/\.playIcon\s*\{[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px/);
   });

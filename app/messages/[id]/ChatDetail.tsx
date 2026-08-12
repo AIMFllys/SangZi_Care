@@ -13,7 +13,10 @@ import { fetchBlob } from '@/lib/api';
 import { ROUTES } from '@/lib/constants';
 import MessageList from '@/components/messages/MessageList';
 import VoiceRecorder from '@/components/messages/VoiceRecorder';
-import type { VoiceMessageDraft } from '@/components/messages/VoiceRecorder';
+import type {
+  TranscriptDraftPlacement,
+  VoiceMessageDraft,
+} from '@/components/messages/VoiceRecorder';
 import { ChevronLeft, Mic, Keyboard } from 'lucide-react';
 import type { MessageResponse } from '@/stores/messageStore';
 import styles from './page.module.css';
@@ -22,6 +25,9 @@ import styles from './page.module.css';
 
 export default function ChatDetailPage() {
   const pageRef = useRef<HTMLDivElement>(null);
+  const textInputRef = useRef<HTMLInputElement>(null);
+  const automaticTranscriptSeedRef = useRef<string | null>(null);
+  const focusTextInputRef = useRef(false);
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const contactId = params?.id ?? '';
@@ -84,6 +90,12 @@ export default function ChatDetailPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (inputMode !== 'text' || !focusTextInputRef.current) return;
+    focusTextInputRef.current = false;
+    textInputRef.current?.focus();
+  }, [inputMode]);
+
   const cleanupPlayback = useCallback((updateState = true): void => {
     const operation = playbackRef.current;
     if (!operation) return;
@@ -142,6 +154,45 @@ export default function ChatDetailPage() {
 
   useEffect(() => () => cleanupPlayback(false), [cleanupPlayback]);
 
+  const clearAutomaticTranscript = useCallback((transcript: string): void => {
+    if (automaticTranscriptSeedRef.current !== transcript) return;
+    automaticTranscriptSeedRef.current = null;
+    setTextInput((current) => current === transcript ? '' : current);
+  }, []);
+
+  const handleTranscriptReady = useCallback(
+    (transcript: string): TranscriptDraftPlacement => {
+      if (textInput.trim()) {
+        automaticTranscriptSeedRef.current = null;
+        return 'manual-preserved';
+      }
+
+      automaticTranscriptSeedRef.current = transcript;
+      setTextInput(transcript);
+      return 'seeded';
+    },
+    [textInput],
+  );
+
+  const handleEditTranscriptAsText = useCallback(
+    (transcript: string, placement: TranscriptDraftPlacement): void => {
+      if (placement === 'manual-preserved') {
+        setTextInput((current) => {
+          const existing = current.trimEnd();
+          return existing ? `${existing} ${transcript}` : transcript;
+        });
+      } else {
+        setTextInput((current) => current.trim() ? current : transcript);
+      }
+
+      automaticTranscriptSeedRef.current = null;
+      focusTextInputRef.current = true;
+      setVoiceError(null);
+      setInputMode('text');
+    },
+    [],
+  );
+
   // 发送文字消息
   const handleSendText = useCallback(async () => {
     const content = textInput.trim();
@@ -150,6 +201,7 @@ export default function ChatDetailPage() {
     setIsSending(true);
     try {
       await sendTextMessage(user.id, contactId, content);
+      automaticTranscriptSeedRef.current = null;
       setTextInput('');
     } catch {
       // 静默处理
@@ -172,11 +224,12 @@ export default function ChatDetailPage() {
           durationMs: data.durationMs,
           signal: data.signal,
         });
+        if (!data.signal.aborted) clearAutomaticTranscript(data.content);
       } finally {
         setIsSending(false);
       }
     },
-    [user?.id, contactId, isSending, sendVoiceMessage],
+    [user?.id, contactId, isSending, sendVoiceMessage, clearAutomaticTranscript],
   );
 
   // 取消语音录制
@@ -188,7 +241,13 @@ export default function ChatDetailPage() {
   const toggleInputMode = useCallback(() => {
     cleanupPlayback();
     setVoiceError(null);
-    setInputMode((prev) => (prev === 'text' ? 'voice' : 'text'));
+    setInputMode((prev) => {
+      if (prev === 'voice') {
+        automaticTranscriptSeedRef.current = null;
+        return 'text';
+      }
+      return 'voice';
+    });
   }, [cleanupPlayback]);
 
   // 回车发送
@@ -245,6 +304,7 @@ export default function ChatDetailPage() {
           type="button"
           aria-label={inputMode === 'text' ? '切换到语音模式' : '切换到文字模式'}
           data-testid="mode-toggle"
+          disabled={isSending}
         >
           {inputMode === 'text' ? <Mic size={24} /> : <Keyboard size={24} />}
         </button>
@@ -253,11 +313,15 @@ export default function ChatDetailPage() {
         {inputMode === 'text' && (
           <div className={styles.textInputRow}>
             <input
+              ref={textInputRef}
               className={styles.textInput}
               type="text"
               placeholder="输入消息..."
               value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
+              onChange={(e) => {
+                automaticTranscriptSeedRef.current = null;
+                setTextInput(e.target.value);
+              }}
               onKeyDown={handleKeyDown}
               aria-label="输入消息"
               data-testid="text-input"
@@ -276,7 +340,13 @@ export default function ChatDetailPage() {
 
         {/* 语音输入模式 */}
         {inputMode === 'voice' && (
-          <VoiceRecorder onSend={handleSendVoice} onCancel={handleCancelVoice} />
+          <VoiceRecorder
+            onSend={handleSendVoice}
+            onCancel={handleCancelVoice}
+            onTranscriptReady={handleTranscriptReady}
+            onEditAsText={handleEditTranscriptAsText}
+            onTranscriptDiscard={clearAutomaticTranscript}
+          />
         )}
       </footer>
     </div>
