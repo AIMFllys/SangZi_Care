@@ -86,6 +86,28 @@ describe('Issue #5 健康草稿与离开保护', () => {
     expect(mockCreateRecordsBatch.mock.calls[0][0].records).toHaveLength(2);
   });
 
+  it('批量保存进行中重复点击确认只发起一次请求并禁用操作按钮', async () => {
+    let resolveBatch: ((value: unknown) => void) | undefined;
+    mockCreateRecordsBatch.mockImplementation(() => new Promise((resolve) => {
+      resolveBatch = resolve;
+    }));
+
+    render(<HealthInputPage />);
+    fireEvent.change(screen.getByLabelText('收缩压'), { target: { value: '120' } });
+    fireEvent.change(screen.getByLabelText('舒张压'), { target: { value: '80' } });
+    fireEvent.click(screen.getByRole('button', { name: /保存记录/ }));
+
+    const confirmButton = screen.getByRole('button', { name: '确认保存' });
+    fireEvent.click(confirmButton);
+    await waitFor(() => expect(confirmButton).toBeDisabled());
+    fireEvent.click(confirmButton);
+
+    expect(mockCreateRecordsBatch).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      resolveBatch?.([]);
+    });
+  });
+
   it('任一草稿非法时定位到对应 Tab 且不发起批量写入', () => {
     render(<HealthInputPage />);
     fireEvent.change(screen.getByLabelText('收缩压'), { target: { value: '120' } });

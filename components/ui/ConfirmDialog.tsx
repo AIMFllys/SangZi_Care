@@ -9,6 +9,7 @@ export interface ConfirmDialogProps {
   description?: string;
   confirmLabel: string;
   cancelLabel: string;
+  busy?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   children?: React.ReactNode;
@@ -20,6 +21,7 @@ export function ConfirmDialog({
   description,
   confirmLabel,
   cancelLabel,
+  busy = false,
   onConfirm,
   onCancel,
   children,
@@ -41,7 +43,7 @@ export function ConfirmDialog({
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
       event.preventDefault();
-      onCancel();
+      if (!busy) onCancel();
       return;
     }
     if (event.key !== 'Tab') return;
@@ -58,19 +60,19 @@ export function ConfirmDialog({
       event.preventDefault();
       first.focus();
     }
-  }, [onCancel]);
+  }, [busy, onCancel]);
 
   if (!open) return null;
 
   return (
-    <div className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" onKeyDown={handleKeyDown}>
+    <div className={styles.overlay} role="dialog" aria-modal="true" aria-busy={busy} aria-labelledby="confirm-dialog-title" onKeyDown={handleKeyDown}>
       <div className={styles.dialog} ref={dialogRef}>
         <h2 id="confirm-dialog-title" className={styles.title}>{title}</h2>
         {description && <p className={styles.description}>{description}</p>}
         {children}
         <div className={styles.actions}>
-          <button type="button" className={styles.cancel} onClick={onCancel}>{cancelLabel}</button>
-          <button type="button" className={styles.confirm} ref={confirmRef} onClick={onConfirm}>{confirmLabel}</button>
+          <button type="button" className={styles.cancel} onClick={onCancel} disabled={busy}>{cancelLabel}</button>
+          <button type="button" className={styles.confirm} ref={confirmRef} onClick={onConfirm} disabled={busy}>{confirmLabel}</button>
         </div>
       </div>
     </div>

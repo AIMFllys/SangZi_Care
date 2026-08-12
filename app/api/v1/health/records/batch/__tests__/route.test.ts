@@ -15,10 +15,10 @@ vi.mock('@/lib/server', async (importOriginal) => ({
 
 const { POST } = await import('../route');
 
-function request(body: unknown): NextRequest {
+function request(body: unknown, extraHeaders: Record<string, string> = {}): NextRequest {
   return new Request('http://localhost/api/v1/health/records/batch', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...extraHeaders },
     body: JSON.stringify(body),
   }) as unknown as NextRequest;
 }
@@ -115,5 +115,22 @@ describe('POST /api/v1/health/records/batch', () => {
     expect(response.status).toBe(400);
     expect(rpc).not.toHaveBeenCalled();
     expect(from).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid Content-Length before authenticating or touching the database', async () => {
+    const response = await POST(request({ records: [validRecord] }, { 'Content-Length': 'not-a-number' }));
+
+    expect(response.status).toBe(400);
+    expect(mocks.requireUser).not.toHaveBeenCalled();
+    expect(mocks.getSupabaseServerClient).not.toHaveBeenCalled();
+  });
+
+  it('enforces the byte limit for multibyte JSON bodies before authenticating', async () => {
+    const oversizedNotes = '中'.repeat(33_000);
+    const response = await POST(request({ records: [{ ...validRecord, notes: oversizedNotes }] }));
+
+    expect(response.status).toBe(413);
+    expect(mocks.requireUser).not.toHaveBeenCalled();
+    expect(mocks.getSupabaseServerClient).not.toHaveBeenCalled();
   });
 });

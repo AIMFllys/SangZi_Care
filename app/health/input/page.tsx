@@ -273,6 +273,7 @@ export default function HealthInputPage() {
   const [pendingRecords, setPendingRecords] = useState<HealthRecordCreate[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const voiceRunIdRef = useRef(0);
+  const submitInFlightRef = useRef(false);
   const targetUserIdRef = useRef(targetUserId);
   const inputLocked = !targetUserId || !canEditHealth;
   const currentDraft = drafts[selectedType];
@@ -547,12 +548,14 @@ export default function HealthInputPage() {
   }, []);
 
   const confirmDialogConfirm = useCallback(async () => {
+    if (isSubmitting || submitInFlightRef.current) return;
     if (pendingRecords.length === 0) {
       setShowConfirm(false);
       leavePage();
       return;
     }
     if (!createRecordsBatch) return;
+    submitInFlightRef.current = true;
     setIsSubmitting(true);
     try {
       await createRecordsBatch({ user_id: targetUserId ?? undefined, records: pendingRecords });
@@ -564,9 +567,10 @@ export default function HealthInputPage() {
     } catch {
       setSubmitError('保存失败，请重试');
     } finally {
+      submitInFlightRef.current = false;
       setIsSubmitting(false);
     }
-  }, [createRecordsBatch, leavePage, pendingRecords, router, targetUserId]);
+  }, [createRecordsBatch, isSubmitting, leavePage, pendingRecords, router, targetUserId]);
 
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -922,6 +926,7 @@ export default function HealthInputPage() {
         description={pendingRecords.length > 0 ? '以下记录将一次性保存，任一条失败都会全部回滚。' : '离开后本页未保存的内容将被清除。'}
         cancelLabel="继续编辑"
         confirmLabel={pendingRecords.length > 0 ? '确认保存' : '放弃离开'}
+        busy={isSubmitting}
         onCancel={confirmDialogCancel}
         onConfirm={() => void confirmDialogConfirm()}
       >

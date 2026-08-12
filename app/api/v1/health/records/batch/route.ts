@@ -6,6 +6,7 @@ import {
   toApiResponse,
   withPrivateNoStore,
 } from '@/lib/server';
+import { readBoundedJson } from '../../../_http';
 import { checkAbnormal } from '@/lib/server/health-thresholds';
 import type { Json } from '@/types/supabase';
 import {
@@ -144,15 +145,9 @@ function parseRecord(
 
 export async function POST(request: NextRequest) {
   try {
-    const contentLength = Number(request.headers.get('content-length') ?? 0);
-    if (contentLength > MAX_BODY_BYTES) {
-      throw new ApiError(413, '请求体过大');
-    }
-
+    const body = await readBoundedJson<BatchBody | null>(request, MAX_BODY_BYTES);
     const { user_id: currentUserId } = await requireUser(request);
-    const body = (await request.json().catch(() => null)) as BatchBody | null;
     if (!body || !isObject(body)) throw new ApiError(400, '请求体必须为 JSON 对象');
-    if (JSON.stringify(body).length > MAX_BODY_BYTES) throw new ApiError(413, '请求体过大');
     assertKnownKeys(body, BODY_KEYS, '请求体');
 
     const targetUserId = typeof body.user_id === 'string' && body.user_id.trim()
