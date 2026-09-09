@@ -14,10 +14,12 @@ describe('全局动效契约', () => {
   });
 
   it('页面切换只做透明度淡入', () => {
-    expect(template).toContain('page-fade');
+    expect(template).toContain('PageFade');
     expect(globals).toContain('.page-fade');
+    expect(globals).toContain('.page-fade.is-entering');
     expect(globals).toContain('@keyframes page-fade-in');
     expect(globals).toMatch(/@keyframes page-fade-in\s*\{[^}]*opacity:\s*0/);
     expect(globals).not.toMatch(/@keyframes page-fade-in\s*\{[^}]*translateY/);
+    expect(globals).not.toMatch(/page-fade-in[^;]*both/);
   });
 });

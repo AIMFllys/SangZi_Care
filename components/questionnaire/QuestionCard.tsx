@@ -13,18 +13,22 @@ interface QuestionCardProps {
 export function QuestionCard({ question, answer, onAnswer }: QuestionCardProps) {
   const isCheckbox = question.type === 'checkbox';
   const selected = isCheckbox ? ((answer as string[] | undefined) ?? []) : [];
+  const headingId = `${question.id}-label`;
 
   return (
-    <fieldset className={styles.card}>
-      <legend className={styles.legend}>{question.label}</legend>
-      <div className={styles.options} role={isCheckbox ? 'group' : 'radiogroup'}>
+    <div
+      className={styles.card}
+      role={isCheckbox ? 'group' : 'radiogroup'}
+      aria-labelledby={headingId}
+    >
+      <h3 id={headingId} className={styles.legend}>{question.label}</h3>
+      <div className={styles.options}>
         {question.options.map((option) => {
           const checked = isCheckbox ? selected.includes(option) : answer === option;
           return (
             <OptionItem
               key={option}
               type={question.type}
-              name={question.id}
               label={option}
               checked={checked}
               onSelect={() => {
@@ -41,6 +45,6 @@ export function QuestionCard({ question, answer, onAnswer }: QuestionCardProps) 
           );
         })}
       </div>
-    </fieldset>
+    </div>
   );
 }

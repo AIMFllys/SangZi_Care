@@ -261,7 +261,10 @@ body {
 .page-fade {
   height: 100%;
   min-height: 0;
-  animation: page-fade-in var(--duration-normal) var(--ease-out-smooth) both;
+}
+
+.page-fade.is-entering {
+  animation: page-fade-in var(--duration-normal) var(--ease-out-smooth);
 }
 
 .page-surface {
@@ -407,7 +410,7 @@ body {
  * ============================================================ */
 
 @media (prefers-reduced-motion: reduce) {
-  .page-fade {
+  .page-fade.is-entering {
     animation: none;
   }
 

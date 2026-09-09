@@ -12,7 +12,7 @@
 
 | 项 | 决策 |
 |----|------|
-| 页面切换 | 内容区透明度淡入，280ms，`--ease-out-smooth`；TabBar / Splash 不参与 |
+| 页面切换 | 内容区透明度淡入 280ms；`PageFade` 动画结束立刻去掉 animation，避免 Android WebView 白屏 |
 | 按下 | `scale(var(--press-scale))`，默认 `0.97`，150ms |
 | 默认缓动 | 只用 `--ease-out-smooth`；`--ease-spring` 不再用于导航 |
 | 晚加载 | 骨架屏（shimmer），不用弹跳圆点 |

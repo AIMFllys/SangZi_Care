@@ -16,7 +16,10 @@ describe('QuestionnairePage', () => {
     render(<QuestionnairePage />);
 
     expect(screen.getByRole('heading', { name: '健康早筛' })).toBeInTheDocument();
+    expect(screen.getAllByText('关爱同行').length).toBeGreaterThan(0);
     expect(screen.getByText('同济医学院 · 慧老智治 医心为民')).toBeInTheDocument();
+    expect(screen.getByText(/共\s*8\s*部分，可一页一页填写/)).toBeInTheDocument();
+    expect(screen.getByText('每一份回答，都在为家庭与社区贡献力量')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '开始填写' }));
     expect(screen.getByText('基础信息 & 家庭关怀')).toBeInTheDocument();
@@ -27,5 +30,18 @@ describe('QuestionnairePage', () => {
     const css = readFileSync(resolve(process.cwd(), 'app/questionnaire/page.module.css'), 'utf8');
     expect(css).toMatch(/\.page\s*\{[\s\S]*overscroll-behavior:\s*none/);
     expect(css).toMatch(/\.content\s*\{[\s\S]*overscroll-behavior-y:\s*contain/);
+    expect(css).not.toMatch(/-webkit-overflow-scrolling:\s*touch/);
+  });
+
+  it('引言辅助句略缩小且不换行，避免窄屏把关键词拆开', () => {
+    const pageCss = readFileSync(resolve(process.cwd(), 'app/questionnaire/page.module.css'), 'utf8');
+    const introCss = readFileSync(
+      resolve(process.cwd(), 'components/questionnaire/Questionnaire.module.css'),
+      'utf8',
+    );
+    expect(introCss).toMatch(/\.meta\s*\{[\s\S]*white-space:\s*nowrap/);
+    expect(introCss).toMatch(/\.eyebrow\s*\{[\s\S]*white-space:\s*nowrap/);
+    expect(pageCss).toMatch(/\.footer\s*\{[\s\S]*white-space:\s*nowrap/);
+    expect(pageCss).toMatch(/\.footer\s*\{[\s\S]*font-size:\s*var\(--font-small\)/);
   });
 });

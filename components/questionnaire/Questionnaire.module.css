@@ -19,9 +19,10 @@
 
 .eyebrow {
   color: var(--accent-action);
-  font-size: var(--font-caption);
+  font-size: var(--font-small);
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .title,
@@ -34,12 +35,18 @@
 }
 
 .lead,
-.meta,
 .skipHint,
 .hint {
   color: var(--text-secondary);
   font-size: var(--font-body);
   line-height: 1.65;
+}
+
+.meta {
+  color: var(--text-secondary);
+  font-size: var(--font-small);
+  line-height: 1.5;
+  white-space: nowrap;
 }
 
 .lead {

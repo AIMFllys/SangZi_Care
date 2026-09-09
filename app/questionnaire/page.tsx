@@ -21,7 +21,7 @@ export default function QuestionnairePage() {
       />
       <main className={styles.content}>
         <Questionnaire sections={QUESTIONNAIRE_SECTIONS} />
-        <p className={styles.footer}>您的每一份回答都为“家庭-社区-医疗”联动贡献力量</p>
+        <p className={styles.footer}>每一份回答，都在为家庭与社区贡献力量</p>
       </main>
     </div>
   );

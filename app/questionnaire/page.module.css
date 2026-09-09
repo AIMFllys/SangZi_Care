@@ -10,16 +10,17 @@
 
 .content {
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
   padding: 0 var(--page-gutter) calc(var(--safe-bottom) + var(--space-lg));
 }
 
 .footer {
   margin: var(--space-xl) 0 0;
   color: var(--text-muted);
-  font-size: var(--font-caption);
+  font-size: var(--font-small);
   text-align: center;
-  line-height: 1.6;
+  line-height: 1.5;
+  white-space: nowrap;
 }
