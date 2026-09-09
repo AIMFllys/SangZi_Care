@@ -10,7 +10,7 @@
 //
 // 注：Python 仅 require_auth，未做跨用户绑定校验；plan 07 文档
 //   "跨用户需绑定校验"为后续改进项，本版对齐 Python 行为。
-//   前端 useAIChat.getSummary / summaryStore.fetchSummary 仅传当前用户 id。
+//   前端若调用仅传当前用户 id。
 // ============================================================
 
 import { NextResponse, type NextRequest } from 'next/server';

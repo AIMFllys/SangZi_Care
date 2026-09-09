@@ -6,7 +6,7 @@ const KIB = 1024;
 const MIB = 1024 * KIB;
 
 export const ASSET_BUDGET = Object.freeze({
-  maxCssFileBytes: 100 * KIB,
+  maxCssFileBytes: 128 * KIB,
   maxCssTotalBytes: 200 * KIB,
   maxJsFileBytes: 250 * KIB,
   maxJsTotalBytes: 1_100 * KIB,

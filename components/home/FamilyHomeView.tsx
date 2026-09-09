@@ -17,6 +17,7 @@ import { useCareRecipient } from '@/hooks/useCareRecipient';
 import { useCareDashboard } from '@/hooks/useCareDashboard';
 import { formatHealthValue } from '@/stores/healthStore';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
+import { DashboardSkeleton } from '@/components/ui/Skeleton';
 import PageHeader from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { IconButton } from '@/components/ui/IconButton';
@@ -84,6 +85,7 @@ export default function FamilyHomeView() {
 
       <DataStateWrapper
         loading={recipientsLoading || loading}
+        skeleton={<DashboardSkeleton />}
         error={recipientsError ?? dashboardError}
         onRetry={recipientsError ? retryRecipients : retryDashboard}
         empty={recipients.length === 0 ? {

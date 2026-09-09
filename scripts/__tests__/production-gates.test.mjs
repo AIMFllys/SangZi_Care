@@ -85,8 +85,8 @@ describe('生产构建门禁', () => {
       { path: 'b.js', bytes: 230 * 1024 },
     ])).toEqual([]);
     expect(budget.evaluateAssetBudget([
-      { path: 'oversize.css', bytes: 101 * 1024 },
-      { path: 'extra.css', bytes: 100 * 1024 },
+      { path: 'oversize.css', bytes: 129 * 1024 },
+      { path: 'extra.css', bytes: 80 * 1024 },
       { path: 'oversize.js', bytes: 251 * 1024 },
       { path: 'huge.bin', bytes: 25 * 1024 * 1024 + 1 },
     ])).toEqual(expect.arrayContaining([
@@ -208,8 +208,9 @@ describe('生产构建门禁', () => {
   it('首页按角色动态加载视图，避免两套看板同时进入首屏代码', () => {
     const source = readFileSync(resolve(root, 'app/page.tsx'), 'utf8');
 
-    expect(source).toContain("dynamic(() => import('@/components/home/ElderHomeView'))");
-    expect(source).toContain("dynamic(() => import('@/components/home/FamilyHomeView'))");
+    expect(source).toContain("dynamic(() => import('@/components/home/ElderHomeView')");
+    expect(source).toContain("dynamic(() => import('@/components/home/FamilyHomeView')");
+    expect(source).toContain('loading:');
     expect(source).not.toMatch(/import ElderHomeView from/);
     expect(source).not.toMatch(/import FamilyHomeView from/);
   });

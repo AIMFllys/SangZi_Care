@@ -1,10 +1,15 @@
 'use client';
 
-import { useUserStore } from '@/stores/userStore';
 import dynamic from 'next/dynamic';
+import { useUserStore } from '@/stores/userStore';
+import { DashboardSkeleton, ListSkeleton } from '@/components/ui/Skeleton';
 
-const ElderHomeView = dynamic(() => import('@/components/home/ElderHomeView'));
-const FamilyHomeView = dynamic(() => import('@/components/home/FamilyHomeView'));
+const ElderHomeView = dynamic(() => import('@/components/home/ElderHomeView'), {
+  loading: () => <ListSkeleton rows={3} />,
+});
+const FamilyHomeView = dynamic(() => import('@/components/home/FamilyHomeView'), {
+  loading: () => <DashboardSkeleton />,
+});
 
 /**
  * 主页面入口 — 根据用户角色渲染不同视图

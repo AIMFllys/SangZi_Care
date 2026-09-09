@@ -25,7 +25,6 @@
 - 写库：[`app/api/v1/**`](../../app/api/v1/)
 - 认证挑战 RPC：[`lib/server/otp-store.ts`](../../lib/server/otp-store.ts)
 - Schema migration：[`supabase/migrations/20260713230000_auth_challenges.sql`](../../supabase/migrations/20260713230000_auth_challenges.sql)
-- Realtime（未挂载）：[`lib/realtimeSubscriptions.ts`](../../lib/realtimeSubscriptions.ts)
 
 ## 注意
 

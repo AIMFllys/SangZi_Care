@@ -50,26 +50,6 @@
   font-size: var(--font-small);
 }
 
-.weather {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  min-width: 0;
-}
-
-.weatherIcon {
-  display: grid;
-  place-items: center;
-  color: var(--accent-decoration);
-}
-
-.weatherTemp {
-  color: var(--text-primary);
-  font-size: var(--font-caption);
-  font-weight: 700;
-  white-space: nowrap;
-}
-
 .voiceSection {
   display: grid;
   min-height: 0;
@@ -299,7 +279,7 @@ button.sosButton {
 .vitalsStrip small,
 .vitalsStrip em {
   color: var(--text-muted);
-  font-size: 9px;
+  font-size: var(--font-small);
   font-style: normal;
   font-weight: 650;
   line-height: 1;
@@ -352,7 +332,7 @@ button.sosButton {
 
 .chartEyebrow {
   color: var(--accent-action);
-  font-size: 9px;
+  font-size: var(--font-small);
   font-weight: 850;
   letter-spacing: 0.13em;
 }
@@ -367,14 +347,14 @@ button.sosButton {
   background: var(--accent-soft);
   color: var(--accent-action);
   font: inherit;
-  font-size: 11px;
+  font-size: var(--font-small);
   font-weight: 750;
   cursor: pointer;
 }
 
 .updatedAt {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--font-small);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -426,7 +406,7 @@ button.sosButton {
 .careActions small {
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--font-small);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -569,7 +549,7 @@ button.sosButton {
 .trendDayLabel {
   flex: 1;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--font-small);
   text-align: center;
 }
 
@@ -611,7 +591,7 @@ button.sosButton {
 .alertDesc {
   margin-top: 2px;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--font-small);
   line-height: 1.45;
 }
 
@@ -622,10 +602,6 @@ button.sosButton {
 
   .summaryCard {
     padding-inline: var(--space-sm);
-  }
-
-  .weatherTemp {
-    display: none;
   }
 }
 

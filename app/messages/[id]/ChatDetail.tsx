@@ -19,8 +19,10 @@ import type {
   TranscriptDraftPlacement,
   VoiceMessageDraft,
 } from '@/components/messages/VoiceRecorder';
-import { ChevronLeft, Mic, Keyboard } from 'lucide-react';
+import { Mic, Keyboard } from 'lucide-react';
 import type { MessageResponse } from '@/stores/messageStore';
+import PageHeader from '@/components/layout/PageHeader';
+import { ChatSkeleton } from '@/components/ui/Skeleton';
 import styles from './page.module.css';
 
 // ---------- 组件 ----------
@@ -277,27 +279,15 @@ export default function ChatDetailPage() {
 
   return (
     <div ref={pageRef} className={styles.page}>
-      {/* 顶部栏 */}
-      <header className={styles.header}>
-        <button
-          className={styles.backBtn}
-          onClick={() => router.push(ROUTES.MESSAGES)}
-          aria-label="返回消息列表"
-          type="button"
-        >
-          <ChevronLeft size={24} />
-        </button>
-        <h1 className={styles.title}>
-          {contactTitle}
-        </h1>
-        <span className={styles.headerSpacer} aria-hidden="true" />
-      </header>
+      <PageHeader
+        title={contactTitle}
+        variant="detail"
+        onBack={() => router.push(ROUTES.MESSAGES)}
+        backAriaLabel="返回消息列表"
+      />
 
-      {/* 消息列表 */}
       {loading ? (
-        <div className={styles.loading}>
-          <span>加载中...</span>
-        </div>
+        <ChatSkeleton />
       ) : (
         <MessageList
           messages={messages}

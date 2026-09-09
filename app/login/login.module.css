@@ -201,8 +201,10 @@
 }
 
 .captchaLoading {
-  font-size: var(--font-caption);
-  color: var(--text-muted);
+  display: block;
+  width: 72%;
+  height: 16px;
+  border-radius: var(--radius-sm);
 }
 
 .captchaRow .captchaInput {

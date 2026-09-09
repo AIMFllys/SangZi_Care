@@ -1,0 +1,96 @@
+.stack,
+.cards,
+.chat,
+.form {
+  width: 100%;
+  min-width: 0;
+}
+
+.stack,
+.form {
+  display: grid;
+  gap: var(--space-sm);
+  align-content: start;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: var(--space-sm);
+  align-items: center;
+  min-height: 72px;
+}
+
+.avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-full);
+}
+
+.lines {
+  display: grid;
+  gap: 8px;
+}
+
+.line,
+.lineShort,
+.metric,
+.hero,
+.timeline,
+.bubble,
+.field {
+  display: block;
+}
+
+.line {
+  height: 14px;
+  width: 100%;
+}
+
+.lineShort {
+  height: 12px;
+  width: 46%;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metric {
+  min-height: 126px;
+  border-radius: var(--radius-lg);
+}
+
+.hero {
+  min-height: 88px;
+  border-radius: var(--radius-lg);
+}
+
+.timeline {
+  min-height: 84px;
+  border-radius: var(--radius-lg);
+}
+
+.chat {
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
+}
+
+.bubble {
+  height: 56px;
+  width: 72%;
+  border-radius: var(--radius-lg);
+}
+
+.bubbleAlt {
+  width: 58%;
+  justify-self: end;
+}
+
+.field {
+  height: 56px;
+  border-radius: var(--radius-md);
+}

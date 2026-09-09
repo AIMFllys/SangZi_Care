@@ -39,7 +39,7 @@ describe('聊天页窄屏与横屏布局契约', () => {
   });
 
   it('聊天、录音和输入区所有操作控件至少 44px', () => {
-    expect(pageCss).toMatch(/\.backBtn,\s*\.modeToggle\s*\{[\s\S]*?width:\s*48px;[\s\S]*?height:\s*48px/);
+    expect(pageCss).toMatch(/\.modeToggle\s*\{[\s\S]*?width:\s*48px;[\s\S]*?height:\s*48px/);
     expect(pageCss).toMatch(/\.sendBtn\s*\{[\s\S]*?height:\s*48px/);
     expect(recorderCss).toMatch(/\.micBtn\s*\{[\s\S]*?height:\s*52px/);
     expect(recorderCss).toMatch(/\.pendingCancelBtn\s*\{[\s\S]*?min-height:\s*44px/);

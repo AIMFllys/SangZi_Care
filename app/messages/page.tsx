@@ -8,6 +8,7 @@ import { useFamilyStore } from '@/stores/familyStore';
 import { useFamilyBinds } from '@/hooks/useFamilyBinds';
 import { getRelationIcon, formatMessageTime, getMessagePreview } from '@/lib/messageUtils';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import ContactPreferenceDialog from '@/components/messages/ContactPreferenceDialog';
 import PageHeader from '@/components/layout/PageHeader';
 import { QuestionnaireEntry } from '@/components/questionnaire/QuestionnaireEntry';
@@ -119,13 +120,14 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} page-surface`}>
       <PageHeader title="亲友联系人" transparent rightAction={<QuestionnaireEntry />} />
 
       <p className={styles.subtitle}>随时与您的至亲保持联系</p>
 
       <DataStateWrapper
         loading={loading}
+        skeleton={<ListSkeleton />}
         error={error}
         empty={contacts.length === 0 ? { icon: <Users size={48} />, title: '还没有联系人', description: '绑定家人后就能聊天啦' } : false}
         onRetry={() => user?.id && !bindsLoading && fetchContacts(binds, user.id)}

@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { useRadioStore } from '@/stores/radioStore';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
+import { ListSkeleton } from '@/components/ui/Skeleton';
+import PageHeader from '@/components/layout/PageHeader';
 import {
-  ArrowLeft,
   Drama,
   HeartPulse,
   Newspaper,
@@ -80,14 +81,13 @@ export default function RadioPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <button type="button" className={styles.backBtn} onClick={() => router.back()} aria-label="返回首页">
-          <ArrowLeft size={24} />
-        </button>
-        <h1 className={styles.title}>健康广播</h1>
-        <span className={styles.headerSpacer} aria-hidden="true" />
-      </header>
+    <div className={`${styles.page} page-surface`}>
+      <PageHeader
+        title="健康广播"
+        variant="detail"
+        onBack={() => router.back()}
+        backAriaLabel="返回首页"
+      />
 
       <div className={styles.scroller}>
         <form className={styles.searchBar} role="search" onSubmit={handleSearch}>
@@ -134,6 +134,7 @@ export default function RadioPage() {
           )}
           <DataStateWrapper
             loading={loading}
+            skeleton={<ListSkeleton rows={4} />}
             error={broadcasts.length === 0 ? error : null}
             empty={filteredBroadcasts.length === 0 ? {
               icon: <RadioIcon size={44} />,

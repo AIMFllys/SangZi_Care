@@ -2,8 +2,7 @@
 // POST /api/v1/medicine/records
 // ------------------------------------------------------------
 // 对齐 backend/api/v1/medicine.py · create_record
-//   - body.user_id 缺省回填当前用户（兼容 intentHandlers 不传 user_id
-//     的调用）
+//   - body.user_id 缺省回填当前用户（兼容不传 user_id 的调用）
 //   - body.user_id ≠ 当前用户 → 需 active 绑定且 can_edit_medication=true
 //     （plan 05 §2，家属代老人记录服药）
 //   - status 缺省 'pending'；若 status='taken' 且 taken_at 未提供，

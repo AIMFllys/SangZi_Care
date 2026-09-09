@@ -21,8 +21,8 @@
 | ID | 项 | 状态 |
 |----|-----|------|
 | TD-10 | 紧急呼叫外部闭环（电话 / 短信 / 推送与家属状态入口） | 部分：Elder 首页触发与应用内反馈已完成 |
-| TD-11 | AI 语音助手动作分发 | 部分：MiMo ASR/TTS 已完成；`intentHandlers` 仍未挂载 |
-| TD-12 | `useRealtimeSync` / `offlineSync` 挂入应用壳 | 未挂载 |
+| TD-11 | AI 语音助手动作分发 | 部分：MiMo ASR/TTS 已完成；未挂载的 `intentHandlers` 空壳已删除 |
+| TD-12 | Realtime / 离线同步挂入应用壳 | 空壳已删除（`useRealtimeSync` / `offlineSync`）；能力未做 |
 | TD-13 | `PlanForm` 等用药组件提供正式路由 | 未挂载 |
 | TD-14 | 广播生成、私有存储与鉴权播放链路 | ✅ 已完成（MiMo MP3 + private Storage + 签名播放） |
 

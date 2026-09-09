@@ -115,7 +115,7 @@ describe('MedicineHistoryPage', () => {
   it('加载中显示加载状态', () => {
     mockStoreState.isLoading = true;
     render(<MedicineHistoryPage />);
-    expect(screen.getByText('加载中...')).toBeTruthy();
+    expect(screen.getByText('正在加载')).toBeTruthy();
   });
 
   it('错误时显示错误信息和重试按钮', () => {
@@ -151,7 +151,7 @@ describe('MedicineHistoryPage', () => {
 
     render(<MedicineHistoryPage />);
 
-    expect(screen.getByText('加载中...')).toBeTruthy();
+    expect(screen.getByText('正在加载')).toBeTruthy();
     expect(mockFetchAllPlans).not.toHaveBeenCalled();
   });
 
@@ -168,7 +168,7 @@ describe('MedicineHistoryPage', () => {
     render(<MedicineHistoryPage />);
 
     expect(mockFetchAllPlans).toHaveBeenCalledWith('elder-8');
-    expect(screen.getByText('加载中...')).toBeTruthy();
+    expect(screen.getByText('正在加载')).toBeTruthy();
     expect(screen.queryByText('旧目标药物')).toBeNull();
   });
 

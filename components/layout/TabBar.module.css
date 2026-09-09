@@ -35,7 +35,7 @@
 }
 
 .tabItem:active {
-  transform: scale(0.97);
+  transform: scale(var(--press-scale));
 }
 
 .tabItem:focus-visible {
@@ -51,8 +51,9 @@
   margin-inline: auto;
   border-radius: var(--radius-full);
   color: inherit;
-  transition: color var(--duration-fast), background-color var(--duration-fast),
-    transform var(--duration-fast) var(--ease-spring);
+  transition: color var(--duration-fast) var(--ease-out-smooth),
+    background-color var(--duration-fast) var(--ease-out-smooth),
+    transform var(--duration-fast) var(--ease-out-smooth);
 }
 
 .tabLabel {
@@ -66,17 +67,12 @@
 }
 
 .tabActive {
-  background-color: transparent;
+  background-color: var(--accent-soft);
   color: var(--accent-action);
 }
 
 .tabActive .tabIcon {
   background-color: transparent;
-}
-
-.tabActive .tabIcon svg {
-  fill: currentColor;
-  stroke: currentColor;
 }
 
 @media (hover: hover) {

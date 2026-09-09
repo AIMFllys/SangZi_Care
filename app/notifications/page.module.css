@@ -56,7 +56,7 @@
 .eyebrow,
 .sectionHeading span {
   color: var(--accent-action);
-  font-size: 9px;
+  font-size: var(--font-small);
   font-weight: 850;
   letter-spacing: 0.13em;
 }
@@ -82,7 +82,7 @@
   border-radius: var(--radius-full);
   background: var(--color-success-soft);
   color: var(--color-success-dark);
-  font-size: 10px;
+  font-size: var(--font-small);
   font-weight: 800;
 }
 

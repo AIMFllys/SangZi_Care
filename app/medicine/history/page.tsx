@@ -8,6 +8,7 @@ import { ROUTES } from '@/lib/constants';
 import { Clock, Calendar, CheckCircle, Archive } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import PageHeader from '@/components/layout/PageHeader';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import styles from './page.module.css';
 
 /** 格式化日期范围显示 */
@@ -94,9 +95,7 @@ export default function MedicineHistoryPage() {
       {/* 内容区域 */}
       <div className={styles.scroller}>
       {recipientLoading || (Boolean(targetUserId) && (!targetMatches || isLoading)) ? (
-        <div className={styles.loading}>
-          <span className={styles.loadingText}>加载中...</span>
-        </div>
+        <ListSkeleton rows={4} />
       ) : !targetUserId ? (
         <div className={styles.loading}>
           <span className={styles.loadingText}>请先选择照护长辈</span>

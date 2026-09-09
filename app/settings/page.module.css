@@ -4,13 +4,12 @@
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  padding: 0 var(--page-gutter, 20px) calc(var(--space-md) + var(--safe-bottom));
-  background: var(--bg-base);
+  padding: 0 var(--page-gutter) calc(var(--space-md) + var(--safe-bottom));
 }
 
 .page > header {
   width: auto;
-  margin-inline: calc(-1 * var(--page-gutter, 20px));
+  margin-inline: calc(-1 * var(--page-gutter));
 }
 
 .section {
@@ -40,8 +39,8 @@
   gap: 12px;
   min-height: 112px;
   overflow: hidden;
-  padding: 18px;
-  border-radius: 26px;
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
   background: linear-gradient(135deg, var(--bg-card-solid), var(--bg-card));
 }
 
@@ -77,7 +76,7 @@
 
 .identityLabel {
   color: var(--accent-action);
-  font-size: 9px;
+  font-size: var(--font-small);
   font-weight: 850;
   letter-spacing: 0.13em;
 }
@@ -96,7 +95,7 @@
   gap: 8px;
   margin-top: 7px;
   color: var(--accent-action);
-  font-size: 11px;
+  font-size: var(--font-small);
   font-weight: 800;
 }
 
@@ -207,48 +206,4 @@
   .menuItem {
     min-height: 48px;
   }
-}
-
-/* Modal */
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-overlay);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  padding: var(--space-lg);
-}
-
-.modalContent {
-  background: var(--bg-card-solid);
-  border-radius: var(--radius-lg);
-  padding: var(--space-xl) var(--space-lg);
-  max-width: 360px;
-  width: 100%;
-  box-shadow: var(--shadow-lg);
-}
-
-.modalTitle {
-  font-size: var(--font-heading);
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: var(--space-md);
-  text-align: center;
-}
-
-.modalMessage {
-  font-size: var(--font-body);
-  color: var(--text-secondary);
-  line-height: 1.6;
-  text-align: center;
-  margin-bottom: var(--space-xl);
-}
-
-.modalActions {
-  display: flex;
-  gap: var(--space-md);
 }

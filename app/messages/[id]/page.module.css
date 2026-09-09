@@ -8,19 +8,6 @@
   background: var(--bg-base);
 }
 
-.header {
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) 48px;
-  align-items: center;
-  min-height: calc(var(--header-height) + var(--safe-top));
-  padding: var(--safe-top) var(--page-gutter) 0;
-  border-bottom: 1px solid var(--divider);
-  background: var(--bg-glass);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-}
-
-.backBtn,
 .modeToggle {
   display: grid;
   width: 48px;
@@ -34,29 +21,6 @@
   color: var(--text-primary);
   cursor: pointer;
   touch-action: manipulation;
-}
-
-.title {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--text-primary);
-  font-size: var(--font-heading);
-  font-weight: 800;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.headerSpacer {
-  width: 48px;
-  height: 48px;
-}
-
-.loading {
-  display: grid;
-  min-height: 0;
-  place-items: center;
-  color: var(--text-secondary);
 }
 
 .inputArea {

@@ -3,7 +3,7 @@
 // ------------------------------------------------------------
 // 对齐 backend/api/v1/ai_chat.py（路由内 Pydantic 模型）与
 // types/supabase.ts 的 ai_conversations 表。
-// 前端契约：hooks/useAIChat.ts、stores/summaryStore.ts。
+// 前端契约：hooks/useAIChat.ts。
 // ============================================================
 
 import type { Database } from '@/types/supabase';

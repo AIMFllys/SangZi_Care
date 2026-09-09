@@ -7,6 +7,7 @@
 | 文档 / 目录 | 说明 |
 |-------------|------|
 | [target-architecture.md](./target-architecture.md) | 全栈 Next + EdgeOne 终局架构（已接受） |
+| [ui-motion.md](./ui-motion.md) | 页面淡入、按压缩放、骨架屏加载契约 |
 | [ui/](./ui/) | UI 设计参考成品图（由旧「UI设计参考成品图」迁入） |
 
 ## 文档结构模板

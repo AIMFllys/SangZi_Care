@@ -14,6 +14,7 @@ import { useHealthStore, formatHealthValue, RECORD_TYPE_CONFIG } from '@/stores/
 import { useMedicineStore } from '@/stores/medicineStore';
 import { fetchApi } from '@/lib/api';
 import PageHeader from '@/components/layout/PageHeader';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 import { ROUTES } from '@/lib/constants';
 import { Phone, MessageSquare, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import styles from './page.module.css';
@@ -233,7 +234,7 @@ export default function FamilyDetailClient({ userId }: Props) {
           <section className={styles.section} aria-label="AI对话记录">
             <h2 className={styles.sectionTitle}>近期AI对话</h2>
             {aiLoading ? (
-              <p className={styles.loadingText}>加载中…</p>
+              <ListSkeleton rows={3} />
             ) : aiConversations.length === 0 ? (
               <p className={styles.emptyText}>暂无对话记录</p>
             ) : (

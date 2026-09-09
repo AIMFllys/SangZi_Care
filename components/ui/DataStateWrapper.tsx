@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import { FileX, AlertCircle } from 'lucide-react';
+import { ListSkeleton } from './Skeleton';
 import styles from './DataStateWrapper.module.css';
 
 interface EmptyConfig {
@@ -19,31 +20,23 @@ interface DataStateWrapperProps {
     error?: string | null;
     empty?: EmptyConfig | false;
     onRetry?: () => void;
+    skeleton?: ReactNode;
     children: ReactNode;
 }
 
 /**
- * 通用三态包装组件：加载中 / 出错 / 数据为空
- * 替代 5+ 个页面重复的 loading/error/empty 模板代码
+ * 通用三态包装组件：骨架屏 / 出错 / 数据为空
  */
 export default function DataStateWrapper({
     loading,
     error,
     empty,
     onRetry,
+    skeleton,
     children,
 }: DataStateWrapperProps) {
     if (loading) {
-        return (
-            <div className={styles.container}>
-                <div className={styles.loader}>
-                    <div className={styles.dot} />
-                    <div className={styles.dot} />
-                    <div className={styles.dot} />
-                </div>
-                <p className={styles.text}>加载中...</p>
-            </div>
-        );
+        return <div className={styles.loadingSlot}>{skeleton ?? <ListSkeleton />}</div>;
     }
 
     if (error) {

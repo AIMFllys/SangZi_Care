@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import PageHeader from '@/components/layout/PageHeader';
 import { QuestionnaireEntry } from '@/components/questionnaire/QuestionnaireEntry';
 import { replaceDocument } from '@/lib/browserNavigation';
@@ -29,46 +30,6 @@ const SETTING_ITEMS = [
   { label: '消息通知', icon: Bell, href: ROUTES.NOTIFICATIONS, tone: 'orange' },
   { label: '关于我们', icon: Info, href: ROUTES.SETTINGS_ABOUT, tone: 'blue' },
 ] as const;
-
-interface ConfirmModalProps {
-  open: boolean;
-  title: string;
-  message: string;
-  confirmLabel: string;
-  cancelLabel?: string;
-  loading?: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-function ConfirmModal({
-  open,
-  title,
-  message,
-  confirmLabel,
-  cancelLabel = '取消',
-  loading = false,
-  onConfirm,
-  onCancel,
-}: ConfirmModalProps) {
-  if (!open) return null;
-  return (
-    <div className={styles.modalOverlay} role="dialog" aria-modal="true" onClick={onCancel}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        <h2 className={styles.modalTitle}>{title}</h2>
-        <p className={styles.modalMessage}>{message}</p>
-        <div className={styles.modalActions}>
-          <Button variant="ghost" fullWidth onClick={onCancel} disabled={loading}>
-            {cancelLabel}
-          </Button>
-          <Button variant="danger" fullWidth onClick={onConfirm} loading={loading}>
-            {confirmLabel}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function SettingsPage() {
   const user = useUserStore((s) => s.user);
@@ -100,7 +61,7 @@ export default function SettingsPage() {
   const targetRoleLabel = isElder ? '家属端' : '长辈端';
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} page-surface`}>
         <PageHeader title="设置" transparent rightAction={<QuestionnaireEntry />} />
 
         <Link href={ROUTES.SETTINGS_PROFILE} className={styles.userCardLink}>
@@ -175,21 +136,23 @@ export default function SettingsPage() {
 
         <p className={styles.version}>桑梓智护 v{APP_VERSION}</p>
 
-        <ConfirmModal
+        <ConfirmDialog
           open={showLogout}
           title="退出登录"
-          message="确定要退出登录吗？"
+          description="确定要退出登录吗？"
           confirmLabel="退出登录"
+          cancelLabel="取消"
           onConfirm={handleLogout}
           onCancel={() => setShowLogout(false)}
         />
 
-        <ConfirmModal
+        <ConfirmDialog
           open={showRoleSwitch}
           title="切换角色"
-          message={`确定要从${roleLabel}切换到${targetRoleLabel}吗？`}
+          description={`确定要从${roleLabel}切换到${targetRoleLabel}吗？`}
           confirmLabel="确认切换"
-          loading={switchingRole}
+          cancelLabel="取消"
+          busy={switchingRole}
           onConfirm={handleRoleSwitch}
           onCancel={() => setShowRoleSwitch(false)}
         />

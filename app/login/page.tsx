@@ -246,7 +246,10 @@ export default function LoginPage() {
                   aria-labelledby="login-captcha-label"
                 >
                   {captchaLoading ? (
-                    <span className={styles.captchaLoading}>加载中...</span>
+                    <>
+                      <span className="sr-only">正在加载</span>
+                      <span className={`skeleton ${styles.captchaLoading}`} aria-hidden="true" />
+                    </>
                   ) : (
                     <span className={styles.captchaText}>{captchaQuestion}</span>
                   )}

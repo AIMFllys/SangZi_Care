@@ -6,6 +6,7 @@ import { useUserStore } from '@/stores/userStore';
 import { useAuthContext } from '@/components/providers/AuthProvider';
 import { ROUTES } from '@/lib/constants';
 import { Card } from '@/components/ui';
+import { FormSkeleton } from '@/components/ui/Skeleton';
 import { User, Users } from 'lucide-react';
 import styles from './page.module.css';
 
@@ -30,7 +31,7 @@ export default function OnboardingPage() {
   }
 
   if (!isReady) {
-    return <div className={styles.loading}>加载中…</div>;
+    return <FormSkeleton fields={2} />;
   }
 
   return (

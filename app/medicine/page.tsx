@@ -11,6 +11,7 @@ import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { useCareRecipient } from '@/hooks/useCareRecipient';
 import { useEmergencyTrigger } from '@/hooks/useEmergencyTrigger';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
+import { TimelineSkeleton } from '@/components/ui/Skeleton';
 import { Badge, Button, Card, IconButton } from '@/components/ui';
 import PageHeader from '@/components/layout/PageHeader';
 import { HeaderActions } from '@/components/layout/HeaderActions';
@@ -457,6 +458,7 @@ export default function MedicinePage() {
         loading={recipientLoading || Boolean(
           targetUserId && (!timelineMatchesTarget || !plansMatchTarget || isLoading),
         )}
+        skeleton={<TimelineSkeleton />}
         error={recipientError ?? (
           timelineMatchesTarget && plansMatchTarget ? error : null
         )}

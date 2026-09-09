@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { IconButton } from '@/components/ui/IconButton';
 import PageHeader from '@/components/layout/PageHeader';
+import { FormSkeleton } from '@/components/ui/Skeleton';
 import styles from './page.module.css';
 
 const GENDER_OPTIONS = [
@@ -113,7 +114,7 @@ export default function ProfilePage() {
   if (!isReady) {
     return (
       <div className={styles.page}>
-        <div className={styles.loading}>加载中…</div>
+        <FormSkeleton />
       </div>
     );
   }

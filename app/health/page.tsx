@@ -24,6 +24,7 @@ import PageHeader from '@/components/layout/PageHeader';
 import { HeaderActions } from '@/components/layout/HeaderActions';
 import { QuestionnaireEntry } from '@/components/questionnaire/QuestionnaireEntry';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
+import { MetricCardsSkeleton } from '@/components/ui/Skeleton';
 import { CareRecipientTabs } from '@/components/family/CareRecipientTabs';
 import styles from './page.module.css';
 
@@ -77,7 +78,7 @@ export default function HealthPage() {
   const canEdit = Boolean(recipient?.permissions.canEditHealth);
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} page-surface`}>
       <PageHeader
         title={isFamily && recipient ? `${recipient.name}的健康` : '健康看板'}
         subtitle={isFamily ? '监护数据 · 非家属本人健康' : undefined}
@@ -124,6 +125,7 @@ export default function HealthPage() {
 
         <DataStateWrapper
           loading={recipientLoading || Boolean(targetUserId && (!isCurrentTarget || loading))}
+          skeleton={<MetricCardsSkeleton />}
           error={recipientError ?? (isCurrentTarget ? error : null)}
           onRetry={recipientError
             ? retryRecipients

@@ -165,7 +165,7 @@ describe('MessagesPage 组件', () => {
   it('加载状态显示加载文本', () => {
     mockLoading = true;
     render(<MessagesPage />);
-    expect(screen.getByText('加载中...')).toBeDefined();
+    expect(screen.getByText('正在加载')).toBeDefined();
   });
 
   it('错误状态显示错误信息和重试按钮', () => {

@@ -4,7 +4,6 @@
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  background: var(--bg-base);
 }
 
 .subtitle {
@@ -126,7 +125,7 @@
   flex-shrink: 0;
   gap: 2px;
   color: var(--accent-action);
-  font-size: 10px;
+  font-size: var(--font-small);
   font-weight: 750;
 }
 
@@ -143,7 +142,7 @@
   border-radius: var(--radius-full);
   background: var(--color-warning-soft);
   color: var(--color-warning-dark);
-  font-size: 9px;
+  font-size: var(--font-small);
   font-weight: 850;
   vertical-align: 1px;
 }
@@ -158,7 +157,7 @@
 
 .contactTime {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--font-small);
   white-space: nowrap;
 }
 

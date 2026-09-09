@@ -8,6 +8,7 @@ import { ROUTES } from '@/lib/constants';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import PageHeader from '@/components/layout/PageHeader';
+import { FormSkeleton } from '@/components/ui/Skeleton';
 import styles from './page.module.css';
 
 /** 字体大小选项 */
@@ -106,7 +107,7 @@ export default function AccessibilityPage() {
   if (!isReady) {
     return (
       <div className={styles.page}>
-        <div className={styles.loading}>加载中…</div>
+        <FormSkeleton />
       </div>
     );
   }

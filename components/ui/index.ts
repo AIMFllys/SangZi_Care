@@ -6,3 +6,11 @@ export { Badge } from './Badge';
 export { IconButton } from './IconButton';
 export { LoadingSpinner } from './LoadingSpinner';
 export { ConfirmDialog } from './ConfirmDialog';
+export {
+  ListSkeleton,
+  MetricCardsSkeleton,
+  DashboardSkeleton,
+  TimelineSkeleton,
+  ChatSkeleton,
+  FormSkeleton,
+} from './Skeleton';

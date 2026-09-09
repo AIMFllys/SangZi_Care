@@ -21,7 +21,7 @@
 }
 
 .iconButton:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: scale(var(--press-scale));
 }
 
 .iconButton:focus-visible {

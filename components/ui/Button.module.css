@@ -24,7 +24,7 @@
 }
 
 .button:active:not(.disabled):not(.loading) {
-  transform: scale(0.97);
+  transform: scale(var(--press-scale));
 }
 
 .button:focus-visible {

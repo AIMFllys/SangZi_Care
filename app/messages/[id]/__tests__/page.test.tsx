@@ -137,6 +137,9 @@ async function openVoiceRecorder(): Promise<void> {
 async function recordTranscript(expected = '今天记得吃药'): Promise<void> {
   fireEvent.click(screen.getByRole('button', { name: '开始录音' }));
   await waitFor(() => expect(mocks.startListening).toHaveBeenCalled());
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: '停止录音' })).toBeEnabled();
+  });
   await act(async () => {
     fireEvent.click(screen.getByRole('button', { name: '停止录音' }));
   });
@@ -180,6 +183,9 @@ describe('ChatDetailPage 真实语音消息', () => {
     await openVoiceRecorder();
     fireEvent.click(screen.getByRole('button', { name: '开始录音' }));
     await waitFor(() => expect(mocks.startListening).toHaveBeenCalledOnce());
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '停止录音' })).toBeEnabled();
+    });
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: '停止录音' }));
     });
@@ -300,6 +306,9 @@ describe('ChatDetailPage 真实语音消息', () => {
     await openVoiceRecorder();
     fireEvent.click(screen.getByRole('button', { name: '开始录音' }));
     await waitFor(() => expect(mocks.startListening).toHaveBeenCalledOnce());
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '停止录音' })).toBeEnabled();
+    });
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: '停止录音' }));
     });
@@ -315,6 +324,9 @@ describe('ChatDetailPage 真实语音消息', () => {
     await openVoiceRecorder();
     fireEvent.click(screen.getByRole('button', { name: '开始录音' }));
     await waitFor(() => expect(mocks.startListening).toHaveBeenCalledOnce());
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '停止录音' })).toBeEnabled();
+    });
     await act(async () => fireEvent.click(screen.getByRole('button', { name: '停止录音' })));
     await act(async () => fireEvent.click(screen.getByRole('button', { name: '发送语音消息' })));
 

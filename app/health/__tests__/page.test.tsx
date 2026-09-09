@@ -114,7 +114,7 @@ describe('HealthPage', () => {
   it('显示加载状态', () => {
     mockStoreState.loading = true;
     render(<HealthPage />);
-    expect(screen.getByText('加载中...')).toBeDefined();
+    expect(screen.getByText('正在加载')).toBeDefined();
   });
 
   it('显示错误状态和重试按钮', () => {
@@ -171,7 +171,7 @@ describe('HealthPage', () => {
     render(<HealthPage />);
 
     expect(screen.queryByText('188/110')).toBeNull();
-    expect(screen.getByText('加载中...')).toBeDefined();
+    expect(screen.getByText('正在加载')).toBeDefined();
   });
 
   it('点击设置按钮导航到设置页', () => {

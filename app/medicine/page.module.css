@@ -220,7 +220,7 @@
 
 .dateNav small {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--font-small);
   font-weight: 650;
 }
 
@@ -308,7 +308,7 @@
   background: var(--accent-soft);
   color: var(--accent-action);
   font: inherit;
-  font-size: 10px;
+  font-size: var(--font-small);
   font-weight: 800;
   white-space: nowrap;
   cursor: pointer;
@@ -368,7 +368,7 @@
 
 .sectionHeader span {
   color: var(--accent-action);
-  font-size: 9px;
+  font-size: var(--font-small);
   font-weight: 850;
   letter-spacing: 0.14em;
 }
@@ -381,7 +381,7 @@
 
 .sectionHeader small {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--font-small);
 }
 
 .planList {
@@ -430,7 +430,7 @@
 
 .planCopy small {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--font-small);
 }
 
 .editPlanButton {

@@ -13,7 +13,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.entry:active { transform: scale(0.96); }
+.entry:active { transform: scale(var(--press-scale)); }
 
 .entry:focus-visible {
   outline: 3px solid var(--accent-action);

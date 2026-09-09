@@ -19,7 +19,7 @@
 
 | ID | 现象 | 对应 |
 |----|------|------|
-| KI-10 | `/voice` 的 MiMo ASR/TTS 已接通，但 `intentHandlers` 动作分发仍未挂载 | TD-11 |
+| KI-10 | `/voice` 的 MiMo ASR/TTS 已接通，动作分发仍未做（旧 `intentHandlers` 空壳已删） | TD-11 |
 | KI-11 | Elder 首页 SOS 已能发起应用内请求，但真实电话、短信或推送通道未接 | TD-10 |
 | KI-12 | Realtime / offline 基础设施未挂载 | TD-12 |
 | KI-13 | `PlanForm` 无页面路由 | TD-13 |

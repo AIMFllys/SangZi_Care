@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Switch } from '@/components/ui/Switch';
 import PageHeader from '@/components/layout/PageHeader';
+import { FormSkeleton, ListSkeleton } from '@/components/ui/Skeleton';
 import {
   displayElderRelation,
   ELDER_RELATION_OPTIONS,
@@ -213,7 +214,7 @@ export default function BindManagementPage() {
   if (!isReady) {
     return (
       <div className={styles.page}>
-        <div className={styles.loading}>加载中…</div>
+        <FormSkeleton />
       </div>
     );
   }
@@ -237,7 +238,7 @@ export default function BindManagementPage() {
         <section className={styles.section} aria-label="已绑定列表">
           <h2 className={styles.sectionTitle}>已绑定列表</h2>
           {loading ? (
-            <p className={styles.hint}>加载中…</p>
+            <ListSkeleton rows={3} />
           ) : bindList.length === 0 ? (
             <p className={styles.hint}>暂无绑定关系</p>
           ) : (

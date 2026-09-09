@@ -81,7 +81,7 @@
 }
 
 .relation {
-  font-size: 10px;
+  font-size: var(--font-small);
   font-weight: 650;
   line-height: 1.1;
   opacity: 0.78;

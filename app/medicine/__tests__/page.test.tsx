@@ -227,7 +227,7 @@ describe('MedicinePage', () => {
 
     render(<MedicinePage />);
 
-    expect(screen.getByText('加载中...')).toBeInTheDocument();
+    expect(screen.getByText('正在加载')).toBeInTheDocument();
     expect(screen.queryByText('降压药')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '确认服用' })).not.toBeInTheDocument();
   });

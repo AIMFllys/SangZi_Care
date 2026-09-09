@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { useEmergencyTrigger } from '@/hooks/useEmergencyTrigger';
-import { Sun, Mic, Phone } from 'lucide-react';
+import { Mic, Phone } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import { QuestionnaireEntry } from '@/components/questionnaire/QuestionnaireEntry';
 import styles from '../../app/page.module.css';
@@ -87,17 +87,11 @@ export default function ElderHomeView() {
         <QuestionnaireEntry variant="chip" />
       </div>
 
-      {/* 时间天气卡 */}
+      {/* 时间卡 */}
       <Card variant="glass" className={styles.timeCard}>
         <div>
           <div className={styles.time}>{time}</div>
           <div className={styles.dateText}>{date}</div>
-        </div>
-        <div className={styles.weather}>
-          <span className={styles.weatherIcon}>
-            <Sun size={32} color="var(--accent)" />
-          </span>
-          <span className={styles.weatherTemp}>24° 晴</span>
         </div>
       </Card>
 
