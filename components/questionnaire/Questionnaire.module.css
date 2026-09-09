@@ -1,0 +1,81 @@
+.intro,
+.panel,
+.questions,
+.actions {
+  display: grid;
+  gap: var(--space-md);
+  min-width: 0;
+}
+
+.questions { gap: var(--space-lg); }
+.actions { padding-bottom: var(--space-lg); }
+
+.eyebrow,
+.lead,
+.meta,
+.skipHint,
+.hint,
+.progress { margin: 0; }
+
+.eyebrow {
+  color: var(--accent-action);
+  font-size: var(--font-caption);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.title,
+.sectionTitle {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-title);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.lead,
+.meta,
+.skipHint,
+.hint {
+  color: var(--text-secondary);
+  font-size: var(--font-body);
+  line-height: 1.65;
+}
+
+.lead {
+  padding: var(--space-md);
+  border-left: 4px solid var(--accent-decoration);
+  background: var(--bg-elevated);
+}
+
+.lead strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.progress {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  color: var(--text-muted);
+  font-size: var(--font-caption);
+  font-weight: 700;
+}
+
+.track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--divider);
+}
+
+.trackFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-decoration), var(--accent-action));
+}
+
+.hint {
+  color: var(--color-danger);
+  font-weight: 700;
+}

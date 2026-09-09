@@ -21,6 +21,8 @@ import type { HealthRecordType } from '@/types/health';
 import { useCareRecipient } from '@/hooks/useCareRecipient';
 import { Button, Card, Badge, IconButton } from '@/components/ui';
 import PageHeader from '@/components/layout/PageHeader';
+import { HeaderActions } from '@/components/layout/HeaderActions';
+import { QuestionnaireEntry } from '@/components/questionnaire/QuestionnaireEntry';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
 import { CareRecipientTabs } from '@/components/family/CareRecipientTabs';
 import styles from './page.module.css';
@@ -80,13 +82,16 @@ export default function HealthPage() {
         title={isFamily && recipient ? `${recipient.name}的健康` : '健康看板'}
         subtitle={isFamily ? '监护数据 · 非家属本人健康' : undefined}
         rightAction={
-          <IconButton
-            variant="soft"
-            aria-label="前往设置"
-            onClick={() => router.push('/settings')}
-          >
-            <User size={22} />
-          </IconButton>
+          <HeaderActions>
+            <QuestionnaireEntry />
+            <IconButton
+              variant="soft"
+              aria-label="前往设置"
+              onClick={() => router.push('/settings')}
+            >
+              <User size={22} />
+            </IconButton>
+          </HeaderActions>
         }
       />
 

@@ -2,7 +2,8 @@
 <resources>
     <style name="Theme.SangZiSmartCare" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowFullscreen">false</item>
-        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:statusBarColor">@color/splash_background</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>

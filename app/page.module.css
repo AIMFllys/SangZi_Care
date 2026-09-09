@@ -11,10 +11,16 @@
 }
 
 .greeting {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
   min-width: 0;
 }
 
 .greetingText {
+  min-width: 0;
+  flex: 1;
   color: var(--text-primary);
   font-size: clamp(26px, 7vw, var(--font-title));
   font-weight: 850;

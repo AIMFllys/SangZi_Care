@@ -5,7 +5,6 @@ import {
   Activity,
   Gauge,
   HeartHandshake,
-  Mic2,
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
@@ -15,28 +14,28 @@ import styles from './page.module.css';
 
 const UPDATES = [
   {
-    icon: Mic2,
-    title: '消息与语音更顺手',
-    description: '语音转文字后可以直接编辑；手动输入不会被覆盖，文字和语音发送也会保持清晰分流。',
+    icon: HeartHandshake,
+    title: '健康早筛问卷',
+    description: '首页和主要页面右上角可以进入早筛问卷，题目与同济医学院关爱同行问卷保持一致。',
+    tone: 'orange',
+  },
+  {
+    icon: Sparkles,
+    title: '开屏更有温度',
+    description: '打开应用会先看到智护银龄的标识和字标动画，再进入首页或登录。',
     tone: 'blue',
   },
   {
-    icon: Gauge,
-    title: 'AI 回复更清楚',
-    description: '长回复支持卡片内滚动，记录、提醒和同步结果会明确显示成功、提醒或失败状态。',
-    tone: 'green',
-  },
-  {
     icon: ShieldCheck,
-    title: '紧急求助更安全',
-    description: '紧急求助防止重复点击，通知过程保持一致；没有可通知家属时也会明确提示。',
+    title: '登录前先说明',
+    description: '没有登录时不再直接跳走，会先弹出说明，点“去登录”后再进入登录页。',
     tone: 'violet',
   },
   {
-    icon: HeartHandshake,
-    title: '健康草稿不丢失',
-    description: '切换健康记录 Tab 会保留草稿，统一确认后一次保存，离开页面前会提醒你处理未保存内容。',
-    tone: 'orange',
+    icon: Gauge,
+    title: '登录步骤更清楚',
+    description: '邮箱、算术确认和验证码分成三步，大字号、大按钮，适合慢慢填写。',
+    tone: 'green',
   },
 ] as const;
 
@@ -64,7 +63,7 @@ export default function NotificationsPage() {
           <div className={styles.releaseCopy}>
             <span className={styles.eyebrow}>PRODUCT UPDATE</span>
             <h2 id="release-title">智护银龄 v{APP_VERSION}</h2>
-            <p>1.2.0 聚焦消息、AI 语音、紧急求助与健康记录体验升级。</p>
+            <p>1.3.0 新增健康早筛问卷、开屏动画，并重做未登录提示与登录页。</p>
           </div>
           <span className={styles.versionBadge}>本次更新</span>
         </section>

@@ -1,0 +1,47 @@
+.mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.halo {
+  fill: color-mix(in srgb, var(--accent-decoration) 16%, transparent);
+}
+
+.heart {
+  filter: drop-shadow(0 8px 16px color-mix(in srgb, var(--accent-action) 28%, transparent));
+}
+
+.cross { fill: #fffaf4; }
+
+.animated .heart {
+  transform-origin: 40px 42px;
+  animation: heart-settle 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animated .cross {
+  transform-origin: 40px 42px;
+  animation: cross-in 700ms 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes heart-settle {
+  from { transform: scale(0.72) rotate(-8deg); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes cross-in {
+  from { transform: scale(0.4); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated .heart,
+  .animated .cross { animation: none; }
+}

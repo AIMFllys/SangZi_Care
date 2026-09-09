@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import PageHeader from '@/components/layout/PageHeader';
+import { QuestionnaireEntry } from '@/components/questionnaire/QuestionnaireEntry';
 import { replaceDocument } from '@/lib/browserNavigation';
 import { APP_VERSION, ROUTES } from '@/lib/constants';
 import styles from './page.module.css';
@@ -100,7 +101,7 @@ export default function SettingsPage() {
 
   return (
     <div className={styles.page}>
-        <PageHeader title="设置" transparent />
+        <PageHeader title="设置" transparent rightAction={<QuestionnaireEntry />} />
 
         <Link href={ROUTES.SETTINGS_PROFILE} className={styles.userCardLink}>
           <Card variant="glass" className={styles.userCard}>

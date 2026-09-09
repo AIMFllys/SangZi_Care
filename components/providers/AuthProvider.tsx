@@ -6,11 +6,15 @@ import { useAuth } from '@/hooks/useAuth';
 interface AuthContextValue {
   isReady: boolean;
   isAuthenticated: boolean;
+  loginPromptOpen: boolean;
+  confirmLoginPrompt: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue>({
   isReady: false,
   isAuthenticated: false,
+  loginPromptOpen: false,
+  confirmLoginPrompt: () => undefined,
 });
 
 export function useAuthContext() {

@@ -50,6 +50,12 @@ describe('ElderHomeView', () => {
     expect(push).toHaveBeenCalledWith('/voice');
   });
 
+  it('右上角问卷入口进入早筛页', () => {
+    render(<ElderHomeView />);
+    fireEvent.click(screen.getByRole('button', { name: '打开健康早筛问卷' }));
+    expect(push).toHaveBeenCalledWith('/questionnaire');
+  });
+
   it('SOS 直接调用紧急呼叫接口并反馈结果', async () => {
     render(<ElderHomeView />);
     fireEvent.click(screen.getByRole('button', { name: '紧急呼叫 SOS' }));

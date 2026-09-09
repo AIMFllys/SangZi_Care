@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">智护银龄</string>
+    <string name="splash_app_name">智护银龄</string>
+    <string name="splash_tagline">科技有温度，守护有回应</string>
     <string name="app_base_url" translatable="false">https://sangzicare.husteread.com</string>
 </resources>

@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useAuth } from '@/hooks/useAuth';
@@ -44,5 +44,29 @@ describe('useAuth', () => {
 
     await waitFor(() => expect(hook.result.current.isAuthenticated).toBe(true));
     expect(mocks.initialize).toHaveBeenCalledTimes(1);
+  });
+
+  it('未登录访问受保护页时先弹出提示，确认后再进入登录页', async () => {
+    mocks.initialize.mockResolvedValue(false);
+    const hook = renderHook(() => useAuth());
+
+    await waitFor(() => expect(hook.result.current.isReady).toBe(true));
+    expect(hook.result.current.loginPromptOpen).toBe(true);
+    expect(mocks.router.replace).not.toHaveBeenCalled();
+
+    act(() => {
+      hook.result.current.confirmLoginPrompt();
+    });
+    expect(mocks.router.replace).toHaveBeenCalledWith('/login');
+  });
+
+  it('登录页本身不弹出登录提示', async () => {
+    mocks.initialize.mockResolvedValue(false);
+    mocks.pathname = '/login';
+    const hook = renderHook(() => useAuth());
+
+    await waitFor(() => expect(hook.result.current.isReady).toBe(true));
+    expect(hook.result.current.loginPromptOpen).toBe(false);
+    expect(mocks.router.replace).not.toHaveBeenCalled();
   });
 });

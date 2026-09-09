@@ -4,6 +4,7 @@
 
 Android 端是一个薄 WebView 壳，Release 只加载
 `https://sangzicare.husteread.com`，不复制 Next.js 静态产物，也不维护第二套语音实现。
+冷启动时先展示原生开屏（标识 +「智护银龄」），页面加载完成后再淡出，避免白屏。
 正式 URL 已写入 `app/src/main/res/values/strings.xml`；只有 Debug 资源会覆盖为本机回环地址。
 
 ## 变体

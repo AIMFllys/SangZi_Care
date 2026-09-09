@@ -11,6 +11,7 @@ const DETAIL = [
   '/settings/profile',
   '/settings/bind',
   '/settings/accessibility',
+  '/questionnaire',
 ] as const;
 
 export function getShellMode(pathname: string): ShellMode {

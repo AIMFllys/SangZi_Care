@@ -141,6 +141,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: auto;
+  min-width: 48px;
+}
+
+.detail .actionSlot,
+.detail .spacer {
+  width: 48px;
 }
 
 @media (max-width: 350px) {

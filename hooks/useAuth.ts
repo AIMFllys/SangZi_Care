@@ -17,6 +17,9 @@ interface UseAuthReturn {
   isReady: boolean;
   /** 用户是否已认证 */
   isAuthenticated: boolean;
+  /** 未登录访问受保护页时，先弹出提示再进入登录 */
+  loginPromptOpen: boolean;
+  confirmLoginPrompt: () => void;
 }
 
 /**
@@ -36,6 +39,7 @@ export function useAuth(): UseAuthReturn {
 
   const [isReady, setIsReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,9 +66,11 @@ export function useAuth(): UseAuthReturn {
     const isPublic = PUBLIC_ROUTES.includes(pathname);
 
     if (!isAuthenticated && !isPublic) {
-      router.replace(ROUTES.LOGIN);
+      setLoginPromptOpen(true);
       return;
     }
+
+    setLoginPromptOpen(false);
 
     if (isAuthenticated && isPublic) {
       // 已登录用户访问登录页 → 跳转首页
@@ -81,5 +87,10 @@ export function useAuth(): UseAuthReturn {
     }
   }, [isAuthenticated, isReady, pathname, router]);
 
-  return { isReady, isAuthenticated };
+  const confirmLoginPrompt = () => {
+    setLoginPromptOpen(false);
+    router.replace(ROUTES.LOGIN);
+  };
+
+  return { isReady, isAuthenticated, loginPromptOpen, confirmLoginPrompt };
 }

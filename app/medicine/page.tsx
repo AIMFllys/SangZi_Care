@@ -13,6 +13,8 @@ import { useEmergencyTrigger } from '@/hooks/useEmergencyTrigger';
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
 import { Badge, Button, Card, IconButton } from '@/components/ui';
 import PageHeader from '@/components/layout/PageHeader';
+import { HeaderActions } from '@/components/layout/HeaderActions';
+import { QuestionnaireEntry } from '@/components/questionnaire/QuestionnaireEntry';
 import { CareRecipientTabs } from '@/components/family/CareRecipientTabs';
 import { PlanForm } from '@/components/medicine/PlanForm';
 import {
@@ -416,12 +418,15 @@ export default function MedicinePage() {
         title={isFamily && recipient ? `${recipient.name}的用药` : '用药管家'}
         subtitle={isFamily ? '远程设置计划，不在家属设备播报' : undefined}
         rightAction={
-          <IconButton
-            aria-label="查看用药历史"
-            onClick={() => router.push('/medicine/history')}
-          >
-            <History size={21} />
-          </IconButton>
+          <HeaderActions>
+            <QuestionnaireEntry />
+            <IconButton
+              aria-label="查看用药历史"
+              onClick={() => router.push('/medicine/history')}
+            >
+              <History size={21} />
+            </IconButton>
+          </HeaderActions>
         }
       />
 

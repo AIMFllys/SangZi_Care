@@ -10,6 +10,20 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/components/providers/AuthProvider', () => ({
   AuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  useAuthContext: () => ({
+    isReady: true,
+    isAuthenticated: true,
+    loginPromptOpen: false,
+    confirmLoginPrompt: () => undefined,
+  }),
+}));
+
+vi.mock('@/components/splash/SplashScreen', () => ({
+  SplashScreen: () => null,
+}));
+
+vi.mock('@/components/auth/AuthRequiredDialog', () => ({
+  AuthRequiredDialog: () => null,
 }));
 
 vi.mock('@/components/providers/ErrorBoundary', () => ({

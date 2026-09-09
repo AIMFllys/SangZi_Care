@@ -20,6 +20,8 @@ import DataStateWrapper from '@/components/ui/DataStateWrapper';
 import PageHeader from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { IconButton } from '@/components/ui/IconButton';
+import { HeaderActions } from '@/components/layout/HeaderActions';
+import { QuestionnaireEntry } from '@/components/questionnaire/QuestionnaireEntry';
 import { CareRecipientTabs } from '@/components/family/CareRecipientTabs';
 import { AdherenceMiniChart } from '@/components/family/AdherenceMiniChart';
 import { HealthSparkline } from '@/components/family/HealthSparkline';
@@ -63,14 +65,17 @@ export default function FamilyHomeView() {
         title="照护看板"
         subtitle={recipient ? `正在照护 · ${recipient.name}` : '家属监护端'}
         rightAction={
-          <IconButton
-            aria-label="查看版本通知"
-            variant="soft"
-            size="md"
-            onClick={() => router.push('/notifications')}
-          >
-            <Bell size={21} />
-          </IconButton>
+          <HeaderActions>
+            <QuestionnaireEntry />
+            <IconButton
+              aria-label="查看版本通知"
+              variant="soft"
+              size="md"
+              onClick={() => router.push('/notifications')}
+            >
+              <Bell size={21} />
+            </IconButton>
+          </HeaderActions>
         }
         transparent
       />

@@ -18,6 +18,7 @@ describe('getShellMode', () => {
     ['/settings/profile', 'detail'],
     ['/settings/bind', 'detail'],
     ['/settings/accessibility', 'detail'],
+    ['/questionnaire', 'detail'],
     ['/login', 'immersive'],
     ['/onboarding', 'immersive'],
     ['/voice', 'immersive'],

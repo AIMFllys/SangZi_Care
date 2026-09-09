@@ -2,7 +2,7 @@
 // 桑梓智护 — 常量定义
 // ============================================================
 
-export const APP_VERSION = '1.2.0';
+export const APP_VERSION = '1.3.0';
 
 // ------ 健康数据异常阈值 ------
 
@@ -41,6 +41,7 @@ export const ROUTES = {
   SETTINGS_BIND: '/settings/bind',
   SETTINGS_PROFILE: '/settings/profile',
   SETTINGS_ACCESSIBILITY: '/settings/accessibility',
+  QUESTIONNAIRE: '/questionnaire',
 } as const;
 
 // ------ 功能卡片配置 ------

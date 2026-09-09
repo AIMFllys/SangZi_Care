@@ -10,6 +10,7 @@ import { getRelationIcon, formatMessageTime, getMessagePreview } from '@/lib/mes
 import DataStateWrapper from '@/components/ui/DataStateWrapper';
 import ContactPreferenceDialog from '@/components/messages/ContactPreferenceDialog';
 import PageHeader from '@/components/layout/PageHeader';
+import { QuestionnaireEntry } from '@/components/questionnaire/QuestionnaireEntry';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { MoreVertical, Pin, Plus, Users } from 'lucide-react';
@@ -119,7 +120,7 @@ export default function MessagesPage() {
 
   return (
     <div className={styles.page}>
-      <PageHeader title="亲友联系人" transparent />
+      <PageHeader title="亲友联系人" transparent rightAction={<QuestionnaireEntry />} />
 
       <p className={styles.subtitle}>随时与您的至亲保持联系</p>
 

@@ -12,9 +12,11 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.webkit.CookieManager
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
@@ -26,6 +28,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
@@ -55,6 +58,10 @@ class MainActivity : AppCompatActivity() {
     private var webViewPauseGeneration = 0L
     private var webViewPausePending = false
     private var webViewPauseFallback: Runnable? = null
+    private lateinit var splashOverlay: View
+    private var splashShownAt = 0L
+    private var splashHidden = false
+    private var splashHideRunnable: Runnable? = null
 
     private val microphonePermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -91,6 +98,8 @@ class MainActivity : AppCompatActivity() {
         configureWebViewClients()
         configureBackNavigation()
         errorPanel = createErrorPanel()
+        splashOverlay = createSplashOverlay()
+        splashShownAt = SystemClock.elapsedRealtime()
         setContentView(
             FrameLayout(this).apply {
                 addView(
@@ -107,8 +116,16 @@ class MainActivity : AppCompatActivity() {
                         FrameLayout.LayoutParams.MATCH_PARENT,
                     ),
                 )
+                addView(
+                    splashOverlay,
+                    FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                    ),
+                )
             },
         )
+        scheduleSplashTimeout()
 
         webView.loadUrl("$baseUrl/")
     }
@@ -167,6 +184,7 @@ class MainActivity : AppCompatActivity() {
                 super.onPageFinished(view, url)
                 if (!mainFrameLoadFailed && url != null && urlPolicy.isSameOrigin(url)) {
                     hideMainFrameError()
+                    hideSplashOverlay()
                 }
             }
 
@@ -425,8 +443,101 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun createSplashOverlay(): View {
+        val logo = ImageView(this).apply {
+            setImageResource(R.drawable.ic_launcher_foreground)
+            contentDescription = getString(R.string.splash_app_name)
+            scaleX = 0.86f
+            scaleY = 0.86f
+            animate()
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(720)
+                .setInterpolator(AccelerateDecelerateInterpolator())
+                .start()
+        }
+        val title = TextView(this).apply {
+            text = getString(R.string.splash_app_name)
+            gravity = Gravity.CENTER
+            setTextColor(Color.parseColor("#2D2016"))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f)
+            letterSpacing = 0.12f
+            alpha = 0f
+            translationY = dp(8).toFloat()
+            animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setStartDelay(220)
+                .setDuration(480)
+                .start()
+        }
+        val tagline = TextView(this).apply {
+            text = getString(R.string.splash_tagline)
+            gravity = Gravity.CENTER
+            setTextColor(Color.parseColor("#6B553F"))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            alpha = 0f
+            animate()
+                .alpha(1f)
+                .setStartDelay(520)
+                .setDuration(520)
+                .start()
+        }
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.splash_background))
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+            contentDescription = getString(R.string.splash_app_name)
+            addView(logo, LinearLayout.LayoutParams(dp(108), dp(108)))
+            addView(
+                title,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply { topMargin = dp(16) },
+            )
+            addView(
+                tagline,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply { topMargin = dp(8) },
+            )
+        }
+    }
+
+    private fun scheduleSplashTimeout() {
+        val timeout = Runnable { hideSplashOverlay() }
+        splashHideRunnable = timeout
+        mainHandler.postDelayed(timeout, SPLASH_MAX_MS)
+    }
+
+    private fun hideSplashOverlay() {
+        if (splashHidden || !::splashOverlay.isInitialized) return
+        val remaining = (SPLASH_MIN_MS - (SystemClock.elapsedRealtime() - splashShownAt))
+            .coerceAtLeast(0L)
+        val hide = Runnable {
+            if (splashHidden) return@Runnable
+            splashHidden = true
+            splashHideRunnable?.let(mainHandler::removeCallbacks)
+            splashHideRunnable = null
+            splashOverlay.animate()
+                .alpha(0f)
+                .setDuration(280)
+                .withEndAction { splashOverlay.visibility = View.GONE }
+                .start()
+        }
+        if (remaining == 0L) {
+            hide.run()
+        } else {
+            mainHandler.postDelayed(hide, remaining)
+        }
+    }
+
     private fun showMainFrameError(message: String) {
         mainFrameLoadFailed = true
+        hideSplashOverlay()
         errorMessage.text = message
         errorPanel.visibility = View.VISIBLE
         errorPanel.announceForAccessibility(message)
@@ -475,6 +586,8 @@ class MainActivity : AppCompatActivity() {
         activityStarted = false
         cancelBackDecision()
         cancelPendingWebViewPause()
+        splashHideRunnable?.let(mainHandler::removeCallbacks)
+        splashHideRunnable = null
         denyPendingMicrophoneRequest()
         webView.stopLoading()
         webView.removeAllViews()
@@ -484,6 +597,8 @@ class MainActivity : AppCompatActivity() {
 
     private companion object {
         const val BACK_DECISION_TIMEOUT_MS = 750L
+        const val SPLASH_MIN_MS = 1800L
+        const val SPLASH_MAX_MS = 4800L
         const val WEBVIEW_BACKGROUND_SIGNAL_TIMEOUT_MS = 100L
         const val ANDROID_SHELL_USER_AGENT_TOKEN = "SangZiSmartCareAndroid/1.0"
         const val PAGE_BACKGROUND_EVENT_SCRIPT =

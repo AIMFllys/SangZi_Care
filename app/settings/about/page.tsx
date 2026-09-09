@@ -38,7 +38,7 @@ export default function AboutPage() {
         </section>
 
         <p className={styles.releaseNote}>
-          v{APP_VERSION} 聚焦消息、AI 语音、紧急求助与健康记录体验升级。
+          v{APP_VERSION} 新增健康早筛问卷、开屏与登录提示，并重做了登录体验。
         </p>
 
         <section className={styles.projectCard} aria-labelledby="project-title">

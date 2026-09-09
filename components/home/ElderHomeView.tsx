@@ -6,6 +6,7 @@ import { useUserStore } from '@/stores/userStore';
 import { useEmergencyTrigger } from '@/hooks/useEmergencyTrigger';
 import { Sun, Mic, Phone } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
+import { QuestionnaireEntry } from '@/components/questionnaire/QuestionnaireEntry';
 import styles from '../../app/page.module.css';
 
 /** 日期格式化 */
@@ -83,6 +84,7 @@ export default function ElderHomeView() {
           <br />
           {name}
         </h1>
+        <QuestionnaireEntry variant="chip" />
       </div>
 
       {/* 时间天气卡 */}
