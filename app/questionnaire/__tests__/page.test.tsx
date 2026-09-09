@@ -27,9 +27,16 @@ describe('QuestionnairePage', () => {
   });
 
   it('问卷滚动容器吞掉过度滚动，避免上拉触发整页刷新', () => {
-    const css = readFileSync(resolve(process.cwd(), 'app/questionnaire/page.module.css'), 'utf8');
-    expect(css).toMatch(/\.page\s*\{[\s\S]*overscroll-behavior:\s*none/);
-    expect(css).toMatch(/\.content\s*\{[\s\S]*overscroll-behavior-y:\s*contain/);
+    const pageCss = readFileSync(resolve(process.cwd(), 'app/questionnaire/page.module.css'), 'utf8');
+    const css = readFileSync(
+      resolve(process.cwd(), 'components/questionnaire/Questionnaire.module.css'),
+      'utf8',
+    );
+    expect(pageCss).toMatch(/\.page\s*\{[\s\S]*overscroll-behavior:\s*none/);
+    expect(css).toMatch(/\.scroller\s*\{[\s\S]*overscroll-behavior:\s*none/);
+    expect(css).toMatch(/\.scroller\s*\{[\s\S]*touch-action:\s*pan-y/);
+    expect(css).toMatch(/\.scroller\s*\{[\s\S]*overflow-anchor:\s*none/);
+    expect(css).toContain('.jumpTop');
     expect(css).not.toMatch(/-webkit-overflow-scrolling:\s*touch/);
   });
 

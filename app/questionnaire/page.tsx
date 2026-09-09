@@ -19,10 +19,10 @@ export default function QuestionnairePage() {
         onBack={() => router.push(ROUTES.HOME)}
         transparent
       />
-      <main className={styles.content}>
-        <Questionnaire sections={QUESTIONNAIRE_SECTIONS} />
-        <p className={styles.footer}>每一份回答，都在为家庭与社区贡献力量</p>
-      </main>
+      <Questionnaire
+        sections={QUESTIONNAIRE_SECTIONS}
+        footer={<p className={styles.footer}>每一份回答，都在为家庭与社区贡献力量</p>}
+      />
     </div>
   );
 }

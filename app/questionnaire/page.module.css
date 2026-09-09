@@ -8,12 +8,8 @@
   background: linear-gradient(180deg, var(--bg-base) 0%, var(--bg-elevated) 100%);
 }
 
-.content {
+.page > :last-child {
   min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  padding: 0 var(--page-gutter) calc(var(--safe-bottom) + var(--space-lg));
 }
 
 .footer {
