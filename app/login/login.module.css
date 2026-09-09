@@ -3,14 +3,14 @@
   height: 100%;
   min-height: 0;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   overscroll-behavior-y: contain;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-lg);
-  padding: calc(var(--safe-top) + var(--space-lg)) var(--page-gutter, 20px) calc(var(--safe-bottom) + var(--space-lg));
+  gap: var(--space-md);
+  padding: calc(var(--safe-top) + var(--space-md)) var(--page-gutter, 20px) calc(var(--safe-bottom) + var(--space-md));
   background: linear-gradient(180deg, var(--bg-base), var(--bg-gradient-end));
 }
 
@@ -31,7 +31,7 @@
 .logoSection { position: relative; }
 
 .appTitle {
-  font-size: var(--font-hero);
+  font-size: clamp(2rem, 7vw, var(--font-hero));
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: 0.08em;
@@ -57,9 +57,29 @@
   list-style: none;
 }
 
-.step { color: var(--text-muted); }
+.step {
+  position: relative;
+  color: var(--text-muted);
+}
+
+.step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 13px;
+  left: calc(50% + 18px);
+  right: calc(-50% + 18px);
+  border-top: 1.5px dashed color-mix(in srgb, var(--text-muted) 55%, transparent);
+  pointer-events: none;
+}
+
+.stepDone:not(:last-child)::before {
+  border-top-style: solid;
+  border-top-color: color-mix(in srgb, var(--accent-action) 42%, transparent);
+}
 
 .stepIndex {
+  position: relative;
+  z-index: 1;
   display: grid;
   place-items: center;
   width: 28px;
@@ -96,8 +116,8 @@
   max-width: 400px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
-  padding: var(--space-lg);
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-xl);
   background: color-mix(in srgb, var(--bg-card-solid) 88%, transparent);
@@ -142,19 +162,33 @@
 
 .sendCodeLabelCompact { display: none; }
 
+.captchaBlock {
+  display: grid;
+  gap: 8px;
+}
+
+.captchaLabel {
+  font-size: var(--font-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .captchaRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 48px;
+  align-items: center;
   gap: var(--space-sm);
-  align-items: flex-end;
+  min-height: 48px;
 }
 
 .captchaQuestion {
-  min-width: 120px;
-  min-height: 56px;
-  padding: 0 var(--space-sm);
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 0;
+  height: 48px;
+  min-height: 48px;
+  padding: 0 var(--space-sm);
   border-radius: var(--radius-lg);
   background: var(--bg-elevated);
   border: 1.5px dashed color-mix(in srgb, var(--accent-action) 35%, transparent);
@@ -172,16 +206,39 @@
 }
 
 .captchaRow .captchaInput {
-  flex: 1;
   min-width: 0;
+  height: 48px;
 }
 
-.otpBlock { display: grid; gap: var(--space-sm); }
+.otpBlock { display: grid; gap: 8px; }
+
+.otpLabel {
+  font-size: var(--font-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.otpWrap {
+  position: relative;
+}
 
 .otpSlots {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 6px;
+}
+
+.otpInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  font-size: 16px;
+  background: transparent;
 }
 
 .otpSlot {
@@ -224,7 +281,7 @@
   .captchaRow {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 88px 48px;
-    align-items: end;
+    align-items: center;
   }
 
   .captchaRow .captchaQuestion { min-width: 0; }

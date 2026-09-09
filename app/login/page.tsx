@@ -5,7 +5,7 @@ import { Button, Input, IconButton } from '@/components/ui';
 import { BrandMark } from '@/components/brand/BrandMark';
 import { fetchApi } from '@/lib/api';
 import { replaceDocument } from '@/lib/browserNavigation';
-import { Mail, RefreshCw, KeyRound, Send, ChevronLeft } from 'lucide-react';
+import { Mail, RefreshCw, Send, ChevronLeft } from 'lucide-react';
 import styles from './login.module.css';
 
 interface CaptchaResponse {
@@ -160,7 +160,7 @@ export default function LoginPage() {
       <div className={styles.atmosphere} aria-hidden="true" />
 
       <div className={styles.logoSection}>
-        <BrandMark size={84} animated />
+        <BrandMark size={72} animated />
         <h1 className={styles.appTitle}>桑梓智护</h1>
         <p className={styles.appSubtitle}>用邮箱验证码进入，守护家中长辈</p>
       </div>
@@ -235,33 +235,42 @@ export default function LoginPage() {
               先算一道简单算术，确认是您本人在操作，然后把验证码发到
               <strong> {email}</strong>
             </p>
-            <div className={styles.captchaRow}>
-              <div className={styles.captchaQuestion} aria-live="polite">
-                {captchaLoading ? (
-                  <span className={styles.captchaLoading}>加载中...</span>
-                ) : (
-                  <span className={styles.captchaText}>{captchaQuestion}</span>
-                )}
+            <div className={styles.captchaBlock}>
+              <span className={styles.captchaLabel} id="login-captcha-label">
+                请算出这道题
+              </span>
+              <div className={styles.captchaRow}>
+                <div
+                  className={styles.captchaQuestion}
+                  aria-live="polite"
+                  aria-labelledby="login-captcha-label"
+                >
+                  {captchaLoading ? (
+                    <span className={styles.captchaLoading}>加载中...</span>
+                  ) : (
+                    <span className={styles.captchaText}>{captchaQuestion}</span>
+                  )}
+                </div>
+                <Input
+                  id="login-captcha"
+                  type="text"
+                  inputMode="numeric"
+                  value={captchaAnswer}
+                  onChange={(value) => setCaptchaAnswer(value.replace(/[^\d-]/g, ''))}
+                  placeholder="得数"
+                  aria-labelledby="login-captcha-label"
+                  aria-label="人机验证答案"
+                  className={styles.captchaInput}
+                />
+                <IconButton
+                  variant="soft"
+                  aria-label="刷新验证题"
+                  onClick={loadCaptcha}
+                  disabled={captchaLoading}
+                >
+                  <RefreshCw size={20} />
+                </IconButton>
               </div>
-              <Input
-                id="login-captcha"
-                label="算术答案"
-                type="text"
-                inputMode="numeric"
-                value={captchaAnswer}
-                onChange={(value) => setCaptchaAnswer(value.replace(/[^\d-]/g, ''))}
-                placeholder="得数"
-                aria-label="人机验证答案"
-                className={styles.captchaInput}
-              />
-              <IconButton
-                variant="soft"
-                aria-label="刷新验证题"
-                onClick={loadCaptcha}
-                disabled={captchaLoading}
-              >
-                <RefreshCw size={20} />
-              </IconButton>
             </div>
             <Button
               variant="primary"
@@ -284,37 +293,36 @@ export default function LoginPage() {
         {step === 3 && (
           <>
             <p className={styles.help}>
-              6 位验证码已发到 <strong>{maskedEmail}</strong>。请在 10 分钟内填写。
+              验证码已发到 <strong>{maskedEmail}</strong>，10 分钟内有效。
             </p>
             <div className={styles.otpBlock}>
-              <div
-                className={styles.otpSlots}
-                aria-hidden="true"
-                onClick={() => codeInputRef.current?.focus()}
-              >
-                {Array.from({ length: CODE_LENGTH }, (_, index) => (
-                  <span
-                    key={index}
-                    className={`${styles.otpSlot} ${code[index] ? styles.otpFilled : ''} ${code.length === index ? styles.otpActive : ''}`}
-                  >
-                    {code[index] ?? ''}
-                  </span>
-                ))}
+              <label className={styles.otpLabel} htmlFor="login-code">
+                邮箱验证码
+              </label>
+              <div className={styles.otpWrap}>
+                <div className={styles.otpSlots} aria-hidden="true">
+                  {Array.from({ length: CODE_LENGTH }, (_, index) => (
+                    <span
+                      key={index}
+                      className={`${styles.otpSlot} ${code[index] ? styles.otpFilled : ''} ${code.length === index ? styles.otpActive : ''}`}
+                    >
+                      {code[index] ?? ''}
+                    </span>
+                  ))}
+                </div>
+                <input
+                  id="login-code"
+                  ref={codeInputRef}
+                  className={styles.otpInput}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={code}
+                  onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
+                  maxLength={CODE_LENGTH}
+                  aria-label="验证码"
+                />
               </div>
-              <Input
-                id="login-code"
-                label="邮箱验证码"
-                inputRef={codeInputRef}
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                value={code}
-                onChange={(value) => setCode(value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
-                placeholder="请输入 6 位数字"
-                maxLength={CODE_LENGTH}
-                aria-label="验证码"
-                prefix={<KeyRound size={20} color="var(--text-muted)" />}
-              />
             </div>
             <button
               type="button"

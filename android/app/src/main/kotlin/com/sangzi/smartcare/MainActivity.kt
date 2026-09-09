@@ -77,6 +77,7 @@ class MainActivity : AppCompatActivity() {
         microphonePermissionPolicy = MicrophonePermissionPolicy(baseUrl)
 
         webView = WebView(this).apply {
+            overScrollMode = View.OVER_SCROLL_NEVER
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.allowFileAccess = false

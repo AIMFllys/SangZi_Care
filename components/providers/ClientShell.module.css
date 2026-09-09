@@ -2,11 +2,13 @@
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .main {
   min-height: 0;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .main[data-shell-mode='tabbed'] {

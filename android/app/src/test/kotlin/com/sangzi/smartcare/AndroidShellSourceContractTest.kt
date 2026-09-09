@@ -55,6 +55,7 @@ class AndroidShellSourceContractTest {
             "app/src/main/kotlin/com/sangzi/smartcare/MainActivity.kt",
         ).readText(Charsets.UTF_8)
         val required = listOf(
+            "overScrollMode = View.OVER_SCROLL_NEVER",
             "settings.allowFileAccess = false",
             "settings.allowContentAccess = false",
             "WebSettings.MIXED_CONTENT_NEVER_ALLOW",

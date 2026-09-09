@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import '@testing-library/jest-dom/vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
@@ -19,5 +21,11 @@ describe('QuestionnairePage', () => {
     fireEvent.click(screen.getByRole('button', { name: '开始填写' }));
     expect(screen.getByText('基础信息 & 家庭关怀')).toBeInTheDocument();
     expect(screen.getByText('1. 您的年龄段是？')).toBeInTheDocument();
+  });
+
+  it('问卷滚动容器吞掉过度滚动，避免上拉触发整页刷新', () => {
+    const css = readFileSync(resolve(process.cwd(), 'app/questionnaire/page.module.css'), 'utf8');
+    expect(css).toMatch(/\.page\s*\{[\s\S]*overscroll-behavior:\s*none/);
+    expect(css).toMatch(/\.content\s*\{[\s\S]*overscroll-behavior-y:\s*contain/);
   });
 });
