@@ -3,10 +3,15 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 // ---------- Mock 依赖 ----------
 
-const mockPush = vi.fn();
+const nav = vi.hoisted(() => ({
+  push: vi.fn(),
+  search: new URLSearchParams(),
+}));
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: nav.push }),
   usePathname: () => '/settings/profile',
+  useSearchParams: () => nav.search,
 }));
 
 const mockSetUser = vi.fn();
@@ -58,6 +63,7 @@ const { default: ProfilePage } = await import('../profile/page');
 describe('ProfilePage 个人信息编辑页', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    nav.search = new URLSearchParams();
     mockUser = {
       id: 'u1',
       name: '张三',
@@ -95,8 +101,17 @@ describe('ProfilePage 个人信息编辑页', () => {
 
   it('预填充出生日期', () => {
     render(<ProfilePage />);
-    const input = screen.getByLabelText('出生日期') as HTMLInputElement;
-    expect(input.value).toBe('1950-05-15');
+    expect((screen.getByLabelText('出生年份') as HTMLSelectElement).value).toBe('1950');
+    expect((screen.getByLabelText('出生月份') as HTMLSelectElement).value).toBe('05');
+    expect((screen.getByLabelText('出生哪一天') as HTMLSelectElement).value).toBe('15');
+  });
+
+  it('可用年/月/日选择器填写出生日期', () => {
+    render(<ProfilePage />);
+    fireEvent.change(screen.getByLabelText('出生年份'), { target: { value: '1948' } });
+    fireEvent.change(screen.getByLabelText('出生月份'), { target: { value: '12' } });
+    fireEvent.change(screen.getByLabelText('出生哪一天'), { target: { value: '08' } });
+    expect(screen.getByText(/今年满 \d+ 岁/)).toBeDefined();
   });
 
   it('预填充性别选择', () => {
@@ -189,5 +204,46 @@ describe('ProfilePage 个人信息编辑页', () => {
     fireEvent.change(input, { target: { value: '关节炎' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(screen.getByText('关节炎')).toBeDefined();
+  });
+
+  it('从问卷进入时资料不全不能保存，补全后跳回问卷', async () => {
+    nav.search = new URLSearchParams('from=questionnaire');
+    mockUser = {
+      ...mockUser!,
+      birth_date: null,
+      gender: null,
+    };
+    render(<ProfilePage />);
+
+    expect(screen.getByText(/健康早筛需要出生日期和性别/)).toBeDefined();
+    fireEvent.click(screen.getByText('保存'));
+    expect(screen.getByText('请填写出生日期，并选择男或女')).toBeDefined();
+    expect(mockFetchApi).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText('出生年份'), { target: { value: '1948' } });
+    fireEvent.change(screen.getByLabelText('出生月份'), { target: { value: '03' } });
+    fireEvent.change(screen.getByLabelText('出生哪一天'), { target: { value: '12' } });
+    fireEvent.click(screen.getByRole('radio', { name: '女' }));
+
+    const updatedUser = {
+      ...mockUser,
+      birth_date: '1948-03-12',
+      gender: 'female',
+    };
+    mockFetchApi.mockResolvedValueOnce(updatedUser);
+    fireEvent.click(screen.getByText('保存'));
+
+    await waitFor(() => {
+      expect(mockFetchApi).toHaveBeenCalledWith('/api/v1/users/me', {
+        method: 'PATCH',
+        body: expect.objectContaining({
+          birth_date: '1948-03-12',
+          gender: 'female',
+        }),
+      });
+    });
+    await waitFor(() => {
+      expect(nav.push).toHaveBeenCalledWith('/questionnaire');
+    });
   });
 });

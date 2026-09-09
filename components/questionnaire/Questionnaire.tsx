@@ -13,11 +13,12 @@ import styles from './Questionnaire.module.css';
 interface QuestionnaireProps {
   sections: Section[];
   footer?: ReactNode;
+  profileLabel?: string;
 }
 
 type Stage = 'intro' | 'section' | 'result';
 
-export function Questionnaire({ sections, footer }: QuestionnaireProps) {
+export function Questionnaire({ sections, footer, profileLabel }: QuestionnaireProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [stage, setStage] = useState<Stage>('intro');
   const [sectionIndex, setSectionIndex] = useState(0);
@@ -98,6 +99,7 @@ export function Questionnaire({ sections, footer }: QuestionnaireProps) {
           <strong>同济医学院 · 慧老智治 医心为民</strong>
           您好！本问卷旨在了解长辈健康与家庭陪伴。答案无对错，请您放宽心填写。所有数据仅用于学术调研，感谢您的参与！
         </p>
+        {profileLabel ? <p className={styles.profileLabel}>{profileLabel}</p> : null}
         <p className={styles.meta}>共 {total} 部分，可一页一页填写</p>
         <Button variant="primary" size="lg" fullWidth onClick={() => setStage('section')}>
           开始填写

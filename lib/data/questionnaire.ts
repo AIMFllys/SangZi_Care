@@ -1,5 +1,12 @@
 import type { Section } from '@/lib/types/questionnaire';
 
+export function sectionsForSex(
+  sections: Section[],
+  sex: 'male' | 'female',
+): Section[] {
+  return sections.filter((section) => !section.gender || section.gender === sex);
+}
+
 /** 与 Elderstech-Questionnaire 题目、选项、权重保持同步 */
 export const QUESTIONNAIRE_SECTIONS: Section[] = [
   {

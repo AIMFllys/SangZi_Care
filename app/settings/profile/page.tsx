@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUserStore } from '@/stores/userStore';
 import { useAuthContext } from '@/components/providers/AuthProvider';
 import { fetchApi } from '@/lib/api';
@@ -10,8 +10,10 @@ import { User, X, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { IconButton } from '@/components/ui/IconButton';
+import { BirthDateField } from '@/components/ui/BirthDateField';
 import PageHeader from '@/components/layout/PageHeader';
 import { FormSkeleton } from '@/components/ui/Skeleton';
+import { hasQuestionnaireProfile, isIsoDate, questionnaireSex } from '@/lib/utils/age';
 import styles from './page.module.css';
 
 const GENDER_OPTIONS = [
@@ -36,8 +38,10 @@ interface ProfileForm {
   chronic_diseases: string[];
 }
 
-export default function ProfilePage() {
+function ProfilePageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromQuestionnaire = searchParams.get('from') === 'questionnaire';
   const { isReady } = useAuthContext();
   const user = useUserStore((s) => s.user);
   const setUser = useUserStore((s) => s.setUser);
@@ -87,6 +91,10 @@ export default function ProfilePage() {
       setError('请输入姓名');
       return;
     }
+    if (fromQuestionnaire && (!isIsoDate(form.birth_date) || questionnaireSex(form.gender) == null)) {
+      setError('请填写出生日期，并选择男或女');
+      return;
+    }
     setSaving(true);
     setError(null);
     setSuccess(false);
@@ -102,6 +110,10 @@ export default function ProfilePage() {
       });
       if (updated) {
         setUser(updated as NonNullable<typeof user>);
+        if (fromQuestionnaire && hasQuestionnaireProfile(updated)) {
+          router.push(ROUTES.QUESTIONNAIRE);
+          return;
+        }
       }
       setSuccess(true);
     } catch (err) {
@@ -124,11 +136,16 @@ export default function ProfilePage() {
         <PageHeader
           title="个人信息"
           variant="detail"
-          backHref={ROUTES.SETTINGS}
-          backAriaLabel="返回设置"
+          backHref={fromQuestionnaire ? ROUTES.HOME : ROUTES.SETTINGS}
+          backAriaLabel={fromQuestionnaire ? '返回首页' : '返回设置'}
           transparent
         />
 
+        {fromQuestionnaire && (
+          <div className={styles.infoBanner} role="status">
+            健康早筛需要出生日期和性别（男或女），填好后会自动进入问卷。
+          </div>
+        )}
         {success && (
           <div className={styles.successBanner} role="status">
             保存成功
@@ -159,13 +176,12 @@ export default function ProfilePage() {
             placeholder="请输入姓名"
           />
 
-          <Input
-            id="profile-birth"
-            label="出生日期"
-            type="date"
+          <BirthDateField
             value={form.birth_date}
+            required={fromQuestionnaire}
             onChange={(value) => {
               setForm((p) => ({ ...p, birth_date: value }));
+              setError(null);
               setSuccess(false);
             }}
           />
@@ -242,7 +258,7 @@ export default function ProfilePage() {
             variant="ghost"
             size="lg"
             fullWidth
-            onClick={() => router.push(ROUTES.SETTINGS)}
+            onClick={() => router.push(fromQuestionnaire ? ROUTES.HOME : ROUTES.SETTINGS)}
           >
             取消
           </Button>
@@ -257,5 +273,13 @@ export default function ProfilePage() {
           </Button>
         </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className={styles.page}><FormSkeleton /></div>}>
+      <ProfilePageInner />
+    </Suspense>
   );
 }

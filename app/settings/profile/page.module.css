@@ -22,6 +22,7 @@
   font-size: var(--font-body);
 }
 
+.infoBanner,
 .successBanner,
 .errorBanner {
   padding: var(--space-sm) var(--space-md);
@@ -29,6 +30,11 @@
   font-size: var(--font-caption);
   margin-bottom: var(--space-md);
   text-align: center;
+}
+
+.infoBanner {
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .successBanner {

@@ -3,16 +3,30 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ElderHomeView from '../ElderHomeView';
 
-const push = vi.fn();
-const fetchApi = vi.fn();
+const mocks = vi.hoisted(() => ({
+  push: vi.fn(),
+  fetchApi: vi.fn(),
+  user: {
+    id: 'elder-1',
+    name: '王奶奶',
+    role: 'elder',
+    birth_date: '1950-05-15',
+    gender: 'female',
+  } as Record<string, unknown>,
+}));
+const { push, fetchApi } = mocks;
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push }),
+  useRouter: () => ({ push: mocks.push }),
+}));
+
+vi.mock('@/components/providers/AuthProvider', () => ({
+  useAuthContext: () => ({ isReady: true, isAuthenticated: true }),
 }));
 
 vi.mock('@/stores/userStore', () => ({
   useUserStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({ user: { id: 'elder-1', name: '王奶奶', role: 'elder' } }),
+    selector({ user: mocks.user }),
 }));
 
 vi.mock('@/lib/api', () => ({ fetchApi: (...args: unknown[]) => fetchApi(...args) }));
@@ -22,6 +36,13 @@ describe('ElderHomeView', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.user = {
+      id: 'elder-1',
+      name: '王奶奶',
+      role: 'elder',
+      birth_date: '1950-05-15',
+      gender: 'female',
+    };
     fetchApi.mockResolvedValue({
       id: 'emergency-1',
       notification_status: 'sent',
@@ -54,6 +75,22 @@ describe('ElderHomeView', () => {
     render(<ElderHomeView />);
     fireEvent.click(screen.getByRole('button', { name: '打开健康早筛问卷' }));
     expect(push).toHaveBeenCalledWith('/questionnaire');
+  });
+
+  it('资料不全时弹出补全提示并去个人信息页', () => {
+    mocks.user = {
+      id: 'elder-1',
+      name: '王奶奶',
+      role: 'elder',
+      birth_date: null,
+      gender: null,
+    };
+    render(<ElderHomeView />);
+    fireEvent.click(screen.getByRole('button', { name: '打开健康早筛问卷' }));
+    expect(push).not.toHaveBeenCalledWith('/questionnaire');
+    expect(screen.getByRole('dialog', { name: '先完善个人信息' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '去填写' }));
+    expect(push).toHaveBeenCalledWith('/settings/profile?from=questionnaire');
   });
 
   it('SOS 直接调用紧急呼叫接口并反馈结果', async () => {

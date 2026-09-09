@@ -30,6 +30,7 @@
 .eyebrow,
 .lead,
 .meta,
+.profileLabel,
 .skipHint,
 .hint,
 .progress { margin: 0; }
@@ -59,11 +60,17 @@
   line-height: 1.65;
 }
 
-.meta {
+.meta,
+.profileLabel {
   color: var(--text-secondary);
   font-size: var(--font-small);
   line-height: 1.5;
   white-space: nowrap;
+}
+
+.profileLabel {
+  color: var(--accent-action);
+  font-weight: 750;
 }
 
 .lead {
