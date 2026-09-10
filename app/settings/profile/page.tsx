@@ -255,7 +255,7 @@ function ProfilePageInner() {
 
         <div className={styles.actions}>
           <Button
-            variant="ghost"
+            variant="secondary"
             size="lg"
             fullWidth
             onClick={() => router.push(fromQuestionnaire ? ROUTES.HOME : ROUTES.SETTINGS)}

@@ -101,16 +101,19 @@ describe('ProfilePage 个人信息编辑页', () => {
 
   it('预填充出生日期', () => {
     render(<ProfilePage />);
-    expect((screen.getByLabelText('出生年份') as HTMLSelectElement).value).toBe('1950');
-    expect((screen.getByLabelText('出生月份') as HTMLSelectElement).value).toBe('05');
-    expect((screen.getByLabelText('出生哪一天') as HTMLSelectElement).value).toBe('15');
+    expect(screen.getByRole('button', { name: '出生年份' }).textContent).toContain('1950');
+    expect(screen.getByRole('button', { name: '出生月份' }).textContent).toContain('5');
+    expect(screen.getByRole('button', { name: '出生哪一天' }).textContent).toContain('15');
   });
 
   it('可用年/月/日选择器填写出生日期', () => {
     render(<ProfilePage />);
-    fireEvent.change(screen.getByLabelText('出生年份'), { target: { value: '1948' } });
-    fireEvent.change(screen.getByLabelText('出生月份'), { target: { value: '12' } });
-    fireEvent.change(screen.getByLabelText('出生哪一天'), { target: { value: '08' } });
+    fireEvent.click(screen.getByRole('button', { name: '出生年份' }));
+    fireEvent.click(screen.getByRole('option', { name: '1948' }));
+    fireEvent.click(screen.getByRole('button', { name: '出生月份' }));
+    fireEvent.click(screen.getByRole('option', { name: '12' }));
+    fireEvent.click(screen.getByRole('button', { name: '出生哪一天' }));
+    fireEvent.click(screen.getByRole('option', { name: '8' }));
     expect(screen.getByText(/今年满 \d+ 岁/)).toBeDefined();
   });
 
@@ -198,6 +201,16 @@ describe('ProfilePage 个人信息编辑页', () => {
     expect(tags.length).toBe(1);
   });
 
+  it('取消和保存是成对的等宽按钮', () => {
+    render(<ProfilePage />);
+    const cancel = screen.getByRole('button', { name: '取消' });
+    const save = screen.getByRole('button', { name: '保存' });
+    expect(cancel.className).toMatch(/secondary/);
+    expect(save.className).toMatch(/primary/);
+    expect(cancel.className).toMatch(/lg/);
+    expect(save.className).toMatch(/lg/);
+  });
+
   it('Enter键添加慢性病', () => {
     render(<ProfilePage />);
     const input = screen.getByLabelText('添加慢性病') as HTMLInputElement;
@@ -220,9 +233,12 @@ describe('ProfilePage 个人信息编辑页', () => {
     expect(screen.getByText('请填写出生日期，并选择男或女')).toBeDefined();
     expect(mockFetchApi).not.toHaveBeenCalled();
 
-    fireEvent.change(screen.getByLabelText('出生年份'), { target: { value: '1948' } });
-    fireEvent.change(screen.getByLabelText('出生月份'), { target: { value: '03' } });
-    fireEvent.change(screen.getByLabelText('出生哪一天'), { target: { value: '12' } });
+    fireEvent.click(screen.getByRole('button', { name: '出生年份' }));
+    fireEvent.click(screen.getByRole('option', { name: '1948' }));
+    fireEvent.click(screen.getByRole('button', { name: '出生月份' }));
+    fireEvent.click(screen.getByRole('option', { name: '3' }));
+    fireEvent.click(screen.getByRole('button', { name: '出生哪一天' }));
+    fireEvent.click(screen.getByRole('option', { name: '12' }));
     fireEvent.click(screen.getByRole('radio', { name: '女' }));
 
     const updatedUser = {

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { ageFromBirthDate, daysInMonth, isIsoDate } from '@/lib/utils/age';
 import styles from './BirthDateField.module.css';
 
@@ -10,6 +11,8 @@ interface BirthDateFieldProps {
   disabled?: boolean;
   required?: boolean;
 }
+
+type PickerKind = 'year' | 'month' | 'day';
 
 function pad(value: number): string {
   return String(value).padStart(2, '0');
@@ -31,11 +34,19 @@ function toIso(year: string, month: string, day: string): string {
   return `${yearNumber}-${pad(monthNumber)}-${pad(dayNumber)}`;
 }
 
+const PICKER_TITLE: Record<PickerKind, string> = {
+  year: '选择年份',
+  month: '选择月份',
+  day: '选择日期',
+};
+
 export function BirthDateField({ value, onChange, disabled, required }: BirthDateFieldProps) {
   const today = new Date();
   const currentYear = today.getFullYear();
   const years = Array.from({ length: 121 }, (_, index) => currentYear - index);
+  const titleId = useId();
   const [draft, setDraft] = useState(() => parseParts(value));
+  const [picker, setPicker] = useState<PickerKind | null>(null);
   const { year, month, day } = draft;
   const selectedYear = year ? Number(year) : null;
   const selectedMonth = month ? Number(month) : null;
@@ -44,6 +55,7 @@ export function BirthDateField({ value, onChange, disabled, required }: BirthDat
     : 31;
   const iso = toIso(year, month, day);
   const age = ageFromBirthDate(iso || value, today);
+  const dayEnabled = Boolean(year && month) && !disabled;
 
   useEffect(() => {
     if (!isIsoDate(value)) return;
@@ -55,6 +67,23 @@ export function BirthDateField({ value, onChange, disabled, required }: BirthDat
     ));
   }, [value]);
 
+  useEffect(() => {
+    if (!picker) return undefined;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setPicker(null);
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [picker]);
+
   const emit = (nextYear: string, nextMonth: string, nextDay: string) => {
     let nextDayClamped = nextDay;
     if (nextYear && nextMonth && nextDay) {
@@ -65,6 +94,27 @@ export function BirthDateField({ value, onChange, disabled, required }: BirthDat
     onChange(toIso(nextYear, nextMonth, nextDayClamped));
   };
 
+  const choose = (kind: PickerKind, nextValue: string) => {
+    if (kind === 'year') emit(nextValue, month, day);
+    if (kind === 'month') emit(year, nextValue, day);
+    if (kind === 'day') emit(year, month, nextValue);
+    setPicker(null);
+  };
+
+  const options = picker === 'year'
+    ? years.map((item) => ({ value: String(item), label: String(item) }))
+    : picker === 'month'
+      ? Array.from({ length: 12 }, (_, index) => {
+          const item = index + 1;
+          return { value: pad(item), label: String(item) };
+        })
+      : Array.from({ length: maxDay }, (_, index) => {
+          const item = index + 1;
+          return { value: pad(item), label: String(item) };
+        });
+
+  const selectedValue = picker === 'year' ? year : picker === 'month' ? month : day;
+
   return (
     <div className={styles.wrapper}>
       <span className={styles.label} id="profile-birth-label">出生日期</span>
@@ -74,61 +124,104 @@ export function BirthDateField({ value, onChange, disabled, required }: BirthDat
         aria-labelledby="profile-birth-label"
         aria-required={required || undefined}
       >
-        <label className={styles.slot}>
+        <div className={`${styles.slot} ${styles.slotYear}`}>
           <span className={styles.slotLabel}>年</span>
-          <select
+          <button
+            type="button"
             aria-label="出生年份"
-            autoComplete="bday-year"
-            className={styles.select}
-            value={year}
+            aria-haspopup="dialog"
+            aria-expanded={picker === 'year'}
+            className={styles.trigger}
             disabled={disabled}
-            required={required}
-            onChange={(event) => emit(event.target.value, month, day)}
+            onClick={() => setPicker('year')}
           >
-            <option value="">请选择</option>
-            {years.map((item) => (
-              <option key={item} value={String(item)}>{item}</option>
-            ))}
-          </select>
-        </label>
-        <label className={styles.slot}>
+            <span className={year ? styles.triggerValue : styles.placeholder}>
+              {year || '请选择'}
+            </span>
+            <ChevronDown size={18} aria-hidden="true" />
+          </button>
+        </div>
+        <div className={styles.slot}>
           <span className={styles.slotLabel}>月</span>
-          <select
+          <button
+            type="button"
             aria-label="出生月份"
-            autoComplete="bday-month"
-            className={styles.select}
-            value={month}
+            aria-haspopup="dialog"
+            aria-expanded={picker === 'month'}
+            className={styles.trigger}
             disabled={disabled}
-            required={required}
-            onChange={(event) => emit(year, event.target.value, day)}
+            onClick={() => setPicker('month')}
           >
-            <option value="">请选择</option>
-            {Array.from({ length: 12 }, (_, index) => index + 1).map((item) => (
-              <option key={item} value={pad(item)}>{item}</option>
-            ))}
-          </select>
-        </label>
-        <label className={styles.slot}>
+            <span className={month ? styles.triggerValue : styles.placeholder}>
+              {month ? String(Number(month)) : '请选择'}
+            </span>
+            <ChevronDown size={18} aria-hidden="true" />
+          </button>
+        </div>
+        <div className={styles.slot}>
           <span className={styles.slotLabel}>日</span>
-          <select
+          <button
+            type="button"
             aria-label="出生哪一天"
-            autoComplete="bday-day"
-            className={styles.select}
-            value={day}
-            disabled={disabled || !year || !month}
-            required={required}
-            onChange={(event) => emit(year, month, event.target.value)}
+            aria-haspopup="dialog"
+            aria-expanded={picker === 'day'}
+            className={styles.trigger}
+            disabled={!dayEnabled}
+            onClick={() => dayEnabled && setPicker('day')}
           >
-            <option value="">请选择</option>
-            {Array.from({ length: maxDay }, (_, index) => index + 1).map((item) => (
-              <option key={item} value={pad(item)}>{item}</option>
-            ))}
-          </select>
-        </label>
+            <span className={day ? styles.triggerValue : styles.placeholder}>
+              {day ? String(Number(day)) : '请选择'}
+            </span>
+            <ChevronDown size={18} aria-hidden="true" />
+          </button>
+        </div>
       </div>
       <p className={styles.hint}>
-        {age == null ? '请选择年月日，健康早筛会按年龄匹配问卷。' : `今年满 ${age} 岁`}
+        {age == null ? '请点选年、月、日，健康早筛会按年龄匹配问卷。' : `今年满 ${age} 岁`}
       </p>
+
+      {picker ? (
+        <div
+          className={styles.overlay}
+          role="presentation"
+          onClick={() => setPicker(null)}
+        >
+          <div
+            className={styles.sheet}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id={titleId} className={styles.sheetTitle}>{PICKER_TITLE[picker]}</h2>
+            <div
+              className={`${styles.choices} ${picker === 'year' ? styles.choicesYear : ''}`}
+              role="listbox"
+              aria-label={PICKER_TITLE[picker]}
+            >
+              {options.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={selectedValue === option.value}
+                  className={`${styles.choice} ${selectedValue === option.value ? styles.choiceActive : ''}`}
+                  onClick={() => choose(picker, option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className={styles.sheetCancel}
+              onClick={() => setPicker(null)}
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

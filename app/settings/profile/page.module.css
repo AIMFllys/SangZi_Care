@@ -135,8 +135,10 @@
 }
 
 .actions {
-  display: flex;
-  gap: var(--space-md);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-sm);
+  align-items: stretch;
   position: sticky;
   bottom: calc(-1 * (var(--space-lg) + var(--safe-bottom)));
   z-index: 2;
@@ -144,4 +146,11 @@
   padding: var(--space-sm) var(--page-gutter, 20px) calc(var(--space-sm) + var(--safe-bottom));
   border-top: 1px solid var(--divider);
   background: var(--bg-card-solid);
+}
+
+.actions :global(button) {
+  min-width: 0;
+  width: 100%;
+  min-height: 52px;
+  box-shadow: none;
 }
