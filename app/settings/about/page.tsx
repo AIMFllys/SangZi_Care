@@ -38,7 +38,7 @@ export default function AboutPage() {
         </section>
 
         <p className={styles.releaseNote}>
-          v{APP_VERSION} 新增健康早筛问卷、开屏与登录提示，并重做了登录体验。
+          v{APP_VERSION} 同时维护网页端 Web 壳与原生 Android 两套正式包，首页时间、底栏与确认弹窗按上海时区与安全区重做。
         </p>
 
         <section className={styles.projectCard} aria-labelledby="project-title">

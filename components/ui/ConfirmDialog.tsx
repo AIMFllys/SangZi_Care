@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './ConfirmDialog.module.css';
 
 export interface ConfirmDialogProps {
@@ -62,10 +63,20 @@ export function ConfirmDialog({
     }
   }, [busy, onCancel]);
 
-  if (!open) return null;
+  if (!open || typeof document === 'undefined') return null;
 
-  return (
-    <div className={styles.overlay} role="dialog" aria-modal="true" aria-busy={busy} aria-labelledby="confirm-dialog-title" onKeyDown={handleKeyDown}>
+  return createPortal(
+    <div
+      className={styles.overlay}
+      role="dialog"
+      aria-modal="true"
+      aria-busy={busy}
+      aria-labelledby="confirm-dialog-title"
+      onKeyDown={handleKeyDown}
+      onClick={(event) => {
+        if (event.target === event.currentTarget && !busy) onCancel();
+      }}
+    >
       <div className={styles.dialog} ref={dialogRef}>
         <h2 id="confirm-dialog-title" className={styles.title}>{title}</h2>
         {description && <p className={styles.description}>{description}</p>}
@@ -75,6 +86,7 @@ export function ConfirmDialog({
           <button type="button" className={styles.confirm} ref={confirmRef} onClick={onConfirm} disabled={busy}>{confirmLabel}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

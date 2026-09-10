@@ -16,7 +16,7 @@
 | 项目名 | 桑梓智护（SangZi Smart Care） |
 | APP 名 | 智护银龄 |
 | 包名 | `sangzi-smart-care` |
-| 当前版本 | `v1.3.0` |
+| 当前版本 | `v2.0.0` |
 
 ---
 

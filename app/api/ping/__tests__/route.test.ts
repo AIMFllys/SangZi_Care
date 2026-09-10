@@ -23,7 +23,7 @@ describe('GET /api/ping', () => {
     await expect(response.json()).resolves.toMatchObject({
       ok: true,
       service: 'sangzi-smart-care',
-      version: '1.3.0',
+      version: '2.0.0',
       revision,
     });
   });

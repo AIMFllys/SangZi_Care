@@ -7,11 +7,12 @@ import { useEmergencyTrigger } from '@/hooks/useEmergencyTrigger';
 import { Mic, Phone } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import { QuestionnaireEntry } from '@/components/questionnaire/QuestionnaireEntry';
+import { formatShanghaiClock } from '@/lib/clock';
 import styles from '../../app/page.module.css';
 
-/** 日期格式化 */
+/** 日期格式化：始终使用上海时区，避免部署设备时区把首页时间带偏 */
 function useCurrentTime() {
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState(() => formatShanghaiClock());
   useEffect(() => {
     let timer: ReturnType<typeof setInterval> | null = null;
 
@@ -24,8 +25,8 @@ function useCurrentTime() {
 
     const startTimer = () => {
       stopTimer();
-      setNow(new Date());
-      timer = setInterval(() => setNow(new Date()), 30_000);
+      setNow(formatShanghaiClock());
+      timer = setInterval(() => setNow(formatShanghaiClock()), 30_000);
     };
 
     const handleVisibilityChange = () => {
@@ -45,14 +46,7 @@ function useCurrentTime() {
     };
   }, []);
 
-  const hours = now.getHours().toString().padStart(2, '0');
-  const mins = now.getMinutes().toString().padStart(2, '0');
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
-  const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-  const weekday = weekdays[now.getDay()];
-
-  return { time: `${hours}:${mins}`, date: `${month}月${day}日 星期${weekday}`, hour: now.getHours() };
+  return now;
 }
 
 /** 时段问候语 */

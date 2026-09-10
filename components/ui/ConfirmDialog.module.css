@@ -1,11 +1,12 @@
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 300;
+  z-index: 380;
   display: grid;
   place-items: center;
   padding: var(--page-gutter);
   background: var(--bg-overlay);
+  isolation: isolate;
 }
 
 .dialog {
@@ -33,6 +34,8 @@
 }
 
 .actions {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-sm);

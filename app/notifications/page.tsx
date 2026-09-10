@@ -63,7 +63,7 @@ export default function NotificationsPage() {
           <div className={styles.releaseCopy}>
             <span className={styles.eyebrow}>PRODUCT UPDATE</span>
             <h2 id="release-title">智护银龄 v{APP_VERSION}</h2>
-            <p>1.3.0 新增健康早筛问卷、开屏动画，并重做未登录提示与登录页。</p>
+            <p>2.0.0 同时提供网页端 Web 壳与原生 Android 两套正式包，并修复首页时间、底栏与确认弹窗。</p>
           </div>
           <span className={styles.versionBadge}>本次更新</span>
         </section>

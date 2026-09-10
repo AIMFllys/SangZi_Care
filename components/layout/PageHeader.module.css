@@ -3,6 +3,7 @@
   top: 0;
   z-index: 50;
   width: 100%;
+  padding-top: var(--safe-top);
   background: var(--bg-glass);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -19,6 +20,7 @@
 
 .inner {
   align-items: center;
+  min-height: var(--header-height);
   height: var(--header-height);
   padding: 0 var(--page-gutter);
 }
@@ -102,7 +104,6 @@
 .title {
   min-width: 0;
   width: 100%;
-  padding-top: var(--safe-top);
   font-size: var(--font-title);
   font-weight: 800;
   line-height: 1.2;
